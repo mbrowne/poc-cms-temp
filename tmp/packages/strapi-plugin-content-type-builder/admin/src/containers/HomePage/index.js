@@ -119,7 +119,6 @@ export class HomePage extends React.Component {
                     styles={{ margin: '-1px 0 3rem 0' }}
                 />
                 {component}
-                <h1>test form:</h1>
                 <AddEditEntityDefinition
                     hash={this.props.location.hash}
                     toggle={this.toggleModal}

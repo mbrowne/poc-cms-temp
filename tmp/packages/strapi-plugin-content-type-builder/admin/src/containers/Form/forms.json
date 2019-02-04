@@ -46,6 +46,25 @@
         },
         {
           "label": {
+            "id": "content-type-builder.form.contentType.item.isAbstract"
+          },
+          "name": "isAbstract",
+          "value": "",
+          "type": "checkbox",
+          "inputDescription": {
+            "id": "content-type-builder.form.contentType.item.isAbstract.description"
+          }
+        },
+        {
+          "label": {
+            "id": "content-type-builder.form.contentType.item.parentEntityDef"
+          },
+          "name": "parentEntityDefId",
+          "type": "select",
+          "items": [{}]
+        },
+        {
+          "label": {
             "id": "content-type-builder.form.contentType.item.description"
           },
           "name": "description",

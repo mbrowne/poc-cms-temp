@@ -4,7 +4,7 @@ input EntityDefinitionInput {
     # displayNameTemplate: String
     pluralName: String!
     templateEntityDefinitionId: ID
-    isAbstract: Boolean!
+    isAbstract: Boolean! = false
     # hasUrl: Boolean!
     # If we support fieldsets in the future, then this field will probably no longer be needed
     properties: [PropertyInput!]!
@@ -39,6 +39,10 @@ input PropertyInput {
 
 type Mutation {
     createEntityDefinition(
-        entityDef: EntityDefinitionInput
+        entityDef: EntityDefinitionInput!
+    ): EntityDefinitionModerationStatus
+
+    updateEntityDefinition(
+        entityDef: EntityDefinitionInput!
     ): EntityDefinitionModerationStatus
 }

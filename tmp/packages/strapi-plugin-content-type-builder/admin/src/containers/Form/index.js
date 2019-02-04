@@ -101,9 +101,9 @@ export class Form extends React.Component {
         this.setParallelAttribute = setParallelAttribute.bind(this)
         this.setTempAttribute = setTempAttribute.bind(this)
 
-        this.form = this.props.formConfig
-        // this.form = []
+        this.form = []
         this.formValidations = getValidationsFromForm(this.form, this.props.formValidations);
+        this.wrapperElement = null
     }
 
     componentDidMount() {
@@ -159,6 +159,13 @@ export class Form extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
+        // Matt Browne added
+        if (this.props.mode === 'hidden') {
+            if (this.wrapperElement.clientHeight > 0) {
+                throw Error("The 'mode' prop is set to 'hidden', but the form is visible and just rendered. You must set the 'mode' prop when displaying the form")
+            }
+        }
+
         if (
             prevProps.modelLoading !== this.props.modelLoading &&
             !isEmpty(this.props.hash)
@@ -169,6 +176,60 @@ export class Form extends React.Component {
 
     componentWillUnmount() {
         document.removeEventListener('keyup', this.handleKeyBinding)
+    }
+
+    initComponent(props, condition) {
+        this.form = props.formConfig
+        // console.log('initComponent, this.form: ', this.form);
+
+        if (!isEmpty(props.hash)) {
+            this.setState({ showModal: true })
+            const valueToReplace = includes(props.hash, '#create')
+                ? '#create'
+                : '#edit'
+            const contentTypeName = replace(
+                split(props.hash, '::')[0],
+                valueToReplace,
+                ''
+            )
+            const isPopUpAttribute = includes(props.hash, 'attribute')
+            const isCreating = valueToReplace === '#create'
+
+            // if (
+            //     condition &&
+            //     !isEmpty(contentTypeName) &&
+            //     contentTypeName !== '#choose'
+            // ) {
+            //     this.fetchModel(contentTypeName)
+            // }
+
+            switch (true) {
+                case isPopUpAttribute && contentTypeName !== '#choose': {
+                    if (isCreating) {
+                        this.props.setAttributeForm(props.hash)
+                    } else if (get(props.contentTypeData, 'name')) {
+                        this.setState({
+                            popUpTitleEdit: get(props.contentTypeData, [
+                                'attributes',
+                                split(props.hash, '::')[3],
+                                'name',
+                            ]),
+                        })
+                        this.props.setAttributeFormEdit(
+                            props.hash,
+                            props.contentTypeData
+                        )
+                    }
+                    break
+                }
+                // case includes(props.hash, 'contentType'):
+                //     // this.setForm(props.hash)
+                //     break
+                // default:
+            }
+        } else {
+            this.setState({ showModal: false })
+        }
     }
 
     addAttributeToContentType = (redirectToChoose = false) => {
@@ -247,74 +308,95 @@ export class Form extends React.Component {
         this.redirectAfterSave(redirectToChoose)
     }
 
-    createContentType = data => {
-        // console.log('data: ', data);
-        // console.log('this.props.formState.values', this.props.formState.values)
-
-        // Check form errors
-        const formErrors = checkFormValidity(data, this.formValidations)
-        // Check if content type name already exists
-        const sameContentTypeNames = filter(
-            this.props.menuData[0].items,
-            contentType => contentType.name === data.name
-        )
-
-        if (
-            size(sameContentTypeNames) > 0 &&
-            (includes(this.props.hash, '#create') ||
-                data.name !==
-                    replace(split(this.props.hash, '::')[0], '#edit', ''))
-        ) {
-            formErrors.push({
-                name: 'name',
-                errors: [
-                    { id: 'content-type-builder.error.contentTypeName.taken' },
-                ],
-            })
+    createContentType() {
+        const { attributes, ...values } = this.props.formState.values
+        const entityDef = {
+            ...values,
+            properties: []
         }
-
-        if (!isEmpty(formErrors)) {
-            return this.props.setFormErrors(formErrors)
-        }
-        const oldMenu = !isEmpty(this.props.menuData)
-            ? this.props.menuData[0].items
-            : []
-        // Check if link already exist in the menu to remove it
-        const index = findIndex(oldMenu, [
-            'name',
-            replace(split(this.props.hash, '::')[0], '#edit', ''),
-        ])
-        // Insert at a specific position or before the add button the not saved contentType
-        const position = index !== -1 ? index : size(oldMenu) - 1
-        oldMenu.splice(position, index !== -1 ? 1 : 0, {
-            icon: 'fa-cube',
-            fields: 0,
-            description: data.description,
-            name: data.name,
-            isTemporary: true,
-        })
-        const newMenu = oldMenu
-        const contentType = data
-
-        map(contentType.attributes, (attr, key) => {
-            if (get(attr.params, 'target') === this.props.modelName) {
-                contentType.attributes[key].params.target = data.name
-            }
-        })
-
-        // Store the temporary contentType in the localStorage
-        this.props.contentTypeCreate(contentType)
-        // Store new menu in localStorage and update App leftMenu
-        this.props.storeTemporaryMenu(newMenu, position, index !== -1 ? 1 : 0)
-        // Reset popUp form
-        this.props.resetIsFormSet()
-        // Reset formErrors
-        this.props.resetFormErrors()
-        // Close modal
         const modelPage = includes(this.props.redirectRoute, 'models')
             ? ''
             : '/models'
-        router.push(`${this.props.redirectRoute}${modelPage}/${data.name}`)
+        router.push(`${this.props.redirectRoute}${modelPage}/${entityDef.id}`)
+
+        //TEMP
+        return
+
+
+
+        // const { attributes, ...values } = this.props.formState.values
+        // const entityDef = {
+        //     ...values,
+        //     properties: []
+        // }
+
+        // // console.log('data: ', data);
+        // // console.log('this.props.formState.values', this.props.formState.values)
+
+        // // Check form errors
+        // const formErrors = checkFormValidity(data, this.formValidations)
+        // // Check if content type name already exists
+        // const sameContentTypeNames = filter(
+        //     this.props.menuData[0].items,
+        //     contentType => contentType.name === data.name
+        // )
+
+        // if (
+        //     size(sameContentTypeNames) > 0 &&
+        //     (includes(this.props.hash, '#create') ||
+        //         data.name !==
+        //             replace(split(this.props.hash, '::')[0], '#edit', ''))
+        // ) {
+        //     formErrors.push({
+        //         name: 'name',
+        //         errors: [
+        //             { id: 'content-type-builder.error.contentTypeName.taken' },
+        //         ],
+        //     })
+        // }
+
+        // if (!isEmpty(formErrors)) {
+        //     return this.props.setFormErrors(formErrors)
+        // }
+        // const oldMenu = !isEmpty(this.props.menuData)
+        //     ? this.props.menuData[0].items
+        //     : []
+        // // Check if link already exist in the menu to remove it
+        // const index = findIndex(oldMenu, [
+        //     'name',
+        //     replace(split(this.props.hash, '::')[0], '#edit', ''),
+        // ])
+        // // Insert at a specific position or before the add button the not saved contentType
+        // const position = index !== -1 ? index : size(oldMenu) - 1
+        // oldMenu.splice(position, index !== -1 ? 1 : 0, {
+        //     icon: 'fa-cube',
+        //     fields: 0,
+        //     description: data.description,
+        //     name: data.name,
+        //     isTemporary: true,
+        // })
+        // const newMenu = oldMenu
+        // const contentType = data
+
+        // map(contentType.attributes, (attr, key) => {
+        //     if (get(attr.params, 'target') === this.props.modelName) {
+        //         contentType.attributes[key].params.target = data.name
+        //     }
+        // })
+
+        // // Store the temporary contentType in the localStorage
+        // this.props.contentTypeCreate(contentType)
+        // // Store new menu in localStorage and update App leftMenu
+        // this.props.storeTemporaryMenu(newMenu, position, index !== -1 ? 1 : 0)
+        // // Reset popUp form
+        // this.props.resetIsFormSet()
+        // // Reset formErrors
+        // this.props.resetFormErrors()
+        // // Close modal
+        // const modelPage = includes(this.props.redirectRoute, 'models')
+        //     ? ''
+        //     : '/models'
+        // router.push(`${this.props.redirectRoute}${modelPage}/${data.name}`)
     }
 
     checkForNestedInput = item => {
@@ -700,73 +782,8 @@ export class Form extends React.Component {
             //     )
             // }
             default: {
-                const entityDef = this.props.formState.values
-
-                try {
-                    const result = await useMutation_fromClassComponent(createEntityDefinitionMutation, {
-                        variables: {
-                            entityDef
-                        },
-                        update: (proxy, mutationResult) => {
-                            console.log('mutationResult: ', mutationResult);
-                        }
-                    })
-                }
-                catch (e) {
-                    console.log('Mutation error: ', e);
-                }
+                return this.createContentType()
             }
-        }
-    }
-
-    initComponent = (props, condition) => {
-        if (!isEmpty(props.hash)) {
-            this.setState({ showModal: true })
-            const valueToReplace = includes(props.hash, '#create')
-                ? '#create'
-                : '#edit'
-            const contentTypeName = replace(
-                split(props.hash, '::')[0],
-                valueToReplace,
-                ''
-            )
-            const isPopUpAttribute = includes(props.hash, 'attribute')
-            const isCreating = valueToReplace === '#create'
-
-            // if (
-            //     condition &&
-            //     !isEmpty(contentTypeName) &&
-            //     contentTypeName !== '#choose'
-            // ) {
-            //     this.fetchModel(contentTypeName)
-            // }
-
-            switch (true) {
-                case isPopUpAttribute && contentTypeName !== '#choose': {
-                    if (isCreating) {
-                        this.props.setAttributeForm(props.hash)
-                    } else if (get(props.contentTypeData, 'name')) {
-                        this.setState({
-                            popUpTitleEdit: get(props.contentTypeData, [
-                                'attributes',
-                                split(props.hash, '::')[3],
-                                'name',
-                            ]),
-                        })
-                        this.props.setAttributeFormEdit(
-                            props.hash,
-                            props.contentTypeData
-                        )
-                    }
-                    break
-                }
-                // case includes(props.hash, 'contentType'):
-                //     // this.setForm(props.hash)
-                //     break
-                // default:
-            }
-        } else {
-            this.setState({ showModal: false })
         }
     }
 
@@ -942,7 +959,7 @@ export class Form extends React.Component {
         }
 
         return (
-            <div className={styles.form}>
+            <div className={styles.form} ref={el => this.wrapperElement = el}>
                 <PopUpForm
                     isOpen={this.state.showModal}
                     toggle={this.toggle}
@@ -1013,7 +1030,7 @@ Form.propTypes = {
     //
     // artnet:
     //
-    mode: PropTypes.oneOf(['create', 'edit']).isRequired,
+    mode: PropTypes.oneOf(['create', 'edit', 'hidden']).isRequired,
 
     //
     // strapi:
@@ -1028,6 +1045,7 @@ Form.propTypes = {
 }
 
 Form.defaultProps = {
+    mode: 'hidden',
     isModelPage: false,
     modelName: ''
 }
@@ -1039,9 +1057,14 @@ const WithRedux = connect(
 
 export default props => {
     const { hash } = props
-    const formConfig = forms[hash.split('::')[1]][hash.split('::')[2]];
+    let formConfig = []
+    let initialValues = {}
+    if (hash) {
+        formConfig = forms[hash.split('::')[1]][hash.split('::')[2]];
+        initialValues = getInitialFormValues(formConfig, props.entityDef)
+    }
     return (
-        <FormStateProvider initialValues={getInitialFormValues(formConfig, props.entityDef)}>
+        <FormStateProvider initialValues={initialValues}>
             <WithRedux {...props} formConfig={formConfig} />
         </FormStateProvider>
     )

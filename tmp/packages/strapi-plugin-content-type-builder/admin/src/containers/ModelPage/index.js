@@ -28,7 +28,7 @@ import { makeSelectContentTypeUpdated } from 'containers/Form/selectors'
 import AttributeRow from 'components/AttributeRow'
 import ContentHeader from 'components/ContentHeader'
 import EmptyAttributesBlock from 'components/EmptyAttributesBlock'
-import Form from 'containers/Form'
+// import Form from 'containers/Form'
 import List from 'components/List'
 import PluginLeftMenu from 'components/PluginLeftMenu'
 import forms from 'containers/Form/forms.json'
@@ -47,6 +47,7 @@ import saga from './sagas'
 import reducer from './reducer'
 import selectModelPage from './selectors'
 import styles from './styles.scss'
+import AddEditEntityDefinition from '../Form/AddEditEntityDefinition';
 
 // Array of attributes that the ctb can handle at the moment
 const availableAttributes = Object.keys(forms.attribute)
@@ -413,9 +414,15 @@ export class ModelPage extends React.Component {
         return fullTitle
     }
 
+    handleSubmit = () => {
+        console.log('handle submit');
+    }
+
     render() {
         // Url to redirects the user if he modifies the temporary content type name
         const redirectRoute = replace(this.props.match.path, '/:modelName', '')
+        const name = get(storeData.getContentType(), 'name')
+        console.log('name: ', name);
         const addButtons =
             (get(storeData.getContentType(), 'name') ===
                 this.props.match.params.modelName &&
@@ -470,7 +477,7 @@ export class ModelPage extends React.Component {
                                         this.props.match.params.modelName
                                     }::contentType::baseSettings`}
                                     addButtons={addButtons}
-                                    handleSubmit={this.props.submit}
+                                    handleSubmit={this.handleSubmit}
                                     isLoading={
                                         this.props.modelPage.showButtonLoader
                                     }
@@ -481,7 +488,7 @@ export class ModelPage extends React.Component {
                         </div>
                     </div>
                 </div>
-                <Form
+                <AddEditEntityDefinition
                     hash={this.props.location.hash}
                     toggle={this.toggleModal}
                     routePath={`${redirectRoute}/${
@@ -495,6 +502,20 @@ export class ModelPage extends React.Component {
                     isModelPage
                     modelLoading={this.props.modelPage.modelLoading}
                 />
+                {/* <Form
+                    hash={this.props.location.hash}
+                    toggle={this.toggleModal}
+                    routePath={`${redirectRoute}/${
+                        this.props.match.params.modelName
+                    }`}
+                    popUpHeaderNavLinks={this.popUpHeaderNavLinks}
+                    menuData={this.props.menu}
+                    redirectRoute={redirectRoute}
+                    modelName={this.props.match.params.modelName}
+                    contentTypeData={this.props.modelPage.model}
+                    isModelPage
+                    modelLoading={this.props.modelPage.modelLoading}
+                /> */}
             </div>
         )
     }

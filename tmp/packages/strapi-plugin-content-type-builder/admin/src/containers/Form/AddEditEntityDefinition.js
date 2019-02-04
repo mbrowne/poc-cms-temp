@@ -4,6 +4,22 @@ import QueryLoader from 'components/QueryLoader'
 import query from './queries/entityDefinitionQuery'
 import Form from '.'
 
+// try {
+//     await useMutation_fromClassComponent(createEntityDefinitionMutation, {
+//         variables: {
+//             entityDef
+//         },
+//         update: (proxy, mutationResult) => {
+//             console.log('mutationResult: ', mutationResult);
+//             cbSuccess()
+//         }
+//     })
+// }
+// catch (e) {
+//     console.log('Mutation error: ', e);
+//     cbFail(e)
+// }
+
 const AddEditEntityDefinition = ({ hash, ...remainingProps }) => {
     const valueToReplace = includes(hash, '#create')
         ? '#create'
@@ -32,6 +48,9 @@ const EditForm = ({ id, ...remainingProps}) => {
                     throw Error(`Entity definition ID '${id}' not found on server`)
                 }
                 // console.log('entityDef: ', data.entityDef);
+
+                //TEMP
+                data.entityDef.pluralName = 'TEMP - CHANGE ME'
 
                 return <Form mode="edit" entityDef={data.entityDef} {...remainingProps} />
             }}

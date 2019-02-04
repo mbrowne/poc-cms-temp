@@ -35,34 +35,63 @@ function prepareEntityDefForStorage(inputObj) {
 }
 
 export const Mutation = {
-    async createEntityDefinition(_, { entityDef: entityDefInput }) {
-        const jsonPath = path.join(entityDefsDir, entityDefInput.id + '.json')
-        let fileExists = false
-        try {
-            await fs.access(jsonPath)
-            fileExists = true
-        } catch (e) {}
+    createEntityDefinition(_, { entityDef }) {
+        return saveEntityDefinition(entityDef, 'create')
+    },
 
-        if (fileExists) {
+    updateEntityDefinition(_, { entityDef }) {
+        return saveEntityDefinition(entityDef, 'update')
+    },
+}
+
+async function saveEntityDefinition(
+    entityDefInput,
+    mode = 'create' /* 'create' | 'update' */
+) {
+    const jsonPath = path.join(entityDefsDir, entityDefInput.id + '.json')
+    let existingEntityDef
+    try {
+        const fileData = await fs.readFile(jsonPath, 'utf8')
+        if (mode === 'create') {
             throw Error(
                 `Entity definition with ID '${
                     entityDefInput.id
                 }' already exists`
             )
         }
-
-        const entityDef = prepareEntityDefForStorage(entityDefInput)
-        await fs.writeFile(
-            jsonPath,
-            JSON.stringify(entityDef, undefined, 2),
-            'utf8'
-        )
-        console.info('Created entity definition successfully')
-
-        const moderationStatus = {
-            entityDef,
-            errorMessage: null,
+        existingEntityDef = JSON.parse(fileData)
+    } catch (e) {
+        if (mode === 'update') {
+            throw Error(
+                `Entity definition with ID '${entityDefInput.id}' not found`
+            )
         }
-        return moderationStatus
-    },
+    }
+
+    let entityDef
+    if (mode === 'create') {
+        entityDef = prepareEntityDefForStorage(entityDefInput)
+    } else {
+        // @NB in the real system we might not handle updates this way.
+        // This always keeps all old properties unless they're overwritten.
+        entityDef = {
+            ...existingEntityDef,
+            ...prepareEntityDefForStorage(entityDefInput),
+        }
+    }
+
+    await fs.writeFile(
+        jsonPath,
+        JSON.stringify(entityDef, undefined, 2),
+        'utf8'
+    )
+
+    const createdOrUpdated = mode === 'create' ? 'Created' : 'Updated'
+    console.info(`${createdOrUpdated} entity definition successfully`)
+
+    const moderationStatus = {
+        entityDef,
+        errorMessage: null,
+    }
+    return moderationStatus
 }
