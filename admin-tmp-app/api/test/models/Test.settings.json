@@ -1,0 +1,18 @@
+{
+  "connection": "default",
+  "collectionName": "",
+  "parentModelName": "tag",
+  "info": {
+    "name": "test",
+    "description": ""
+  },
+  "options": {
+    "timestamps": true
+  },
+  "attributes": {
+    "a": {
+      "default": "",
+      "type": "string"
+    }
+  }
+}

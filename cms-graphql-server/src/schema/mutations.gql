@@ -1,0 +1,44 @@
+input EntityDefinitionInput {
+    id: ID!
+    label: String
+    # displayNameTemplate: String
+    pluralName: String!
+    templateEntityDefinitionId: ID
+    isAbstract: Boolean!
+    # hasUrl: Boolean!
+    # If we support fieldsets in the future, then this field will probably no longer be needed
+    properties: [PropertyInput!]!
+    # fieldsets: [PropertyFieldsetInput!]
+}
+
+# input PropertyFieldsetInput {
+#     title: String
+#     properties: [PropertyInput!]
+#     computedProperties: [ComputedPropertyInput!]
+# }
+
+input PropertyInput {
+    id: String!
+    label: String!
+    dataType: String!
+    readOnly: Boolean!
+    # editingComponent: String!
+    # TODO
+    # flags: [PropertyFlagInput!]
+
+    # Separate fields for different sub-types of Property, since graphql does not currently support
+    # polymorphic input types (i.e. unions/interfaces)
+    # literalProperty: LiteralPropertyInput
+    # associationProperty: AssociationDefinitionInput
+    # staticAssetProperty: StaticAssetPropertyInput
+}
+
+# input LiteralPropertyInput {
+#     # defaultValue: LiteralPropertyValueScalar
+# }
+
+type Mutation {
+    createEntityDefinition(
+        entityDef: EntityDefinitionInput
+    ): EntityDefinitionModerationStatus
+}

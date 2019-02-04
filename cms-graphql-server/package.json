@@ -1,0 +1,25 @@
+{
+  "name": "cms-graphql-server",
+  "version": "0.0.1",
+  "description": "GraphQL server used by the CMS authoring system",
+  "main": "src/index.js",
+  "author": "Matt Browne",
+  "license": "unlicensed",
+  "private": true,
+  "scripts": {
+    "start": "nodemon --ext js,mjs,gql -r esm src",
+    "production-server": "node -r esm src"
+  },
+  "_moduleAliases": {
+    "~": "src"
+  },
+  "dependencies": {
+    "apollo-server": "^2.3.3",
+    "apollo-server-koa": "^2.3.3",
+    "esm": "^3.2.0",
+    "graphql": "^14.1.1",
+    "koa": "^2.7.0",
+    "module-alias": "^2.1.0"
+  },
+  "devDependencies": {}
+}

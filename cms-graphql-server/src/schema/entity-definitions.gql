@@ -1,0 +1,87 @@
+type EntityDefinition {
+    """
+    example id: 'auction-house'
+    """
+    id: ID!
+    """
+    If left blank, the id (converted to Title Case) will be used as the label
+    """
+    label: String
+    pluralName: String!
+    """
+    if specified, a templateEntityDefinition means that this entity definition inherits all the properties of its template definition,
+    e.g. the template of Exhibition is Event
+    """
+    templateEntityDefinition: EntityDefinition
+
+    """
+    abstract entity definitions must be extended by other entity definitions; they cannot be used directly
+    """
+    isAbstract: Boolean!
+
+    # # This specifies the primary context of the entity definition, e.g. the primary context for Artwork would be Creator,
+    # # via the Artwork-Creator association.
+    # # This is used to help the backend generate unique human-readable IDs for every entity without resorting to numbers so much of
+    # # the time, e.g. 'andy-warhol/untitled-2' instead of 'untitled-32982'.
+    # # It could also be used as a convention for the *default* URL structure for a given entity definition, but doesn't have to be.
+    # # Its primary purpose is for generating entity IDs that are unique across all entities of a given entity type.
+    # contextAssociationDefinition: AssociationDefinition
+    # hasUrl: Boolean! # In the UI, the choices could appear as "Has URL" and "Data only"
+
+    properties(
+        excludeInheritedProperties: Boolean = false
+    ): [PropertyDefinition!]!
+    # editingFieldsets: [FormFieldset!]
+    # detailScreenFieldsets: [FormFieldset!]
+
+    # # Since we have a standard 'name' property, we can allow an empty array and default to using name as the default sort order
+    # defaultSortOrder: [PropertySortOrder!]
+    # predicates: [Predicate!]
+    # # Associations to pre-fetch so they can be resolved very quickly by the graphql server (from JSON files) without having to hit the search API
+    # eagerFetchAssociations: [AssociationToFetch!]
+}
+
+interface PropertyDefinition {
+    id: ID!
+    label: String!
+    # flags: [PropertyFlag!]!
+    """
+    Returns true for calculated/computed properties, since they're always read-only
+    """
+    readOnly: Boolean!
+    """
+    Data type of the property, e.g. string, number, date.
+    For association definitions and other complex properties, this returns 'Object'
+    """
+    dataType: String!
+    # Excluded from this interface because it doesn't apply to calculated properties.
+    # But all writable properties should have this
+    # editingComponent: String!
+}
+
+type LiteralProperty implements PropertyDefinition {
+    id: ID!
+    label: String!
+    readOnly: Boolean!
+    dataType: String!
+    # For writable properties
+    editingComponent: String
+    # # This might be derived from flags
+    # moderatorRoles: [Role!]
+    # predicates: [Predicate!]
+    # defaultValue: LiteralPropertyValue
+}
+
+type EntityDefinitionModerationStatus {
+    entityDef: EntityDefinition
+    # moderationStatuses: [PropertyModerationStatus!]
+    """
+    if the request was invalid, the above properties will be null and we will just return an error message
+    """
+    errorMessage: ErrorMessage
+}
+
+type ErrorMessage {
+    code: Int
+    message: String
+}
