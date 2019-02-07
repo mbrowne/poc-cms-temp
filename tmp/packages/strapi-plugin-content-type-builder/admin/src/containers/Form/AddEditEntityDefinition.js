@@ -2,7 +2,7 @@ import React from 'react'
 import { includes, upperFirst } from 'lodash'
 import QueryLoader from 'components/QueryLoader'
 import query from './queries/entityDefinitionQuery'
-import Form from '.'
+import Form from './Form'
 
 // try {
 //     await useMutation_fromClassComponent(createEntityDefinitionMutation, {
@@ -31,7 +31,7 @@ const AddEditEntityDefinition = ({ hash, ...remainingProps }) => {
 
     if (isCreating) {
         return (
-            <Form mode="create" hash={hash} {...remainingProps} />
+            <Form mode="create" hash={hash} showModal={true} {...remainingProps} />
         )
     }
     if (!entityDefId) {

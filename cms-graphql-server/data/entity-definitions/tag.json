@@ -1,0 +1,14 @@
+{
+  "id": "tag",
+  "pluralName": "tags",
+  "isAbstract": false,
+  "properties": [
+    {
+      "__typename": "LiteralProperty",
+      "id": "name",
+      "label": "Name",
+      "dataType": "string",
+      "readOnly": false
+    }
+  ]
+}
