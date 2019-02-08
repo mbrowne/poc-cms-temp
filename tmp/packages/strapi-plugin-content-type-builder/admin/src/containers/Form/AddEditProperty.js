@@ -23,6 +23,7 @@ const AddEditProperty = ({ entityDefId, propertyName, hash, ...remainingProps })
     return (
         <AddEditPropertyView
             mode={mode}
+            entityDefId={entityDefId}
             formType={formType}
             popUpTitle={popUpTitle}
             formConfig={formConfig}
@@ -36,8 +37,8 @@ function parseHash(hash) {
     const hashArray = hash.split('::')
     const valueToReplace = includes(hash, '#create') ? '#create' : '#edit';
     const entityDefId = replace(hashArray[0], valueToReplace, '');
-    const mode = hashArray[0].substring(1)
-    if (entityDefId !== '#choose') {
+    const mode = entityDefId === '#choose' ? 'choose': valueToReplace.substring(1)
+    if (mode !== 'choose') {
         return {
             mode,
             formType: hashArray[1].replace('attribute', ''),
@@ -48,35 +49,6 @@ function parseHash(hash) {
         mode,
         formType: hashArray[1]
     }
-}
-
-function getAttributeFormData(formType) {
-    const type = formType === 'number' ? 'integer' : formType;
-    let defaultValue = type === 'number' ? 0 : '';
-  
-    if (type === 'boolean') {
-      defaultValue = false;
-    }
-  
-    const attribute = {
-      name: '',
-      params: {
-        appearance: {
-          WYSIWYG: false,
-        },
-        type,
-        default: defaultValue,
-        required: false,
-        unique: false,
-        maxLength: false,
-        minLength: false,
-        multiple: false,
-        min: false,
-        max: false,
-      },
-    }
-  
-    return attribute
 }
 
 export default AddEditProperty

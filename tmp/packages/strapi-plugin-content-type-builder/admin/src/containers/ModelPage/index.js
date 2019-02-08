@@ -37,17 +37,21 @@ const ModelPage = (props) => {
         modelPage.model.attributes = []
         return <ModelPageView {...props} modelPage={modelPage} />
     }
-    return (
-        <QueryLoader query={entityDefinitionQuery} variables={{ id: entityDefId }}>
-            {({ data }) => {
-                if (!data.entityDef) {
-                    throw Error(`Entity definition ID '${entityDefId}' not found on server`)
-                }
-                modelPage.model = data.entityDef
-                return <ModelPageView {...props} modelPage={modelPage} />
-            }}
-        </QueryLoader>
-    )
+
+    //TEMP
+    return <ModelPageView {...props} modelPage={modelPage} />
+
+    // return (
+    //     <QueryLoader query={entityDefinitionQuery} variables={{ id: entityDefId }}>
+    //         {({ data }) => {
+    //             if (!data.entityDef) {
+    //                 throw Error(`Entity definition ID '${entityDefId}' not found on server`)
+    //             }
+    //             modelPage.model = data.entityDef
+    //             return <ModelPageView {...props} modelPage={modelPage} />
+    //         }}
+    //     </QueryLoader>
+    // )
 }
 
 //TEMP

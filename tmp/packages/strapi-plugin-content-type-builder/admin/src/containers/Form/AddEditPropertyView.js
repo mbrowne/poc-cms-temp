@@ -3,25 +3,55 @@ import AttributeCard from 'components/AttributeCard'
 import PopUpForm from 'components/PopUpForm'
 import { router } from 'app'
 import forms from './forms.json'
-import { map } from 'lodash'
+import { useFormState } from 'components/Form'
+import { map, get, compact, concat } from 'lodash'
+import { storeData } from '../../utils/storeData'
 
 const AddEditPropertyView = (props) => {
     // console.log('remainingProps.toggle', remainingProps.toggle)
 
-    const { mode, popUpTitle, formType, formConfig, routePath, hash } = props
+    const { mode, popUpTitle, formType, formConfig, routePath, hash, entityDefId } = props
     const nodeToFocusState = useState(null)
-    // TODO
-    // Make sure it only runs on first render, and also need removeEventListener()
-    //
-    // useEffect(() => {
-    //     document.addEventListener('keydown', e => handleKeyBinding(e, nodeToFocusState))
-    // })
 
-    function handleChange({ target }) {
-        console.log('target.value', target.value)
+    const formStateRetVal = useFormState({})
+    const { formState, setFormState } = formStateRetVal
+
+    const propValues = formState.values
+    if (mode !== 'choose' && !propValues.type) {
+        setFormState(getAttributeDefaultsForType(formType))
+        return
     }
 
-    function handleSubmit() {}
+    // TEMP
+    formState.values.name = 'testProp'
+    console.log('formState.values: ', formState.values);
+    // formState.values = { name: 'testProp' }
+
+    if (formState.values.type !== formType) {
+        formState.values.type = formType
+    }
+
+    const isTempEntityDef = isEditingTempEntityDef(entityDefId)
+
+    useEffect(() => {
+        const onKeyDown = e => handleKeyBinding(e, nodeToFocusState)
+        document.addEventListener('keydown', onKeyDown)
+        return () => {
+            document.removeEventListener('keydown', onKeyDown)
+        }
+    })
+
+    function handleChange({ target }) {
+        setFormState({ [target.name]: target.value })
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault()
+        if (mode === 'create') {
+            addProperty(props, formState.values, isTempEntityDef)
+        }
+        else editProperty(props, formState.values)
+    }
 
     function renderModalBody() {
         return renderModalBodyChooseAttributes(props, nodeToFocusState)
@@ -34,14 +64,140 @@ const AddEditPropertyView = (props) => {
             popUpTitle={popUpTitle}
             popUpFormType={formType || ''}
             form={formConfig}
+            values={formState.values}
             buttonSubmitMessage='form.button.continue'
             onChange={handleChange}
             onSubmit={handleSubmit}
             routePath={`${routePath}/${hash}`}
             // Override the default rendering
             renderModalBody={mode === 'choose' ? renderModalBody: false}
+            noButtons={mode === 'choose'}
         />
     )
+}
+
+function isEditingTempEntityDef(entityDefId) {
+    return storeData.getIsModelTemporary() &&
+        get(storeData.getContentType(), 'id') === entityDefId
+}
+
+function addProperty(props, formValues, isTempEntityDef) {
+    if (isTempEntityDef) {
+        addPropertyToTempEntityDef(props, formValues)
+    } else {
+        addPropertyToExistingEntityDef(props, formValues)
+    }
+    redirectAfterSave(props)
+}
+
+function addPropertyToTempEntityDef(props, formValues) {
+
+    // @TODO
+    // const formErrors = this.checkAttributeValidations(
+    //     checkFormValidity(
+    //         this.props.modifiedDataAttribute,
+    //         this.formValidations
+    //     )
+    // )
+
+    // if (!isEmpty(formErrors)) {
+    //     return this.props.setFormErrors(formErrors)
+    // }
+
+    // @TODO check for attributerelation (and rename to isAssociationProp)
+    const isAssociationProp = false
+    const parallelAttribute = null
+    if (!isAssociationProp) {
+        const contentType = props.localState.entityDef
+        const newAttribute = formValues
+
+        contentType.attributes = compact(
+            concat(contentType.attributes, newAttribute, parallelAttribute)
+        )
+        // // Reset the store and update the parent container
+        // props.contentTypeCreate(contentType)
+
+        // Get the displayed model from the localStorage
+        const model = storeData.getModel()
+        // Set the new field number in the localStorage
+        model.fields = contentType.attributes.length
+        // // Update the global store (app container) to add the new value to the model without refetching
+        // props.temporaryContentTypeFieldsUpdated(model.fields)
+        // Store the updated model in the localStorage
+        storeData.setModel(model)
+        // TODO
+        // this.props.resetFormErrors()
+    }
+}
+
+function addPropertyToExistingEntityDef(props, formValues) {
+    // const { entityDef } = props.localState
+    // console.log('entityDef: ', entityDef);
+    // console.log('formValues', formValues)
+
+    // const tmp = {
+    //     ...formValues,
+    //     id: formValues.name,
+    // }
+    // console.log('Adding property', tmp);
+
+    props.localActions.addAttributeToContentType({
+        ...formValues,
+        id: formValues.name,
+    })
+}
+
+function editTempContentTypeAttribute(props, formValues) {
+    // const formErrors = this.checkAttributeValidations(
+    //     checkFormValidity(
+    //         this.props.modifiedDataAttribute,
+    //         this.formValidations
+    //     )
+    // )
+
+    // if (!isEmpty(formErrors)) {
+    //     return this.props.setFormErrors(formErrors)
+    // }
+
+    // const contentType = storeData.getContentType()
+    // const newAttribute = this.setTempAttribute()
+    // const oldAttribute =
+    //     contentType.attributes[this.props.hash.split('::')[3]]
+    // contentType.attributes[this.props.hash.split('::')[3]] = newAttribute
+
+    // if (newAttribute.params.target === this.props.modelName) {
+    //     const parallelAttribute = this.setParallelAttribute(newAttribute)
+    //     contentType.attributes[
+    //         findIndex(contentType.attributes, [
+    //             'name',
+    //             oldAttribute.params.key,
+    //         ])
+    //     ] = parallelAttribute
+    // }
+
+    // if (
+    //     oldAttribute.params.target === this.props.modelName &&
+    //     newAttribute.params.target !== this.props.modelName
+    // ) {
+    //     contentType.attributes.splice(
+    //         findIndex(contentType.attributes, [
+    //             'name',
+    //             oldAttribute.params.key,
+    //         ]),
+    //         1
+    //     )
+    // }
+
+    // this.editContentTypeAttribute(redirectToChoose)
+
+    // const newContentType = contentType
+    // // Empty errors
+    // this.props.resetFormErrors()
+    // storeData.setContentType(newContentType)
+}
+
+function redirectAfterSave(props) {
+    router.push(`${props.redirectRoute}/${props.entityDefId}`)
 }
 
 function renderModalBodyChooseAttributes(props, [nodeToFocus]) {
@@ -113,6 +269,36 @@ function handleKeyBinding(e, nodeToFocusState) {
     }
 
     setNodeToFocus(prevNodeToFocus => prevNodeToFocus + toAdd)
+}
+
+function getAttributeDefaultsForType(formType) {
+    const type = formType === 'number' ? 'integer' : formType;
+    let defaultValue = type === 'number' ? 0 : '';
+  
+    if (type === 'boolean') {
+      defaultValue = false;
+    }
+  
+    const attribute = {
+      id: '',
+      name: '', // temp - will later be replaced by 'id'
+      type,
+      defaultValue,
+      required: false,
+      unique: false,
+      maxLength: false,
+      minLength: false,
+      multiple: false,
+      min: false,
+      max: false,
+      strapiParams: {
+        appearance: {
+          WYSIWYG: false,
+        },
+      },
+    }
+  
+    return attribute
 }
 
 export default AddEditPropertyView

@@ -43,6 +43,7 @@ import {
     resetShowButtonsProps,
     submit,
 } from './actions'
+import * as allModelPageActions from './actions'
 import saga from './sagas'
 import reducer from './reducer'
 import selectModelPage from './selectors'
@@ -196,13 +197,14 @@ export class ModelPageView extends React.Component {
         } = this.props
         const index = findIndex(model.attributes, ['name', attributeName])
         const attributeToRemove = get(model, ['attributes', index])
-        const parallelAttributeIndex =
-            attributeToRemove.name === attributeToRemove.params.key
-                ? -1
-                : findIndex(
-                      model.attributes,
-                      attr => attr.params.key === attributeName
-                  )
+        const parallelAttributeIndex = -1
+        // const parallelAttributeIndex =
+        //     attributeToRemove.name === attributeToRemove.params.key
+        //         ? -1
+        //         : findIndex(
+        //               model.attributes,
+        //               attr => attr.params.key === attributeName
+        //           )
 
         this.props.deleteAttribute(
             index,
@@ -414,7 +416,7 @@ export class ModelPageView extends React.Component {
     }
 
     handleSubmit = () => {
-        console.log('handle submit');
+        console.log('handle submit')
     }
 
     render() {
@@ -422,13 +424,15 @@ export class ModelPageView extends React.Component {
         const redirectRoute = replace(this.props.match.path, '/:modelName', '')
         const name = get(storeData.getContentType(), 'id')
         const addButtons =
-            (name ===
-                this.props.match.params.modelName &&
+            (name === this.props.match.params.modelName &&
                 size(get(storeData.getContentType(), 'attributes')) > 0) ||
             this.props.modelPage.showButtons
+
+        console.log('showButtons?', addButtons)
         const contentHeaderDescription =
             this.props.modelPage.model.description ||
             'content-type-builder.modelPage.contentHeader.emptyDescription.description'
+
         const content =
             size(this.props.modelPage.model.attributes) === 0 ? (
                 <EmptyAttributesBlock
@@ -451,6 +455,18 @@ export class ModelPageView extends React.Component {
         const icoType = includes(this.props.match.params.modelName, '&source=')
             ? ''
             : 'pencil'
+
+        //TEMP
+        const localState = {
+            entityDef: this.props.modelPage.model,
+        }
+        const { props } = this
+        const localActions = {
+            addAttributeToContentType: props.addAttributeToContentType,
+            editContentTypeAttribute: props.editContentTypeAttribute,
+            editContentTypeAttributeRelation:
+                props.editContentTypeAttributeRelation,
+        }
 
         return (
             <div className={styles.modelPage}>
@@ -487,6 +503,8 @@ export class ModelPageView extends React.Component {
                     </div>
                 </div>
                 <FormRouter
+                    localState={localState} // temp
+                    localActions={localActions} // temp
                     hash={this.props.location.hash}
                     toggle={this.toggleModal}
                     routePath={`${redirectRoute}/${
@@ -544,6 +562,13 @@ const mapStateToProps = createStructuredSelector({
     updatedContentType: makeSelectContentTypeUpdated(),
 })
 
+// temp - artnet added
+const {
+    addAttributeToContentType,
+    editContentTypeAttribute,
+    editContentTypeAttributeRelation,
+} = allModelPageActions
+
 function mapDispatchToProps(dispatch) {
     return bindActionCreators(
         {
@@ -553,6 +578,10 @@ function mapDispatchToProps(dispatch) {
             modelFetchSucceeded,
             resetShowButtonsProps,
             submit,
+
+            addAttributeToContentType,
+            editContentTypeAttribute,
+            editContentTypeAttributeRelation,
         },
         dispatch
     )

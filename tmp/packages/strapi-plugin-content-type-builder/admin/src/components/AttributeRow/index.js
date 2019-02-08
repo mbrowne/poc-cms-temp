@@ -65,20 +65,22 @@ class AttributeRow extends React.Component {
   toggleModalWarning = () => this.setState({ showWarning: !this.state.showWarning });
 
   renderAttributesBox = () => {
-    const attributeType = this.props.row.params.type || 'relation';
+    const attributeType = this.props.row.type || 'relation';
     const src = this.asset[attributeType];
     return <img src={src} alt="ico" />;
   };
 
   render() {
+    const prop = this.props.row
+    const params = prop.strapiParams
     const isNotEditable =
-      has(this.props.row.params, 'configurable') && !this.props.row.params.configurable;
+      has(params, 'configurable') && !params.configurable;
     const type =
-      get(this.props.row, 'params.type') === 'text' &&
-      get(this.props.row, 'params.appearance.WYSIWYG') === true
+      prop.type === 'text' &&
+      get(params, 'appearance.WYSIWYG') === true
         ? 'WYSIWYG'
-        : this.props.row.params.type;
-    const relationType = this.props.row.params.type ? (
+        : prop.type;
+    const relationType = prop.type ? (
       <FormattedMessage id={`content-type-builder.attribute.${type}`} />
     ) : (
       <div>
@@ -87,16 +89,16 @@ class AttributeRow extends React.Component {
         <FormattedMessage id="content-type-builder.from">
           {message => (
             <span style={{ fontStyle: 'italic' }}>
-              {capitalize(this.props.row.params.target)}&nbsp;
-              {this.props.row.params.pluginValue
-                ? `(${message}: ${this.props.row.params.pluginValue})`
+              {capitalize(params.target)}&nbsp;
+              {params.pluginValue
+                ? `(${message}: ${params.pluginValue})`
                 : ''}
             </span>
           )}
         </FormattedMessage>
       </div>
     );
-    const relationStyle = !this.props.row.params.type ? styles.relation : '';
+    const relationStyle = !params.type ? styles.relation : '';
     const icons = isNotEditable
       ? [{ icoType: 'lock' }]
       : [
@@ -118,7 +120,7 @@ class AttributeRow extends React.Component {
         <div className={styles.flex}>
           <div className={styles.nameContainer}>
             {this.renderAttributesBox()}
-            <div>{this.props.row.name}</div>
+            <div>{prop.id}</div>
           </div>
           <div className={styles.relationContainer}>{relationType}</div>
           <div className={styles.mainField} />

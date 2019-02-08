@@ -102,6 +102,17 @@ function modelPageReducer(state = initialState, action) {
         .updateIn(['model', 'attributes'], (list) => list.splice(action.position, 1));
     }
     case MODEL_FETCH_SUCCEEDED:
+      // TEMP
+      if (action.model.model.attributes) {
+        for (const attr of action.model.model.attributes) {
+          const { params } = attr
+          delete attr.params
+          attr.id = attr.name
+          attr.strapiParams = params || {}
+          attr.type = params.type
+        }
+      }
+
       return state
         .set('didFetchModel', !state.get('didFetchModel'))
         .set('modelLoading', false)
