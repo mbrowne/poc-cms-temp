@@ -1,30 +1,35 @@
 import React from 'react'
-import { includes, replace } from 'lodash'
 import forms from './forms.json'
 import AddEditPropertyView from './AddEditPropertyView'
+// TEMP
+import { bindActionCreators } from 'redux'
+import { connect } from 'react-redux'
+import { contentTypeCreate } from './actions'
 
 const AddEditProperty = ({ entityDefId, propertyName, hash, ...remainingProps }) => {
     let formConfig = []
-    const { mode, formType, settingsType } = parseHash(hash)
 
     // //temp
     // const parsed = parseHash(hash)
     // console.log('parsed: ', parsed);
 
     let popUpTitle
-    if (mode === 'choose') {
+    const hashArray = hash.split('::')
+    const settingsType = hashArray[2]
+    const whichWizardStep = hashArray[0] === '#choose' ? 'chooseType': 'propSettings'
+    if (whichWizardStep === 'chooseType') {
+        const formType = hashArray[1]
         popUpTitle = `content-type-builder.popUpForm.choose.${formType}.header.title`
     } else {
-        // console.log('forms', forms)
+        const formType = hashArray[1].replace('attribute', '')
         formConfig = forms.attribute[formType][settingsType]
         popUpTitle = 'content-type-builder.popUpForm.edit'
     }
 
     return (
         <AddEditPropertyView
-            mode={mode}
+            wizardStep={whichWizardStep}
             entityDefId={entityDefId}
-            formType={formType}
             popUpTitle={popUpTitle}
             formConfig={formConfig}
             hash={hash}
@@ -33,22 +38,19 @@ const AddEditProperty = ({ entityDefId, propertyName, hash, ...remainingProps })
     )
 }
 
-function parseHash(hash) {
-    const hashArray = hash.split('::')
-    const valueToReplace = includes(hash, '#create') ? '#create' : '#edit';
-    const entityDefId = replace(hashArray[0], valueToReplace, '');
-    const mode = entityDefId === '#choose' ? 'choose': valueToReplace.substring(1)
-    if (mode !== 'choose') {
-        return {
-            mode,
-            formType: hashArray[1].replace('attribute', ''),
-            settingsType: hashArray[2]
-        }
-    }
-    return {
-        mode,
-        formType: hashArray[1]
-    }
+// TEMP - redux will be removed later
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators(
+      {
+          contentTypeCreate
+      },
+      dispatch
+  )
 }
 
-export default AddEditProperty
+export default connect(
+  undefined,
+  mapDispatchToProps
+)(AddEditProperty)
+
+// export default AddEditProperty

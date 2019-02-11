@@ -70,12 +70,12 @@ export function editContentTypeAttributeRelation(modifiedAttribute, attributePos
 export function deleteAttribute(position, modelName, shouldRemoveParallelAttribute) {
   const temporaryContentType = storeData.getContentType();
 
-  if (get(temporaryContentType, 'name') === modelName) {
-    const attributeKey = temporaryContentType.attributes[position].params.key;
-    temporaryContentType.attributes.splice(position, 1);
+  if (get(temporaryContentType, 'id') === modelName) {
+    const attributeKey = temporaryContentType.properties[position].strapiParams.key;
+    temporaryContentType.properties.splice(position, 1);
 
     if (shouldRemoveParallelAttribute) {
-      temporaryContentType.attributes.splice(findIndex(temporaryContentType.attributes, ['name', attributeKey]), 1);
+      temporaryContentType.properties.splice(findIndex(temporaryContentType.properties, ['id', attributeKey]), 1);
     }
 
     const updatedContentType = temporaryContentType;
@@ -107,11 +107,11 @@ export function modelFetchSucceeded(data) {
   const model = data;
   const defaultKeys = ['required', 'unique', 'type', 'key', 'target', 'nature', 'targetColumnName', 'columnName', 'multiple', 'default', 'appearance'];
 
-  forEach(model.model.attributes, (attribute, index) => {
-    map(attribute.params, (value, key) => {
+  forEach(model.model.properties, (attribute, index) => {
+    map(attribute.strapiParams, (value, key) => {
       if (!includes(defaultKeys, key) && value) {
-        set(model.model.attributes[index].params, `${key}Value`, value);
-        set(model.model.attributes[index].params, key, true);
+        set(model.model.properties[index].strapiParams, `${key}Value`, value);
+        set(model.model.properties[index].strapiParams, key, true);
       }
     });
   });

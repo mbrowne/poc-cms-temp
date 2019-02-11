@@ -30,7 +30,9 @@ const initialState = fromJS({
     attributes: List(),
   }),
   model: Map({
+    // TODO rename all remaining references to 'properties'
     attributes: List(),
+    properties: List()
   }),
   postContentTypeSuccess: false,
   showButtons: false,
@@ -46,7 +48,8 @@ function modelPageReducer(state = initialState, action) {
         .set('showButtons', true);
     case ADD_ATTRIBUTE_TO_CONTENT_TYPE:
       return state
-        .updateIn(['model', 'attributes'], (list) => list.push(action.newAttribute))
+        .updateIn(['model', 'properties'], (list) => list.push(action.newAttribute))
+        // .updateIn(['model', 'attributes'], (list) => list.push(action.newAttribute))
         .set('showButtons', true);
     case CANCEL_CHANGES:
       return state
@@ -77,49 +80,48 @@ function modelPageReducer(state = initialState, action) {
         .updateIn(['model', 'attributes', action.parallelAttributePosition], () => action.parallelAttribute);
     }
     case DELETE_ATTRIBUTE: {
-      const contentTypeAttributes = state.getIn(['model', 'attributes']).toJS();
-      contentTypeAttributes.splice(action.position, 1);
-      const updatedContentTypeAttributes = contentTypeAttributes;
+      const contentTypeProperties = state.getIn(['model', 'properties']).toJS();
+      contentTypeProperties.splice(action.position, 1);
+      const updatedContentTypeProperties = contentTypeProperties;
 
-      let showButtons = size(updatedContentTypeAttributes) !== size(state.getIn(['initialModel', 'attributes']).toJS())
-        || size(differenceBy(state.getIn(['initialModel', 'attributes']).toJS(), updatedContentTypeAttributes, 'name')) > 0;
+      let showButtons = size(updatedContentTypeProperties) !== size(state.getIn(['initialModel', 'properties']).toJS())
+        || size(differenceBy(state.getIn(['initialModel', 'properties']).toJS(), updatedContentTypeProperties, 'id')) > 0;
 
-      if (get(storeData.getContentType(), 'name') === state.getIn(['initialModel', 'name'])) {
-        showButtons = size(get(storeData.getContentType(), 'attributes')) > 0;
+      if (get(storeData.getContentType(), 'id') === state.getIn(['initialModel', 'id'])) {
+        showButtons = size(get(storeData.getContentType(), 'properties')) > 0;
       }
 
       if (action.shouldRemoveParallelAttribute) {
-        const attributeKey = state.getIn(['model', 'attributes', action.position]).params.key;
+        const attributeKey = state.getIn(['model', 'properties', action.position]).strapiParams.key;
 
         return state
           .set('showButtons', showButtons)
-          .updateIn(['model', 'attributes'], (list) => list.splice(action.position, 1))
-          .updateIn(['model', 'attributes'], (list) => list.splice(findIndex(list.toJS(), ['name', attributeKey]), 1));
+          .updateIn(['model', 'properties'], (list) => list.splice(action.position, 1))
+          .updateIn(['model', 'properties'], (list) => list.splice(findIndex(list.toJS(), ['id', attributeKey]), 1));
       }
 
       return state
         .set('showButtons', showButtons)
-        .updateIn(['model', 'attributes'], (list) => list.splice(action.position, 1));
+        .updateIn(['model', 'properties'], (list) => list.splice(action.position, 1));
     }
     case MODEL_FETCH_SUCCEEDED:
-      // TEMP
-      if (action.model.model.attributes) {
-        for (const attr of action.model.model.attributes) {
-          const { params } = attr
-          delete attr.params
-          attr.id = attr.name
-          attr.strapiParams = params || {}
-          attr.type = params.type
-        }
-      }
-
+      // // TEMP
+      // if (action.model.model.attributes) {
+      //   for (const attr of action.model.model.attributes) {
+      //     const { params } = attr
+      //     delete attr.params
+      //     attr.id = attr.name
+      //     attr.strapiParams = params || {}
+      //     attr.type = params.type
+      //   }
+      // }
       return state
         .set('didFetchModel', !state.get('didFetchModel'))
         .set('modelLoading', false)
         .set('model', Map(action.model.model))
         .set('initialModel', Map(action.model.model))
-        .setIn(['model', 'attributes'], List(action.model.model.attributes))
-        .setIn(['initialModel', 'attributes'], List(action.model.model.attributes));
+        .setIn(['model', 'properties'], List(action.model.model.properties))
+        .setIn(['initialModel', 'properties'], List(action.model.model.properties));
     case POST_CONTENT_TYPE_SUCCEEDED:
       return state.set('postContentTypeSuccess', !state.get('postContentTypeSuccess'));
     case RESET_SHOW_BUTTONS_PROPS:

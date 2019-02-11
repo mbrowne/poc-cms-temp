@@ -36,12 +36,12 @@ import injectSaga from 'utils/injectSaga'
 import injectReducer from 'utils/injectReducer'
 import { storeData } from '../../utils/storeData'
 import {
-    cancelChanges,
-    deleteAttribute,
-    modelFetch,
-    modelFetchSucceeded,
-    resetShowButtonsProps,
-    submit,
+  cancelChanges,
+  deleteAttribute,
+  modelFetch,
+  modelFetchSucceeded,
+  resetShowButtonsProps,
+  submit,
 } from './actions'
 import * as allModelPageActions from './actions'
 import saga from './sagas'
@@ -195,15 +195,15 @@ export class ModelPageView extends React.Component {
         const {
             modelPage: { model },
         } = this.props
-        const index = findIndex(model.attributes, ['name', attributeName])
-        const attributeToRemove = get(model, ['attributes', index])
+        const index = findIndex(model.properties, ['id', attributeName])
+        const attributeToRemove = get(model, ['properties', index])
         const parallelAttributeIndex = -1
         // const parallelAttributeIndex =
-        //     attributeToRemove.name === attributeToRemove.params.key
+        //     attributeToRemove.id === attributeToRemove.strapiParams.key
         //         ? -1
         //         : findIndex(
         //               model.attributes,
-        //               attr => attr.params.key === attributeName
+        //               attr => attr.strapiParams.key === attributeName
         //           )
 
         this.props.deleteAttribute(
@@ -375,13 +375,13 @@ export class ModelPageView extends React.Component {
     }
 
     renderListTitle = (props, listStyles) => {
-        const availableNumber = size(props.listContent.attributes)
+        const availableNumber = size(props.listContent.properties)
         const title =
             availableNumber > 1
                 ? 'content-type-builder.modelPage.contentType.list.title.plural'
                 : 'content-type-builder.modelPage.contentType.list.title.singular'
 
-        const relationShipNumber = props.listContent.attributes.filter(attr =>
+        const relationShipNumber = props.listContent.properties.filter(attr =>
             has(attr.params, 'target')
         ).length
 
@@ -425,16 +425,15 @@ export class ModelPageView extends React.Component {
         const name = get(storeData.getContentType(), 'id')
         const addButtons =
             (name === this.props.match.params.modelName &&
-                size(get(storeData.getContentType(), 'attributes')) > 0) ||
+                size(get(storeData.getContentType(), 'properties')) > 0) ||
             this.props.modelPage.showButtons
 
-        console.log('showButtons?', addButtons)
         const contentHeaderDescription =
             this.props.modelPage.model.description ||
             'content-type-builder.modelPage.contentHeader.emptyDescription.description'
 
         const content =
-            size(this.props.modelPage.model.attributes) === 0 ? (
+            size(this.props.modelPage.model.properties) === 0 ? (
                 <EmptyAttributesBlock
                     title="content-type-builder.home.emptyAttributes.title"
                     description="content-type-builder.home.emptyAttributes.description"
@@ -447,7 +446,7 @@ export class ModelPageView extends React.Component {
                     id="attributesList"
                     listContent={this.props.modelPage.model}
                     renderCustomListTitle={this.renderListTitle}
-                    listContentMappingKey={'attributes'}
+                    listContentMappingKey={'properties'}
                     renderCustomLi={this.renderCustomLi}
                     onButtonClick={this.handleClickAddAttribute}
                 />
@@ -558,7 +557,7 @@ ModelPageView.propTypes = {
 
 const mapStateToProps = createStructuredSelector({
     menu: makeSelectMenu(),
-    // modelPage: selectModelPage(),
+    modelPage: selectModelPage(),
     updatedContentType: makeSelectContentTypeUpdated(),
 })
 

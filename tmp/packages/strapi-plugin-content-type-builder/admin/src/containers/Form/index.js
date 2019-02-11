@@ -20,7 +20,7 @@ const FormRouter = (props) => {
             ''
         )
         const isPopUpAttribute = includes(props.hash, 'attribute')
-        const isCreating = valueToReplace === '#create'
+        // const isCreating = valueToReplace === '#create'
 
         return isPopUpAttribute
             ? <AddEditProperty entityDefId={entityDefId} {...props} />

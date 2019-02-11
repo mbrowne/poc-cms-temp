@@ -33,8 +33,9 @@ const ModelPage = (props) => {
     // console.log('entityDefInLocalStorage: ', entityDefInLocalStorage);
     if (entityDefInLocalStorage && entityDefInLocalStorage.id === entityDefId) {
         modelPage.model = entityDefInLocalStorage
+        // console.log('modelPage.model: ', modelPage.model);
         // TEMP
-        modelPage.model.attributes = []
+        // modelPage.model.attributes = []
         return <ModelPageView {...props} modelPage={modelPage} />
     }
 

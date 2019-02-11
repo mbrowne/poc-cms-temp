@@ -10,26 +10,26 @@ import { storeData } from '../../utils/storeData'
 const AddEditPropertyView = (props) => {
     // console.log('remainingProps.toggle', remainingProps.toggle)
 
-    const { mode, popUpTitle, formType, formConfig, routePath, hash, entityDefId } = props
+    const { popUpTitle, formConfig, routePath, hash, wizardStep, entityDefId } = props
     const nodeToFocusState = useState(null)
+
+    const { mode, formType, settingsType } = parseHash(props, hash)
 
     const formStateRetVal = useFormState({})
     const { formState, setFormState } = formStateRetVal
 
     const propValues = formState.values
-    if (mode !== 'choose' && !propValues.type) {
-        setFormState(getAttributeDefaultsForType(formType))
-        return
+    if (mode !== 'choose') {
+        const newProp = getAttributeDefaultsForType(formType)
+        if (propValues.type != newProp.type) {
+          setFormState(newProp)
+          return null
+        }
     }
 
     // TEMP
-    formState.values.name = 'testProp'
-    console.log('formState.values: ', formState.values);
-    // formState.values = { name: 'testProp' }
-
-    if (formState.values.type !== formType) {
-        formState.values.type = formType
-    }
+    // formState.values.name = 'testProp'
+    // console.log('formState.values: ', formState.values);
 
     const isTempEntityDef = isEditingTempEntityDef(entityDefId)
 
@@ -70,13 +70,36 @@ const AddEditPropertyView = (props) => {
             onSubmit={handleSubmit}
             routePath={`${routePath}/${hash}`}
             // Override the default rendering
-            renderModalBody={mode === 'choose' ? renderModalBody: false}
-            noButtons={mode === 'choose'}
+            renderModalBody={wizardStep === 'chooseType' ? renderModalBody: false}
+            noButtons={wizardStep === 'chooseType'}
         />
     )
 }
 
+function parseHash(props, hash) {
+  const hashArray = hash.split('::')
+  if (props.wizardStep === 'chooseType') {
+    return {
+      mode: props.mode,
+      entityDefId: props.entityDefId,
+      formType: hashArray[1]
+    }
+  }
+  else {
+    const valueToReplace = hash.includes('#create') ? '#create' : '#edit';
+    const entityDefId = hashArray[0].replace(valueToReplace, '');
+    return {
+      mode: valueToReplace.substring(1),
+      entityDefId,
+      formType: hashArray[1].replace('attribute', ''),
+      settingsType: hashArray[2]
+    }
+  }
+}
+
 function isEditingTempEntityDef(entityDefId) {
+  // console.log('entityDefId: ', entityDefId);
+  // console.log('storeData.getContentType()', storeData.getContentType())
     return storeData.getIsModelTemporary() &&
         get(storeData.getContentType(), 'id') === entityDefId
 }
@@ -109,18 +132,23 @@ function addPropertyToTempEntityDef(props, formValues) {
     const parallelAttribute = null
     if (!isAssociationProp) {
         const contentType = props.localState.entityDef
-        const newAttribute = formValues
+        const newAttribute = {
+          ...formValues,
+          id: formValues.name
+        }
 
-        contentType.attributes = compact(
-            concat(contentType.attributes, newAttribute, parallelAttribute)
+        contentType.properties = compact(
+            concat(contentType.properties, newAttribute, parallelAttribute)
         )
-        // // Reset the store and update the parent container
-        // props.contentTypeCreate(contentType)
+        // Update the entity definition in localStorage
+        storeData.setContentType(contentType)
+        // Update redux
+        props.contentTypeCreate(contentType)
 
         // Get the displayed model from the localStorage
         const model = storeData.getModel()
         // Set the new field number in the localStorage
-        model.fields = contentType.attributes.length
+        model.fields = contentType.properties.length
         // // Update the global store (app container) to add the new value to the model without refetching
         // props.temporaryContentTypeFieldsUpdated(model.fields)
         // Store the updated model in the localStorage
