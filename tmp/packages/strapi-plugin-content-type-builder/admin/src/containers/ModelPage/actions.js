@@ -46,13 +46,15 @@ export function cancelChanges() {
   };
 }
 
-export function editContentTypeAttribute(modifiedAttribute, attributePosition, shouldAddParralAttribute) {
+export function editContentTypeAttribute(modifiedProp, propPosition, shouldAddParralAttribute) {
   return {
     type: EDIT_CONTENT_TYPE_ATTRIBUTE,
-    modifiedAttribute,
-    attributePosition,
+    modifiedProp,
+    propPosition,
     shouldAddParralAttribute,
-    parallelAttribute: setParallelAttribute(modifiedAttribute),
+    // TEMP
+    parallelAttribute: {}
+    // parallelAttribute: setParallelAttribute(modifiedAttribute),
   };
 }
 

@@ -28,15 +28,10 @@ import reducer from './reducer'
 const ModelPage = (props) => {
     const entityDefId = props.match.params.modelName
     // const modelPage = { ...modelPageDefaults }
-    const { modelPage } = props
     const entityDefInLocalStorage = storeData.getContentType()
     // console.log('entityDefInLocalStorage: ', entityDefInLocalStorage);
     if (entityDefInLocalStorage && entityDefInLocalStorage.id === entityDefId) {
-        modelPage.model = entityDefInLocalStorage
-        // console.log('modelPage.model: ', modelPage.model);
-        // TEMP
-        // modelPage.model.attributes = []
-        return <ModelPageView {...props} modelPage={modelPage} />
+        return <ModelPageView {...props} />
     }
 
     //TEMP

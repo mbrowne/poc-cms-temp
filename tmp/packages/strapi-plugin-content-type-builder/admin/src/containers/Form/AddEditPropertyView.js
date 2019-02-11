@@ -7,23 +7,39 @@ import { useFormState } from 'components/Form'
 import { map, get, compact, concat } from 'lodash'
 import { storeData } from '../../utils/storeData'
 
-const AddEditPropertyView = (props) => {
+const AddEditPropertyView = props => {
     // console.log('remainingProps.toggle', remainingProps.toggle)
 
-    const { popUpTitle, formConfig, routePath, hash, wizardStep, entityDefId } = props
-    const nodeToFocusState = useState(null)
+    const {
+        popUpTitle,
+        formConfig,
+        routePath,
+        hash,
+        wizardStep,
+        entityDef,
+    } = props
+    const [nodeToFocus, setNodeToFocus] = useState(null)
 
-    const { mode, formType, settingsType } = parseHash(props, hash)
+    const { mode, formType, settingsType, propPosition } = parseHash(props, hash)
 
-    const formStateRetVal = useFormState({})
+    const isTempEntityDef = isEditingTempEntityDef(entityDef.id)
+    // const entityDef = isTempEntityDef ? storeData.getContentType(): props.entityDef
+
+    const existingProp = entityDef.properties[propPosition]
+    // TEMP
+    if (existingProp) {
+        existingProp.name = existingProp.id
+    }
+
+    const formStateRetVal = useFormState(existingProp || {})
     const { formState, setFormState } = formStateRetVal
 
     const propValues = formState.values
-    if (mode !== 'choose') {
+    if (mode !== 'choose' && !existingProp) {
         const newProp = getAttributeDefaultsForType(formType)
         if (propValues.type != newProp.type) {
-          setFormState(newProp)
-          return null
+            setFormState(newProp)
+            return null
         }
     }
 
@@ -31,10 +47,8 @@ const AddEditPropertyView = (props) => {
     // formState.values.name = 'testProp'
     // console.log('formState.values: ', formState.values);
 
-    const isTempEntityDef = isEditingTempEntityDef(entityDefId)
-
     useEffect(() => {
-        const onKeyDown = e => handleKeyBinding(e, nodeToFocusState)
+        const onKeyDown = e => handleKeyBinding(e, [nodeToFocus, setNodeToFocus])
         document.addEventListener('keydown', onKeyDown)
         return () => {
             document.removeEventListener('keydown', onKeyDown)
@@ -47,14 +61,15 @@ const AddEditPropertyView = (props) => {
 
     async function handleSubmit(e) {
         e.preventDefault()
-        if (mode === 'create') {
-            addProperty(props, formState.values, isTempEntityDef)
-        }
-        else editProperty(props, formState.values)
+        createOrUpdateProperty(props, mode, formState.values, isTempEntityDef, propPosition)
     }
 
     function renderModalBody() {
-        return renderModalBodyChooseAttributes(props, nodeToFocusState)
+        return renderModalBodyChooseAttributes(props, [nodeToFocus, setNodeToFocus], resetNodeToFocus)
+    }
+
+    function resetNodeToFocus() {
+        setNodeToFocus(null)
     }
 
     return (
@@ -65,56 +80,59 @@ const AddEditPropertyView = (props) => {
             popUpFormType={formType || ''}
             form={formConfig}
             values={formState.values}
-            buttonSubmitMessage='form.button.continue'
+            buttonSubmitMessage="form.button.continue"
             onChange={handleChange}
             onSubmit={handleSubmit}
             routePath={`${routePath}/${hash}`}
             // Override the default rendering
-            renderModalBody={wizardStep === 'chooseType' ? renderModalBody: false}
+            renderModalBody={
+                wizardStep === 'chooseType' ? renderModalBody : false
+            }
             noButtons={wizardStep === 'chooseType'}
         />
     )
 }
 
 function parseHash(props, hash) {
-  const hashArray = hash.split('::')
-  if (props.wizardStep === 'chooseType') {
-    return {
-      mode: props.mode,
-      entityDefId: props.entityDefId,
-      formType: hashArray[1]
+    const hashArray = hash.split('::')
+    if (props.wizardStep === 'chooseType') {
+        return {
+            mode: props.mode,
+            entityDefId: props.entityDef.id,
+            formType: hashArray[1],
+        }
+    } else {
+        const valueToReplace = hash.includes('#create') ? '#create' : '#edit'
+        const entityDefId = hashArray[0].replace(valueToReplace, '')
+        return {
+            mode: valueToReplace.substring(1),
+            entityDefId,
+            formType: hashArray[1].replace('attribute', ''),
+            settingsType: hashArray[2],
+            propPosition: hashArray[3],
+        }
     }
-  }
-  else {
-    const valueToReplace = hash.includes('#create') ? '#create' : '#edit';
-    const entityDefId = hashArray[0].replace(valueToReplace, '');
-    return {
-      mode: valueToReplace.substring(1),
-      entityDefId,
-      formType: hashArray[1].replace('attribute', ''),
-      settingsType: hashArray[2]
-    }
-  }
 }
 
 function isEditingTempEntityDef(entityDefId) {
-  // console.log('entityDefId: ', entityDefId);
-  // console.log('storeData.getContentType()', storeData.getContentType())
-    return storeData.getIsModelTemporary() &&
+    // console.log('entityDefId: ', entityDefId);
+    // console.log('storeData.getContentType()', storeData.getContentType())
+    return (
+        storeData.getIsModelTemporary() &&
         get(storeData.getContentType(), 'id') === entityDefId
+    )
 }
 
-function addProperty(props, formValues, isTempEntityDef) {
+function createOrUpdateProperty(props, mode, formValues, isTempEntityDef, propPosition) {
     if (isTempEntityDef) {
-        addPropertyToTempEntityDef(props, formValues)
+        createOrUpdateTempEntityDefProperty(props, mode, formValues, propPosition)
     } else {
-        addPropertyToExistingEntityDef(props, formValues)
+        createOrUpdateExistingEntityDefProperty(props, mode, formValues, propPosition)
     }
     redirectAfterSave(props)
 }
 
-function addPropertyToTempEntityDef(props, formValues) {
-
+function createOrUpdateTempEntityDefProperty(props, mode, formValues, propPosition) {
     // @TODO
     // const formErrors = this.checkAttributeValidations(
     //     checkFormValidity(
@@ -132,14 +150,19 @@ function addPropertyToTempEntityDef(props, formValues) {
     const parallelAttribute = null
     if (!isAssociationProp) {
         const contentType = props.localState.entityDef
-        const newAttribute = {
-          ...formValues,
-          id: formValues.name
+        const newOrUpdatedProp = {
+            ...formValues,
+            id: formValues.name,
         }
 
-        contentType.properties = compact(
-            concat(contentType.properties, newAttribute, parallelAttribute)
-        )
+        if (mode === 'create') {
+            contentType.properties = compact(
+                concat(contentType.properties, newOrUpdatedProp, parallelAttribute)
+            )
+        } else { // mode === 'edit'
+            contentType.properties[propPosition] = newOrUpdatedProp
+        }
+
         // Update the entity definition in localStorage
         storeData.setContentType(contentType)
         // Update redux
@@ -158,7 +181,7 @@ function addPropertyToTempEntityDef(props, formValues) {
     }
 }
 
-function addPropertyToExistingEntityDef(props, formValues) {
+function createOrUpdateExistingEntityDefProperty(props, mode, formValues, propPosition) {
     // const { entityDef } = props.localState
     // console.log('entityDef: ', entityDef);
     // console.log('formValues', formValues)
@@ -169,66 +192,27 @@ function addPropertyToExistingEntityDef(props, formValues) {
     // }
     // console.log('Adding property', tmp);
 
-    props.localActions.addAttributeToContentType({
-        ...formValues,
-        id: formValues.name,
-    })
-}
-
-function editTempContentTypeAttribute(props, formValues) {
-    // const formErrors = this.checkAttributeValidations(
-    //     checkFormValidity(
-    //         this.props.modifiedDataAttribute,
-    //         this.formValidations
-    //     )
-    // )
-
-    // if (!isEmpty(formErrors)) {
-    //     return this.props.setFormErrors(formErrors)
-    // }
-
-    // const contentType = storeData.getContentType()
-    // const newAttribute = this.setTempAttribute()
-    // const oldAttribute =
-    //     contentType.attributes[this.props.hash.split('::')[3]]
-    // contentType.attributes[this.props.hash.split('::')[3]] = newAttribute
-
-    // if (newAttribute.params.target === this.props.modelName) {
-    //     const parallelAttribute = this.setParallelAttribute(newAttribute)
-    //     contentType.attributes[
-    //         findIndex(contentType.attributes, [
-    //             'name',
-    //             oldAttribute.params.key,
-    //         ])
-    //     ] = parallelAttribute
-    // }
-
-    // if (
-    //     oldAttribute.params.target === this.props.modelName &&
-    //     newAttribute.params.target !== this.props.modelName
-    // ) {
-    //     contentType.attributes.splice(
-    //         findIndex(contentType.attributes, [
-    //             'name',
-    //             oldAttribute.params.key,
-    //         ]),
-    //         1
-    //     )
-    // }
-
-    // this.editContentTypeAttribute(redirectToChoose)
-
-    // const newContentType = contentType
-    // // Empty errors
-    // this.props.resetFormErrors()
-    // storeData.setContentType(newContentType)
+    if (mode === 'create') {
+        props.localActions.addAttributeToContentType({
+            ...formValues,
+            id: formValues.name,
+        })
+    } else { // mode === 'edit'
+        props.localActions.editContentTypeAttribute(
+            {
+                ...formValues,
+                id: formValues.name,
+            },
+            propPosition
+        )
+    }
 }
 
 function redirectAfterSave(props) {
-    router.push(`${props.redirectRoute}/${props.entityDefId}`)
+    router.push(`${props.redirectRoute}/${props.entityDef.id}`)
 }
 
-function renderModalBodyChooseAttributes(props, [nodeToFocus]) {
+function renderModalBodyChooseAttributes(props, [nodeToFocus], resetNodeToFocus) {
     const attributesDisplay = forms.attributesDisplay.items
     // const attributesDisplay = has(this.context.plugins.toJS(), 'upload')
     // ? forms.attributesDisplay.items
@@ -258,10 +242,7 @@ function renderModalBodyChooseAttributes(props, [nodeToFocus]) {
     ))
 }
 
-function resetNodeToFocus() {}
-
-function handleKeyBinding(e, nodeToFocusState) {
-    const [ nodeToFocus, setNodeToFocus ] = nodeToFocusState
+function handleKeyBinding(e, [nodeToFocus, setNodeToFocus]) {
     let toAdd = 0
 
     switch (e.keyCode) {
@@ -278,8 +259,7 @@ function handleKeyBinding(e, nodeToFocusState) {
             break
         case 40:
             if (
-                nodeToFocus ===
-                    forms.attributesDisplay.items.length - 1 ||
+                nodeToFocus === forms.attributesDisplay.items.length - 1 ||
                 nodeToFocus === forms.attributesDisplay.items.length - 2
             ) {
                 toAdd = -8
@@ -300,32 +280,32 @@ function handleKeyBinding(e, nodeToFocusState) {
 }
 
 function getAttributeDefaultsForType(formType) {
-    const type = formType === 'number' ? 'integer' : formType;
-    let defaultValue = type === 'number' ? 0 : '';
-  
+    const type = formType === 'number' ? 'integer' : formType
+    let defaultValue = type === 'number' ? 0 : ''
+
     if (type === 'boolean') {
-      defaultValue = false;
+        defaultValue = false
     }
-  
+
     const attribute = {
-      id: '',
-      name: '', // temp - will later be replaced by 'id'
-      type,
-      defaultValue,
-      required: false,
-      unique: false,
-      maxLength: false,
-      minLength: false,
-      multiple: false,
-      min: false,
-      max: false,
-      strapiParams: {
-        appearance: {
-          WYSIWYG: false,
+        id: '',
+        name: '', // temp - will later be replaced by 'id'
+        type,
+        defaultValue,
+        required: false,
+        unique: false,
+        maxLength: false,
+        minLength: false,
+        multiple: false,
+        min: false,
+        max: false,
+        strapiParams: {
+            appearance: {
+                WYSIWYG: false,
+            },
         },
-      },
     }
-  
+
     return attribute
 }
 

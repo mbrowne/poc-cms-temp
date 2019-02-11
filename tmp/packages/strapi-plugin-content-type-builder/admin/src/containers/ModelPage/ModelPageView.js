@@ -36,12 +36,12 @@ import injectSaga from 'utils/injectSaga'
 import injectReducer from 'utils/injectReducer'
 import { storeData } from '../../utils/storeData'
 import {
-  cancelChanges,
-  deleteAttribute,
-  modelFetch,
-  modelFetchSucceeded,
-  resetShowButtonsProps,
-  submit,
+    cancelChanges,
+    deleteAttribute,
+    modelFetch,
+    modelFetchSucceeded,
+    resetShowButtonsProps,
+    submit,
 } from './actions'
 import * as allModelPageActions from './actions'
 import saga from './sagas'
@@ -94,16 +94,34 @@ export class ModelPageView extends React.Component {
                 id: 'saveData',
             },
         ]
+
+        this.mounted = false
     }
 
     componentDidMount() {
+        let contentTypeTemporary = false
+        if (
+            storeData.getIsModelTemporary() &&
+            get(storeData.getContentType(), 'id') ===
+                this.props.match.params.modelName
+        ) {
+            this.setState({ contentTypeTemporary: true })
+            contentTypeTemporary = true
+        }
+
         // this is how we get the entityDefinition from graphql into redux.
         // will need to be refactored later.
-        if (!this.state.contentTypeTemporary) {
-          this.props.modelFetchSucceeded({
-              model: this.props.entityDefFromGraphqlWithStrapiParams,
+        if (!contentTypeTemporary) {
+            this.props.modelFetchSucceeded({
+                model: this.props.entityDefFromGraphqlWithStrapiParams,
+            })
+        }
+        else {
+            this.props.modelFetchSucceeded({
+              model: storeData.getContentType(),
           })
         }
+        this.mounted = true
         // this.fetchModel(this.props)
     }
 
@@ -163,21 +181,21 @@ export class ModelPageView extends React.Component {
         </div>
     )
 
-    fetchModel = props => {
-        if (
-            storeData.getIsModelTemporary() &&
-            get(storeData.getContentType(), 'id') ===
-                props.match.params.modelName
-        ) {
-            this.setState({ contentTypeTemporary: true })
-            this.props.modelFetchSucceeded({
-                model: storeData.getContentType(),
-            })
-        } else {
-            this.setState({ contentTypeTemporary: false })
-            this.props.modelFetch(props.match.params.modelName)
-        }
-    }
+    // fetchModel = props => {
+    //     if (
+    //         storeData.getIsModelTemporary() &&
+    //         get(storeData.getContentType(), 'id') ===
+    //             props.match.params.modelName
+    //     ) {
+    //         this.setState({ contentTypeTemporary: true })
+    //         this.props.modelFetchSucceeded({
+    //             model: storeData.getContentType(),
+    //         })
+    //     } else {
+    //         this.setState({ contentTypeTemporary: false })
+    //         this.props.modelFetch(props.match.params.modelName)
+    //     }
+    // }
 
     handleAddLinkClick = () => {
         if (storeData.getIsModelTemporary()) {
@@ -236,9 +254,7 @@ export class ModelPageView extends React.Component {
         //         'content-type-builder.notification.info.disable'
         //     )
         // }
-        const settingsType = prop.type
-            ? 'baseSettings'
-            : 'defineRelation'
+        const settingsType = prop.type ? 'baseSettings' : 'defineRelation'
         const parallelAttributeIndex = findIndex(
             this.props.modelPage.model.properties,
             ['id', prop.strapiParams.key]
@@ -257,9 +273,7 @@ export class ModelPageView extends React.Component {
                 dataType = 'number'
                 break
             default:
-                dataType = prop.type
-                    ? prop.type
-                    : 'relation'
+                dataType = prop.type ? prop.type : 'relation'
         }
 
         router.push(
@@ -430,6 +444,7 @@ export class ModelPageView extends React.Component {
         // Url to redirects the user if he modifies the temporary content type name
         const redirectRoute = replace(this.props.match.path, '/:modelName', '')
         const name = get(storeData.getContentType(), 'id')
+
         const addButtons =
             (name === this.props.match.params.modelName &&
                 size(get(storeData.getContentType(), 'properties')) > 0) ||
@@ -472,6 +487,11 @@ export class ModelPageView extends React.Component {
             editContentTypeAttribute: props.editContentTypeAttribute,
             editContentTypeAttributeRelation:
                 props.editContentTypeAttributeRelation,
+        }
+
+        // workaround to prevent rendering form before entity def is loaded
+        if (!this.mounted) {
+          return null
         }
 
         return (
@@ -520,7 +540,7 @@ export class ModelPageView extends React.Component {
                     menuData={this.props.menu}
                     redirectRoute={redirectRoute}
                     modelName={this.props.match.params.modelName}
-                    contentTypeData={this.props.modelPage.model}
+                    entityDef={this.props.modelPage.model}
                     isModelPage
                     modelLoading={this.props.modelPage.modelLoading}
                 />

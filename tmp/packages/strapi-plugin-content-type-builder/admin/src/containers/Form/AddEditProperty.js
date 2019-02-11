@@ -6,7 +6,7 @@ import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import { contentTypeCreate } from './actions'
 
-const AddEditProperty = ({ entityDefId, propertyName, hash, ...remainingProps }) => {
+const AddEditProperty = ({ entityDef, propertyName, hash, ...remainingProps }) => {
     let formConfig = []
 
     // //temp
@@ -16,6 +16,8 @@ const AddEditProperty = ({ entityDefId, propertyName, hash, ...remainingProps })
     let popUpTitle
     const hashArray = hash.split('::')
     const settingsType = hashArray[2]
+    // step 1 of the wizard is choosing the property type
+    // step 2 is choosing property settings
     const whichWizardStep = hashArray[0] === '#choose' ? 'chooseType': 'propSettings'
     if (whichWizardStep === 'chooseType') {
         const formType = hashArray[1]
@@ -29,7 +31,7 @@ const AddEditProperty = ({ entityDefId, propertyName, hash, ...remainingProps })
     return (
         <AddEditPropertyView
             wizardStep={whichWizardStep}
-            entityDefId={entityDefId}
+            entityDef={entityDef}
             popUpTitle={popUpTitle}
             formConfig={formConfig}
             hash={hash}

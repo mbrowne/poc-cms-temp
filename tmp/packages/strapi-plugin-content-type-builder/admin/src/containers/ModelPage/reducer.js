@@ -59,13 +59,13 @@ function modelPageReducer(state = initialState, action) {
       if (action.shouldAddParralAttribute) {
         return state
           .set('showButtons', true)
-          .updateIn(['model', 'attributes', action.attributePosition], () => action.modifiedAttribute)
-          .updateIn(['model', 'attributes'], (list) => list.splice(action.attributePosition + 1, 0, action.parallelAttribute));
+          .updateIn(['model', 'properties', action.propPosition], () => action.modifiedProp)
+          .updateIn(['model', 'properties'], (list) => list.splice(action.propPosition + 1, 0, action.parallelAttribute));
       }
 
       return state
         .set('showButtons', true)
-        .updateIn(['model', 'attributes', action.attributePosition], () => action.modifiedAttribute);
+        .updateIn(['model', 'properties', action.propPosition], () => action.modifiedProp);
     }
     case EDIT_CONTENT_TYPE_ATTRIBUTE_RELATION: {
       if (action.shouldRemoveParallelAttribute) {

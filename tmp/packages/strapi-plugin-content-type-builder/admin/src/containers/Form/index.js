@@ -11,19 +11,19 @@ const FormRouter = (props) => {
         if (!showModal) {
             setShowModal(true)
         }
-        const valueToReplace = includes(props.hash, '#create')
-            ? '#create'
-            : '#edit'
-        const entityDefId = replace(
-            split(props.hash, '::')[0],
-            valueToReplace,
-            ''
-        )
+        // const valueToReplace = includes(props.hash, '#create')
+        //     ? '#create'
+        //     : '#edit'
+        // const entityDefId = replace(
+        //     split(props.hash, '::')[0],
+        //     valueToReplace,
+        //     ''
+        // )
         const isPopUpAttribute = includes(props.hash, 'attribute')
         // const isCreating = valueToReplace === '#create'
 
         return isPopUpAttribute
-            ? <AddEditProperty entityDefId={entityDefId} {...props} />
+            ? <AddEditProperty {...props} />
             : <AddEditEntityDefinition showModal={showModal} {...props} /> //<Form showModal={showModal} {...props} />
     }
     else {
