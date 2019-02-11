@@ -12,6 +12,11 @@ export default gql`
             #         ...
             # }
             isAbstract
+            properties {
+              id
+              label
+              dataType
+            }
         }
     }
 `

@@ -1,6 +1,6 @@
 {
-  "id": "tag",
-  "pluralName": "tags",
+  "id": "Tag",
+  "pluralName": "Tags",
   "isAbstract": false,
   "properties": [
     {

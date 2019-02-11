@@ -40,19 +40,29 @@ const ModelPage = (props) => {
     }
 
     //TEMP
-    return <ModelPageView {...props} modelPage={modelPage} />
+    // return <ModelPageView {...props} modelPage={modelPage} />
 
-    // return (
-    //     <QueryLoader query={entityDefinitionQuery} variables={{ id: entityDefId }}>
-    //         {({ data }) => {
-    //             if (!data.entityDef) {
-    //                 throw Error(`Entity definition ID '${entityDefId}' not found on server`)
-    //             }
-    //             modelPage.model = data.entityDef
-    //             return <ModelPageView {...props} modelPage={modelPage} />
-    //         }}
-    //     </QueryLoader>
-    // )
+    return (
+        <QueryLoader query={entityDefinitionQuery} variables={{ id: entityDefId }}>
+            {({ data }) => {
+                if (!data.entityDef) {
+                    throw Error(`Entity definition ID '${entityDefId}' not found on server`)
+                }
+                const model = addStrapiParams(data.entityDef)
+                return <ModelPageView {...props} entityDefFromGraphqlWithStrapiParams={model} />
+            }}
+        </QueryLoader>
+    )
+}
+
+function addStrapiParams(entityDef) {
+  const properties = entityDef.properties.map(prop => ({
+    ...prop,
+    // TODO: rename `type` to `dataType` to match graphql schema
+    type: prop.dataType,
+    strapiParams: {}
+  }))
+  return { ...entityDef, properties }
 }
 
 //TEMP

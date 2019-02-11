@@ -97,7 +97,14 @@ export class ModelPageView extends React.Component {
     }
 
     componentDidMount() {
-        this.fetchModel(this.props)
+        // this is how we get the entityDefinition from graphql into redux.
+        // will need to be refactored later.
+        if (!this.state.contentTypeTemporary) {
+          this.props.modelFetchSucceeded({
+              model: this.props.entityDefFromGraphqlWithStrapiParams,
+          })
+        }
+        // this.fetchModel(this.props)
     }
 
     componentWillReceiveProps(nextProps) {
@@ -116,7 +123,7 @@ export class ModelPageView extends React.Component {
             this.props.match.params.modelName
         ) {
             this.props.resetShowButtonsProps()
-            this.fetchModel(this.props)
+            // this.fetchModel(this.props)
         }
     }
 
@@ -213,45 +220,45 @@ export class ModelPageView extends React.Component {
         )
     }
 
-    handleEditAttribute = attributeName => {
-        const index = findIndex(this.props.modelPage.model.attributes, [
-            'name',
-            attributeName,
+    handleEditAttribute = propId => {
+        const index = findIndex(this.props.modelPage.model.properties, [
+            'id',
+            propId,
         ])
-        const attribute = this.props.modelPage.model.attributes[index]
+        const prop = this.props.modelPage.model.properties[index]
 
-        // Display a notification if the attribute is not present in the ones that the ctb handles
-        if (
-            !has(attribute.params, 'nature') &&
-            !includes(availableAttributes, attribute.params.type)
-        ) {
-            return strapi.notification.info(
-                'content-type-builder.notification.info.disable'
-            )
-        }
-        const settingsType = attribute.params.type
+        // // Display a notification if the attribute is not present in the ones that the ctb handles
+        // if (
+        //     !has(attribute.strapiParams, 'nature') &&
+        //     !includes(availableAttributes, attribute.strapiParams.type)
+        // ) {
+        //     return strapi.notification.info(
+        //         'content-type-builder.notification.info.disable'
+        //     )
+        // }
+        const settingsType = prop.type
             ? 'baseSettings'
             : 'defineRelation'
         const parallelAttributeIndex = findIndex(
-            this.props.modelPage.model.attributes,
-            ['name', attribute.params.key]
+            this.props.modelPage.model.properties,
+            ['id', prop.strapiParams.key]
         )
         const hasParallelAttribute =
             settingsType === 'defineRelation' && parallelAttributeIndex !== -1
                 ? `::${parallelAttributeIndex}`
                 : ''
 
-        let attributeType
+        let dataType
 
-        switch (attribute.params.type) {
+        switch (prop.type) {
             case 'integer':
             case 'float':
             case 'decimal':
-                attributeType = 'number'
+                dataType = 'number'
                 break
             default:
-                attributeType = attribute.params.type
-                    ? attribute.params.type
+                dataType = prop.type
+                    ? prop.type
                     : 'relation'
         }
 
@@ -260,7 +267,7 @@ export class ModelPageView extends React.Component {
                 this.props.match.params.modelName
             }#edit${
                 this.props.match.params.modelName
-            }::attribute${attributeType}::${settingsType}::${index}${hasParallelAttribute}`
+            }::attribute${dataType}::${settingsType}::${index}${hasParallelAttribute}`
         )
     }
 

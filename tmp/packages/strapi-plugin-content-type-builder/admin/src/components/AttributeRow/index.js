@@ -53,10 +53,10 @@ class AttributeRow extends React.Component {
     };
   }
 
-  handleEdit = () => this.props.onEditAttribute(this.props.row.name);
+  handleEdit = () => this.props.onEditAttribute(this.props.row.id);
 
   handleDelete = () => {
-    this.props.onDelete(this.props.row.name);
+    this.props.onDelete(this.props.row.id);
     this.setState({ showWarning: false });
   };
 
