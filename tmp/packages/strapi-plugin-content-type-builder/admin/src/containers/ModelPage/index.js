@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { storeData } from '../../utils/storeData'
 import ModelPageView from './ModelPageView'
 import QueryLoader from 'components/QueryLoader'
-import entityDefinitionQuery from '../Form/queries/entityDefinitionQuery'
+import * as queries from '../Form/queries'
+import { useMutation } from 'react-apollo-hooks'
 // TEMP
 import { compose } from 'redux'
 import { connect } from 'react-redux'
@@ -26,25 +27,32 @@ import reducer from './reducer'
 // }
 
 const ModelPage = (props) => {
+    // console.log('Modelpage', props.modelPage.model);
+
     const entityDefId = props.match.params.modelName
     // const modelPage = { ...modelPageDefaults }
     const entityDefInLocalStorage = storeData.getContentType()
     // console.log('entityDefInLocalStorage: ', entityDefInLocalStorage);
-    if (entityDefInLocalStorage && entityDefInLocalStorage.id === entityDefId) {
-        return <ModelPageView {...props} />
+    // if the entityDef is in localStorage only then it's a new entityDef that we need to create; otherwise it's an update
+    const mode = (entityDefInLocalStorage && entityDefInLocalStorage.id === entityDefId ? 'create': 'update')
+    const mutationFunc = useMutation(queries[mode + 'EntityDefinition'])
+    if (mode === 'create') {
+        return <ModelPageView {...props} onSubmit={() => saveChanges(props, mutationFunc, 'create')} />
     }
 
     //TEMP
     // return <ModelPageView {...props} modelPage={modelPage} />
 
     return (
-        <QueryLoader query={entityDefinitionQuery} variables={{ id: entityDefId }}>
+        <QueryLoader query={queries.entityDefinition} variables={{ id: entityDefId }} entityDef={props.modelPage.model}>
             {({ data }) => {
                 if (!data.entityDef) {
                     throw Error(`Entity definition ID '${entityDefId}' not found on server`)
                 }
                 const model = addStrapiParams(data.entityDef)
-                return <ModelPageView {...props} entityDefFromGraphqlWithStrapiParams={model} />
+                return (
+                    <ModelPageView {...props} entityDefFromGraphqlWithStrapiParams={model} onSubmit={() => saveChanges(props, mutationFunc, 'update')} />
+                )
             }}
         </QueryLoader>
     )
@@ -58,6 +66,23 @@ function addStrapiParams(entityDef) {
     strapiParams: {}
   }))
   return { ...entityDef, properties }
+}
+
+function saveChanges(props, mutationFunc, mode /* 'create' | 'update' */) {
+    const data = props.modelPage.model
+    const entityDefInput = transformToMutationInput(data)
+
+    const result = mutationFunc({
+        variables: {
+            entityDef: entityDefInput
+        }
+    })
+    console.log('result: ', result);
+    // strapi.notification.error(errorMsg);
+}
+
+function transformToMutationInput(data) {
+    return data
 }
 
 //TEMP

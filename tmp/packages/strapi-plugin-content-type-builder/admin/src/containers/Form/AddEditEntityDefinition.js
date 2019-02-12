@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { includes, upperFirst } from 'lodash'
-import QueryLoader from 'components/QueryLoader'
-import query from './queries/entityDefinitionQuery'
+import { useQuery } from 'react-apollo-hooks'
+import { entityDefinition as entityDefinitionQuery } from './queries'
 import Form from './Form'
+import { storeData } from '../../utils/storeData'
 
 // try {
 //     await useMutation_fromClassComponent(createEntityDefinitionMutation, {
@@ -37,24 +38,45 @@ const AddEditEntityDefinition = ({ hash, ...remainingProps }) => {
     if (!entityDefId) {
         return null
     }
-    return <EditForm hash={hash} id={entityDefId} {...remainingProps} />
+    return <EditForm hash={hash} id={entityDefId} showModal={true} {...remainingProps} />
 }
 
 const EditForm = ({ id, ...remainingProps}) => {
+    if (isEditingTempEntityDef(id)) {
+        return <Form mode="edit" entityDef={storeData.getContentType()} {...remainingProps} />
+    }
+    
     return (
-        <QueryLoader query={query} variables={{ id }}>
-            {({ data }) => {
+        <Suspense fallback={<div>Loading...</div>}>
+            {React.createElement(() => {
+                const { data, error } = useQuery(entityDefinitionQuery, { variables: { id }})
+                if (error) {
+                    throw error
+                }
+
                 if (!data.entityDef) {
                     throw Error(`Entity definition ID '${id}' not found on server`)
                 }
                 // console.log('entityDef: ', data.entityDef);
 
                 //TEMP
-                data.entityDef.pluralName = 'TEMP - CHANGE ME'
+                // data.entityDef.pluralName = 'TEMP - CHANGE ME'
 
-                return <Form mode="edit" entityDef={data.entityDef} {...remainingProps} />
-            }}
-        </QueryLoader>
+                return <Form mode="edit" entityDef={data.entityDef} onPersistChanges={handlePersistChanges} {...remainingProps} />
+            })}
+        </Suspense>
+    )
+}
+
+function handlePersistChanges(entityDef) {
+    console.log('TODO: handlePersistChanges for editing existing entityDef');
+    console.log('entityDef: ', entityDef);
+}
+
+function isEditingTempEntityDef(entityDefId) {
+    return (
+        storeData.getIsModelTemporary() &&
+        storeData.getContentType().id.toLowerCase() === entityDefId.toLowerCase()
     )
 }
 

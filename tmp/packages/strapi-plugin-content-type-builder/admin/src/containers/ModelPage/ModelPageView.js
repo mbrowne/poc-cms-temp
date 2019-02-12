@@ -286,8 +286,12 @@ export class ModelPageView extends React.Component {
     }
 
     handleSubmit = () => {
-        this.props.submit(this.context, this.props.match.params.modelName)
+        this.props.onSubmit()
     }
+
+    // handleSubmit = () => {
+    //     this.props.submit(this.context, this.props.match.params.modelName)
+    // }
 
     toggleModal = () => {
         const locationHash = this.props.location.hash
@@ -436,19 +440,23 @@ export class ModelPageView extends React.Component {
         return fullTitle
     }
 
-    handleSubmit = () => {
-        console.log('handle submit')
-    }
-
     render() {
+        // workaround to prevent rendering form before entity def is loaded
+        if (!this.mounted) {
+            return null
+        }
+
         // Url to redirects the user if he modifies the temporary content type name
         const redirectRoute = replace(this.props.match.path, '/:modelName', '')
         const name = get(storeData.getContentType(), 'id')
 
-        const addButtons =
-            (name === this.props.match.params.modelName &&
-                size(get(storeData.getContentType(), 'properties')) > 0) ||
-            this.props.modelPage.showButtons
+        // const addButtons =
+        //     (name === this.props.match.params.modelName &&
+        //         size(get(storeData.getContentType(), 'properties')) > 0) ||
+        //     this.props.modelPage.showButtons
+
+        // TEMP
+        const addButtons = true
 
         const contentHeaderDescription =
             this.props.modelPage.model.description ||
@@ -489,11 +497,6 @@ export class ModelPageView extends React.Component {
                 props.editContentTypeAttributeRelation,
         }
 
-        // workaround to prevent rendering form before entity def is loaded
-        if (!this.mounted) {
-          return null
-        }
-
         return (
             <div className={styles.modelPage}>
                 <div className="container-fluid">
@@ -517,7 +520,6 @@ export class ModelPageView extends React.Component {
                                         this.props.match.params.modelName
                                     }::contentType::baseSettings`}
                                     addButtons={addButtons}
-                                    handleSubmit={this.handleSubmit}
                                     isLoading={
                                         this.props.modelPage.showButtonLoader
                                     }

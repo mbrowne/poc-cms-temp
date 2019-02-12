@@ -1,8 +1,8 @@
 import gql from 'graphql-tag'
 
-export const createEntityDefinition = gql`
+export const updateEntityDefinition = gql`
     mutation($entityDef: EntityDefinitionInput!) {
-        createEntityDefinition(entityDef: $entityDef) {
+        updateEntityDefinition(entityDef: $entityDef) {
             entityDef {
                 id
             }

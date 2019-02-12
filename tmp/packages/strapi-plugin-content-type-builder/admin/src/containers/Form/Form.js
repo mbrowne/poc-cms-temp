@@ -55,7 +55,7 @@ import { FormStateProvider, withFormState } from 'components/Form'
 import { checkFormValidity } from '../../utils/formValidations'
 import { storeData } from '../../utils/storeData'
 import { getValidationsFromForm } from '../../utils/formValidations';
-import useMutation_fromClassComponent from '../../utils/mutationFromClassComponent';
+// import useMutation_fromClassComponent from '../../utils/mutationFromClassComponent';
 
 import checkAttributeValidations from './utils/attributeValidations'
 import setParallelAttribute, { setTempAttribute } from './utils/setAttribute'
@@ -79,9 +79,6 @@ import selectForm from './selectors'
 
 import styles from './styles.scss'
 import forms from './forms.json'
-
-// import { useApolloClient } from 'react-apollo-hooks'
-import createEntityDefinitionMutation from './queries/createEntityDefinition'
 
 /* eslint-disable react/sort-comp */
 /* eslint-disable consistent-return */
@@ -491,25 +488,38 @@ export class Form extends React.Component {
             return this.props.setFormErrors(formErrors)
         }
 
-        const contentType = storeData.getContentType()
+        const entityDefInLocalStorage = storeData.getContentType()
+        const entityDef = this.props.formState.values
 
         // Update relation key of the temporary contentType
-        if (contentType) {
-            map(contentType.attributes, (attr, key) => {
-                if (
-                    get(attr.params, 'target') ===
-                    replace(split(this.props.hash, '::')[0], '#edit', '')
-                ) {
-                    contentType.attributes[
-                        key
-                    ].params.target = this.props.modifiedDataEdit.name
-                }
-            })
-            this.props.contentTypeCreate(contentType)
+        if (entityDefInLocalStorage) {
+            const { values } = this.props.formState
+            // entityDef = { ...contentType, ...values }
+            storeData.setContentType(entityDef)
+
+            // map(contentType.attributes, (attr, key) => {
+            //     if (
+            //         get(attr.params, 'target') ===
+            //         replace(split(this.props.hash, '::')[0], '#edit', '')
+            //     ) {
+            //         contentType.attributes[
+            //             key
+            //         ].params.target = this.props.modifiedDataEdit.name
+            //     }
+            // })
+            // this.props.contentTypeCreate(contentType)
+
+            // TEMP workaround
+            window.location.reload()
+        } else {
+            this.props.onPersistChanges(entityDef)
+            // this.props.contentTypeEdit(this.context);
         }
 
-        // this.setState({ showModal: false })
-        return this.props.contentTypeEdit(this.context)
+        const modelPage = includes(this.props.redirectRoute, 'models')
+            ? ''
+            : '/models'
+        router.push(`${this.props.redirectRoute}${modelPage}/${entityDef.id}`)
     }
 
     editContentTypeAttribute = (redirectTochoose = false) => {
@@ -806,9 +816,10 @@ export class Form extends React.Component {
                     : this.createContentType
                 dataSucces = isAttribute
                     ? null
-                    : this.getModelWithCamelCaseName(
-                          this.props.modifiedDataEdit
-                      )
+                    : this.props.modifiedDataEdit.id
+                    // : this.getModelWithCamelCaseName(
+                    //       this.props.modifiedDataEdit
+                    //   )
                 cbFail = isAttribute
                     ? () => this.editContentTypeAttribute(redirectToChoose)
                     : this.contentTypeEdit
@@ -1059,7 +1070,7 @@ function mapDispatchToProps(dispatch) {
             //   changeInputAttribute,
             //   connectionsFetch,
             //   contentTypeCreate,
-            //   contentTypeEdit,
+            contentTypeEdit,
             //   contentTypeFetch,
             //   contentTypeFetchSucceeded,
             //   removeContentTypeRequiredError,

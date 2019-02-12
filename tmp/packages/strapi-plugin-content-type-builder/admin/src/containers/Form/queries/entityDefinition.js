@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-export default gql`
+export const entityDefinition = gql`
     query($id: ID!) {
         entityDef: entityDefinition(id: $id) {
             id
