@@ -16,6 +16,14 @@
       "label": "Short Bio",
       "dataType": "string",
       "readOnly": false
+    },
+    {
+      "__typename": "LiteralProperty",
+      "id": "longBio",
+      "label": "Long Bio",
+      "dataType": "string",
+      "readOnly": false
     }
-  ]
+  ],
+  "label": null
 }

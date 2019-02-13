@@ -4,6 +4,7 @@ import ModelPageView from './ModelPageView'
 import QueryLoader from 'components/QueryLoader'
 import * as queries from '../Form/queries'
 import { useMutation } from 'react-apollo-hooks'
+import { startCase } from 'lodash'
 // TEMP
 import { compose } from 'redux'
 import { connect } from 'react-redux'
@@ -81,8 +82,18 @@ function saveChanges(props, mutationFunc, mode /* 'create' | 'update' */) {
     // strapi.notification.error(errorMsg);
 }
 
-function transformToMutationInput(data) {
-    return data
+function transformToMutationInput(entityDefData) {
+    const { __typename, ...data } = entityDefData
+    const entityDefInput = {
+        ...data,
+        properties: data.properties.map(prop => ({
+            id: prop.id,
+            label: startCase(prop.id),
+            dataType: prop.type,
+            readOnly: false,
+        }))
+    }
+    return entityDefInput
 }
 
 //TEMP
