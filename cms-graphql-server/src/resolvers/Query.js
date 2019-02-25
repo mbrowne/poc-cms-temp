@@ -35,6 +35,10 @@ export const Query = {
     entityDefinition(_, { id }) {
         return loadEntityDef(id)
     },
+
+    testQuery() {
+        return 2
+    },
 }
 
 // @TODO Do dynamic imports get cached? If so we might need to read the JSON file directly instead.

@@ -27,7 +27,7 @@ class TableListRow extends React.Component {
 
   handleEdit = () => {
     router.push(
-      `/plugins/content-type-builder/#edit${this.props.rowItem.name}::contentType::baseSettings`,
+      `/plugins/content-type-builder/entity-defs/edit/${this.props.rowItem.name}#contentType::baseSettings`,
     );
   };
 
@@ -40,7 +40,7 @@ class TableListRow extends React.Component {
 
   handleGoTo = () => {
     router.push(
-      `/plugins/content-type-builder/models/${this.props.rowItem.name}${
+      `/plugins/content-type-builder/entity-defs/${this.props.rowItem.name}${
         this.props.rowItem.source ? `&source=${this.props.rowItem.source}` : ''
       }`,
     );
