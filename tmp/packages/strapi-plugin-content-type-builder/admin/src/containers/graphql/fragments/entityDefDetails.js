@@ -4,7 +4,7 @@ export const entityDefDetails = gql`
     fragment EntityDefDetails on EntityDefinition {
         id
         label
-        pluralName
+        pluralLabel
         # templateEntityDefinition {
         #     id
         #     properties

@@ -34,8 +34,6 @@ import styles from './styles.scss'
 import saga from './sagas'
 import reducer from './reducer'
 
-import AddEditEntityDefinition from '../Form/AddEditEntityDefinition'
-
 export class HomePage extends React.Component {
     // eslint-disable-line react/prefer-stateless-function
     constructor(props) {
@@ -119,14 +117,14 @@ export class HomePage extends React.Component {
                     styles={{ margin: '-1px 0 3rem 0' }}
                 />
                 {component}
-                <AddEditEntityDefinition
+                {/* <AddEditEntityDefinition
                     hash={this.props.location.hash}
                     toggle={this.toggleModal}
                     routePath={this.props.match.path}
                     popUpHeaderNavLinks={this.popUpHeaderNavLinks}
                     menuData={this.props.menu}
                     redirectRoute={`${this.props.match.path}`}
-                />
+                /> */}
                 {/* <Form
                     hash={this.props.location.hash}
                     toggle={this.toggleModal}

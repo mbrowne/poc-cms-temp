@@ -1,97 +1,4 @@
 {
-  "contentType": {
-    "baseSettings": {
-      "items": [
-        {
-          "label": {
-            "id": "content-type-builder.form.contentType.item.id"
-          },
-          "name": "id",
-          "value": "",
-          "type": "string",
-          "validations": {
-            "required": true
-          },
-          "inputDescription": {
-            "id": "content-type-builder.form.contentType.item.id.description",
-            "params": {
-              "link": {
-                "parent": {
-                  "type": "a",
-                  "attr": {
-                    "href": "https://strapi.io/documentation/concepts/concepts.html#models",
-                    "target": "_blank"
-                  }
-                },
-                "children": {
-                  "type": "FormattedMessage",
-                  "attr": {
-                    "id": "content-type-builder.form.contentType.item.id.link.description"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "label": {
-            "id": "content-type-builder.form.contentType.item.pluralName"
-          },
-          "name": "pluralName",
-          "value": "",
-          "type": "string",
-          "validations": {
-            "required": true
-          }
-        },
-        {
-          "label": {
-            "id": "content-type-builder.form.contentType.item.isAbstract"
-          },
-          "name": "isAbstract",
-          "value": "",
-          "type": "checkbox",
-          "inputDescription": {
-            "id": "content-type-builder.form.contentType.item.isAbstract.description"
-          }
-        },
-        {
-          "label": {
-            "id": "content-type-builder.form.contentType.item.parentEntityDef"
-          },
-          "name": "parentEntityDefId",
-          "type": "select",
-          "items": [{}]
-        },
-        {
-          "label": {
-            "id": "content-type-builder.form.contentType.item.description"
-          },
-          "name": "description",
-          "value": "",
-          "type": "textarea",
-          "placeholder": "content-type-builder.form.contentType.item.description.placeholder",
-          "validations": {}
-        }
-      ]
-    },
-    "advancedSettings": {
-      "items": [
-        {
-          "label": {
-            "id": "content-type-builder.form.contentType.item.collectionName"
-          },
-          "name": "collectionName",
-          "type": "string",
-          "value": "",
-          "validations": {},
-          "inputDescription": {
-            "id": "content-type-builder.form.contentType.item.collectionName.inputDescription"
-          }
-        }
-      ]
-    }
-  },
   "attributesDisplay": {
     "items": [
       {
@@ -276,9 +183,18 @@
             "type": "select",
             "value": "integer",
             "items": [
-              { "name": "content-type-builder.form.attribute.item.number.type.integer", "value": "integer" },
-              { "name": "content-type-builder.form.attribute.item.number.type.float", "value": "float" },
-              { "name": "content-type-builder.form.attribute.item.number.type.decimal", "value": "decimal" }
+              {
+                "name": "content-type-builder.form.attribute.item.number.type.integer",
+                "value": "integer"
+              },
+              {
+                "name": "content-type-builder.form.attribute.item.number.type.float",
+                "value": "float"
+              },
+              {
+                "name": "content-type-builder.form.attribute.item.number.type.decimal",
+                "value": "decimal"
+              }
             ],
             "validations": {
               "required": true

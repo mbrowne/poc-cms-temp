@@ -1,6 +1,6 @@
 {
   "id": "Creator",
-  "pluralName": "Creators",
+  "pluralLabel": "Creators",
   "isAbstract": false,
   "properties": [
     {

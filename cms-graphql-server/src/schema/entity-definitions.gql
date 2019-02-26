@@ -7,7 +7,7 @@ type EntityDefinition {
     If left blank, the id (converted to Title Case) will be used as the label
     """
     label: String
-    pluralName: String!
+    pluralLabel: String!
     """
     if specified, a templateEntityDefinition means that this entity definition inherits all the properties of its template definition,
     e.g. the template of Exhibition is Event

@@ -261,9 +261,7 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
                                     editIcon
                                     editPath={`${redirectRoute}/${
                                         match.params.id
-                                    }#edit${
-                                        match.params.id
-                                    }::contentType::baseSettings`}
+                                    }/(${match.params.id}/base-settings/edit)`}
                                     addButtons={addButtons}
                                     isLoading={entityDefUI.showButtonLoader}
                                     buttonsContent={contentHeaderButtons}

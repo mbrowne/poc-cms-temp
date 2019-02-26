@@ -15,19 +15,14 @@ import PropTypes from 'prop-types'
 import { pluginId } from 'app'
 
 import HomePage from 'containers/HomePage'
-import ModelPage from 'containers/ModelPage'
 import EntityDefinitionPage from 'containers/EntityDefinition'
+import AddEditEntityDefForm from 'containers/AddEditEntityDefForm'
+import AddEditPropertyDefForm from 'containers/AddEditPropertyDefForm'
 import NotFoundPage from 'containers/NotFoundPage'
-import formSaga from 'containers/Form/sagas'
-import formReducer from 'containers/Form/reducer'
-
-// Other containers actions
-import { makeSelectShouldRefetchContentType } from 'containers/Form/selectors'
 
 // Utils
 import injectSaga from 'utils/injectSaga'
-import injectReducer from 'utils/injectReducer'
-import { storeData } from '../../utils/storeData'
+// import { storeData } from '../../utils/storeData'
 
 import styles from './styles.scss'
 import { modelsFetch } from './actions'
@@ -51,10 +46,10 @@ class App extends React.Component {
         }
     }
 
-    componentWillUnmount() {
-        // Empty the app localStorage
-        storeData.clearAppStorage()
-    }
+    // componentWillUnmount() {
+    //     // Empty the app localStorage
+    //     storeData.clearAppStorage()
+    // }
 
     render() {
         return (
@@ -62,25 +57,64 @@ class App extends React.Component {
                 <InitApolloState />
                 <Switch>
                     <Route
-                        exact
-                        path="/plugins/content-type-builder"
-                        component={HomePage}
+                        path="/plugins/content-type-builder/entity-defs/:id"
+                        render={props => (
+                            <SubRouter
+                                component={EntityDefinitionPage}
+                                {...props}
+                            />
+                        )}
                     />
                     <Route
+                        path="/plugins/content-type-builder"
+                        render={props => (
+                            <SubRouter component={HomePage} {...props} />
+                        )}
+                    />
+                    {/* <Route
                         exact
                         path="/plugins/content-type-builder/models/:modelName"
                         component={ModelPage}
-                    />
-                    <Route
-                        exact
-                        path="/plugins/content-type-builder/entity-defs/:id"
-                        component={EntityDefinitionPage}
-                    />
+                    /> */}
                     <Route path="" component={NotFoundPage} />
                 </Switch>
             </div>
         )
     }
+}
+
+// This sub-router uses the auxiliary routing convention described in this article:
+// https://itnext.io/auxiliary-routing-with-react-e0a4eee36122
+//
+// This allows for maximum flexibility for routes that open modal windows; it makes it possible
+// to have URLs that open a given modal window on top of any base route. This might or
+// might not actually be needed, but aside from syntax (parentheses instead of #),
+// it essentially does the same thing that Strapi's official content-type-builder plugin does with
+// its hash-based routes, so I'm implementing it here to stay consistent with the Strapi approach.
+function SubRouter({ component: Component, ...props }) {
+    const basePath = props.match.path
+    return (
+        <React.Fragment>
+            <Route
+                path={`${basePath}/\\(base-settings/:modal_mode\\)`}
+                render={props => <AddEditEntityDefForm {...props} />}
+            />
+            <Route
+                path={`${basePath}/\\(base-settings/:modal_mode/:modal_entityDefId\\)`}
+                render={props => <AddEditEntityDefForm {...props} />}
+            />
+            <Route
+                path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId\\)`}
+                render={props => <AddEditPropertyDefForm {...props} />}
+            />
+            <Route
+                // Note: This route is only valid for editing existing properties ('edit' mode), not creating new ones
+                path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId/:modal_propertyId\\)`}
+                render={props => <AddEditPropertyDefForm {...props} />}
+            />
+            <Component {...props} />
+        </React.Fragment>
+    )
 }
 
 // Initialize Apollo local state
@@ -117,20 +151,18 @@ export function mapDispatchToProps(dispatch) {
     )
 }
 
-const mapStateToProps = createStructuredSelector({
-    shouldRefetchContentType: makeSelectShouldRefetchContentType(),
-})
+// makeSelectShouldRefetchContentType
 
 const withConnect = connect(
-    mapStateToProps,
+    null,
     mapDispatchToProps
 )
 const withSaga = injectSaga({ key: 'global', saga })
-const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
-const withFormSaga = injectSaga({ key: 'form', saga: formSaga })
+// const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
+// const withFormSaga = injectSaga({ key: 'form', saga: formSaga })
 export default compose(
-    withFormReducer,
-    withFormSaga,
+    // withFormReducer,
+    // withFormSaga,
     withSaga,
     withRouter,
     withConnect
