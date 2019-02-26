@@ -10,9 +10,10 @@ import { getPluginState } from '../state'
 import * as queries from '../graphql/queries'
 import styles from './styles.scss'
 import PluginLeftMenu from 'components/PluginLeftMenu'
-import AttributeRow from 'components/AttributeRow'
 import ContentHeader from 'components/ContentHeader'
 import EmptyAttributesBlock from 'components/EmptyAttributesBlock'
+import List from 'components/List'
+import AttributeRow from 'components/AttributeRow'
 import NotFoundPage from '../NotFoundPage'
 
 /*
@@ -163,7 +164,15 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
         ),
 
         renderListTitle: () => null,
-        renderCustomLi: () => null,
+
+        renderCustomLi: (row, key) => (
+            <AttributeRow
+                key={key}
+                row={row}
+                onEditAttribute={handleEditProperty}
+                onDelete={handleDeleteProperty}
+            />
+        ),
     }
 
     function handleAddLinkClick() {
@@ -181,17 +190,19 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
 
     function handleCancelChanges() {}
 
-    function handleClickAddProperty() {}
+    function handleAddProperty() {}
+
+    function handleEditProperty() {}
+
+    function handleDeleteProperty() {}
 
     function renderContent(entityDef) {
-        // console.log('entityDef.properties', entityDef.properties)
-
-        return entityDef.properties.length > 0 ? (
+        return entityDef.properties.length === 0 ? (
             <EmptyAttributesBlock
                 title="content-type-builder.home.emptyAttributes.title"
                 description="content-type-builder.home.emptyAttributes.description"
                 label="content-type-builder.button.attributes.add"
-                onClick={handleClickAddProperty}
+                onClick={handleAddProperty}
                 id="openAddAttr"
             />
         ) : (
@@ -201,7 +212,7 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
                 renderCustomListTitle={helpers.renderListTitle}
                 listContentMappingKey={'properties'}
                 renderCustomLi={helpers.renderCustomLi}
-                onButtonClick={handleClickAddProperty}
+                onButtonClick={handleAddProperty}
             />
         )
     }
