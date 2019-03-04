@@ -43,9 +43,14 @@ export function useApolloStateUpdate(statePath) {
         const currentStateToUpdate =
             rawCacheData['$ROOT_QUERY.' + statePath] || {}
         nestedObj.__typename = currentStateToUpdate.__typename
+
         Object.assign(nestedObj, updates)
 
-        const oldCacheData = JSON.parse(JSON.stringify(rawCacheData))
+        // Apollo requires a __typename on the top-level object as well (even though we're not changing it)
+        stateUpdates.__typename =
+            rawCacheData['$ROOT_QUERY.' + rootLevelKey].__typename
+
+        const oldRawCacheData = rawCacheData
         client.writeData({
             data: {
                 [rootLevelKey]: stateUpdates,
@@ -53,6 +58,7 @@ export function useApolloStateUpdate(statePath) {
         })
 
         if (config.persistClientState) {
+            const oldCacheData = JSON.parse(JSON.stringify(oldRawCacheData))
             if (timeout != null) {
                 clearTimeout(timeout)
             }

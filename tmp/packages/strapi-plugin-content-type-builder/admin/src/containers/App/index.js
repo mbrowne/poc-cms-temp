@@ -17,6 +17,7 @@ import { pluginId } from 'app'
 import HomePage from 'containers/HomePage'
 import EntityDefinitionPage from 'containers/EntityDefinition'
 import AddEditEntityDefForm from 'containers/AddEditEntityDefForm'
+import ChoosePropertyTypeForm from 'containers/ChoosePropertyTypeForm'
 import AddEditPropertyDefForm from 'containers/AddEditPropertyDefForm'
 import NotFoundPage from 'containers/NotFoundPage'
 
@@ -92,25 +93,96 @@ class App extends React.Component {
 // it essentially does the same thing that Strapi's official content-type-builder plugin does with
 // its hash-based routes, so I'm implementing it here to stay consistent with the Strapi approach.
 function SubRouter({ component: Component, ...props }) {
-    const basePath = props.match.path
+    const basePath = props.match.url
+    // :modal_formType      should be either 'baseSettings' or 'advancedSettings'
+    // :modal_mode          should be either 'create' or 'edit'
+
+    // return (
+    //     <React.Fragment>
+    //         <Route
+    //             path={`${basePath}/\\(:modal_formType/:modal_mode\\)`}
+    //             render={props => (
+    //                 <AddEditEntityDefForm {...props} basePath={basePath} />
+    //             )}
+    //         />
+    //         <Route
+    //             path={`${basePath}/\\(:modal_formType/:modal_mode/:modal_entityDefId\\)`}
+    //             render={props => (
+    //                 <AddEditEntityDefForm {...props} basePath={basePath} />
+    //             )}
+    //         />
+    //         <Route
+    //             path={`${basePath}/\\(choose-property-type/:modal_entityDefId\\)`}
+    //             render={props => (
+    //                 <ChoosePropertyTypeForm {...props} basePath={basePath} />
+    //             )}
+    //         />
+    //         <Route
+    //             path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId\\)`}
+    //             render={props => (
+    //                 <AddEditPropertyDefForm {...props} basePath={basePath} />
+    //             )}
+    //         />
+    //         <Route
+    //             // Note: This route is only valid for editing existing properties ('edit' mode), not creating new ones
+    //             path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId/:modal_propertyId\\)`}
+    //             render={props => (
+    //                 <AddEditPropertyDefForm {...props} basePath={basePath} />
+    //             )}
+    //         />
+    //         <Component {...props} />
+    //     </React.Fragment>
+    // )
+
     return (
         <React.Fragment>
             <Route
-                path={`${basePath}/\\(base-settings/:modal_mode\\)`}
-                render={props => <AddEditEntityDefForm {...props} />}
+                path={`${basePath}/\\(:modal_formType/:modal_mode/:modal_entityDefId\\)`}
+                render={props => (
+                    <React.Fragment>
+                        <Route
+                            path={`${basePath}/\\(choose-property-type/:modal_entityDefId\\)`}
+                            render={props => (
+                                <ChoosePropertyTypeForm
+                                    {...props}
+                                    basePath={basePath}
+                                />
+                            )}
+                        />
+                        <Route
+                            path=""
+                            render={() => {
+                                console.log('test')
+                                return <div>test</div>
+                            }}
+                            // render={props => (
+                            //     <AddEditEntityDefForm
+                            //         {...props}
+                            //         basePath={basePath}
+                            //     />
+                            // )}
+                        />
+                    </React.Fragment>
+                )}
             />
             <Route
-                path={`${basePath}/\\(base-settings/:modal_mode/:modal_entityDefId\\)`}
-                render={props => <AddEditEntityDefForm {...props} />}
+                path={`${basePath}/\\(:modal_formType/:modal_mode\\)`}
+                render={props => (
+                    <AddEditEntityDefForm {...props} basePath={basePath} />
+                )}
             />
             <Route
                 path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId\\)`}
-                render={props => <AddEditPropertyDefForm {...props} />}
+                render={props => (
+                    <AddEditPropertyDefForm {...props} basePath={basePath} />
+                )}
             />
             <Route
                 // Note: This route is only valid for editing existing properties ('edit' mode), not creating new ones
                 path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId/:modal_propertyId\\)`}
-                render={props => <AddEditPropertyDefForm {...props} />}
+                render={props => (
+                    <AddEditPropertyDefForm {...props} basePath={basePath} />
+                )}
             />
             <Component {...props} />
         </React.Fragment>

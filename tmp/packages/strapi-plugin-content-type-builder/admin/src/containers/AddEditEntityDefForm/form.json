@@ -3,16 +3,16 @@
     "items": [
       {
         "label": {
-          "id": "content-type-builder.form.contentType.item.name"
+          "id": "content-type-builder.form.contentType.item.id"
         },
-        "name": "name",
+        "name": "id",
         "value": "",
         "type": "string",
         "validations": {
           "required": true
         },
         "inputDescription": {
-          "id": "content-type-builder.form.contentType.item.name.description",
+          "id": "content-type-builder.form.contentType.item.id.description",
           "params": {
             "link": {
               "parent": {
@@ -25,7 +25,7 @@
               "children": {
                 "type": "FormattedMessage",
                 "attr": {
-                  "id": "content-type-builder.form.contentType.item.name.link.description"
+                  "id": "content-type-builder.form.contentType.item.id.link.description"
                 }
               }
             }
@@ -34,21 +34,9 @@
       },
       {
         "label": {
-          "id": "content-type-builder.form.contentType.item.connections"
+          "id": "content-type-builder.form.contentType.item.templateEntityDefinitionId"
         },
-        "name": "connection",
-        "type": "select",
-        "value": "default",
-        "items": [{}],
-        "validations": {
-          "required": true
-        }
-      },
-      {
-        "label": {
-          "id": "content-type-builder.form.contentType.item.parentModel"
-        },
-        "name": "parentModelName",
+        "name": "templateEntityDefinitionId",
         "type": "select",
         "items": [{}]
       },
@@ -79,14 +67,14 @@
     "items": [
       {
         "label": {
-          "id": "content-type-builder.form.contentType.item.collectionName"
+          "id": "content-type-builder.form.contentType.item.label"
         },
-        "name": "collectionName",
-        "type": "string",
+        "name": "label",
         "value": "",
+        "type": "string",
         "validations": {},
         "inputDescription": {
-          "id": "content-type-builder.form.contentType.item.collectionName.inputDescription"
+          "id": "content-type-builder.form.contentType.item.label.description"
         }
       }
     ]

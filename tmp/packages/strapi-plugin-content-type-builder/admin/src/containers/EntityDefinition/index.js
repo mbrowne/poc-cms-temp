@@ -17,7 +17,7 @@ import AttributeRow from 'components/AttributeRow'
 import NotFoundPage from '../NotFoundPage'
 
 /*
-interface EntityDefinitionProps {
+interface EntityDefinitionProps extends RouteComponentProps {
     menu: Menu
 }
 
@@ -34,6 +34,7 @@ interface Menu {
 const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
     menu,
     match,
+    history,
     showButtons,
 }) => {
     const contentHeaderButtons = [
@@ -190,7 +191,13 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
 
     function handleCancelChanges() {}
 
-    function handleAddProperty() {}
+    function handleAddProperty() {
+        history.push(
+            `/plugins/content-type-builder/entity-defs/${
+                match.params.id
+            }/(choose-property-type/${match.params.id})`
+        )
+    }
 
     function handleEditProperty() {}
 
