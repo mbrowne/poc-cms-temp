@@ -1,13 +1,21 @@
 input EntityDefinitionInput {
+    """
+    NB: This can be different from the `id` argument passed to updateEntityDefinition(), in the case
+    where the user changes the ID
+    """
     id: ID!
     label: String
     # displayNameTemplate: String
-    pluralName: String!
+    pluralLabel: String!
+    description: String
     templateEntityDefinitionId: ID
     isAbstract: Boolean! = false
     # hasUrl: Boolean!
-    # If we support fieldsets in the future, then this field will probably no longer be needed
-    properties: [PropertyInput!]!
+    #
+    # If we support fieldsets in the future, then this field will probably no longer be needed.
+    # `properites` is optional so that you can update just the basic attributes of an entity definition
+    # without re-sending all the properties.
+    properties: [PropertyInput!]
     # fieldsets: [PropertyFieldsetInput!]
 }
 
@@ -43,6 +51,7 @@ type Mutation {
     ): EntityDefinitionModerationStatus
 
     updateEntityDefinition(
+        id: ID!
         entityDef: EntityDefinitionInput!
     ): EntityDefinitionModerationStatus
 }

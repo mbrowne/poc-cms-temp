@@ -35,13 +35,10 @@ export const Query = {
     entityDefinition(_, { id }) {
         return loadEntityDef(id)
     },
-
-    testQuery() {
-        return 2
-    },
 }
 
-// @TODO Do dynamic imports get cached? If so we might need to read the JSON file directly instead.
 async function loadEntityDef(id) {
-    return (await import(path.join(entityDefsDir, id + '.json'))).default
+    return JSON.parse(
+        await fs.readFile(path.join(entityDefsDir, id + '.json'), 'utf8')
+    )
 }

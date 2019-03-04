@@ -1,5 +1,4 @@
 type Query {
     entityDefinitions: EntityDefinitionResults!
     entityDefinition(id: ID!): EntityDefinition
-    testQuery: Int
 }
