@@ -8,7 +8,7 @@ export const config = {
     // Adding '-custom' suffix since we're not using the official apollo-cache-persist package,
     // but hopefully the official package will support our use case (https://github.com/apollographql/apollo-client/issues/4469)
     // in the future.
-    storageKey: 'apollo-cache-persist-custom'
+    storageKey: 'apollo-cache-persist-custom',
 }
 
 const { storageKey } = config
@@ -48,8 +48,8 @@ export function useApolloStateUpdate(statePath) {
         const oldCacheData = JSON.parse(JSON.stringify(rawCacheData))
         client.writeData({
             data: {
-                [rootLevelKey]: stateUpdates
-            }
+                [rootLevelKey]: stateUpdates,
+            },
         })
 
         if (config.persistClientState) {
@@ -63,7 +63,7 @@ export function useApolloStateUpdate(statePath) {
     }
 }
 
-export function restoreClientState(client, defaultState) {
+export function restoreApolloClientState(client, defaultState) {
     const { cache } = client
     const json = localStorage.getItem(storageKey)
     if (json) {
@@ -71,7 +71,7 @@ export function restoreClientState(client, defaultState) {
         cache.restore(JSON.parse(json))
     } else {
         cache.writeData({
-            data: defaultState
+            data: defaultState,
         })
     }
 }
@@ -120,7 +120,7 @@ function storeClientState(cache, prevCacheData) {
     const updatedStorageState = {
         ...currentStorageState,
         ...objsToPersist,
-        ROOT_QUERY: rootQueryDataToPersist
+        ROOT_QUERY: rootQueryDataToPersist,
     }
     localStorage.setItem(storageKey, JSON.stringify(updatedStorageState))
 }

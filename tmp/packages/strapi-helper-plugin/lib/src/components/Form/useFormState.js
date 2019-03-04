@@ -4,16 +4,16 @@ import { useState } from 'react'
 export function useFormState(initialValues = {}) {
     const [formState, setFormState] = useState({
         initialValues,
-        values: initialValues
+        values: initialValues,
     })
     function setValues(values) {
         setFormState(prevState => ({
             ...prevState,
             values: {
                 ...prevState.values,
-                ...values
-            }
+                ...values,
+            },
         }))
     }
-    return { formState, setFormState: setValues }
+    return [formState, setValues]
 }

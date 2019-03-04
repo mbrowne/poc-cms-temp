@@ -3,7 +3,7 @@ import invariant from 'invariant'
 
 const RAW_VALUES = Symbol('RAW_VALUES')
 
-export default function useConvenientState(initialState) {
+export function useConvenientState(initialState) {
     invariant(
         typeof initialState === 'object',
         'useConvenientState() only works with objects'

@@ -22,14 +22,19 @@ export function useQueryLoader(query, options) {
 
 const QueryLoader = ({ result, loadingPromise, renderCallback }) => {
     if (loadingPromise) {
+        // @TODO figure out how to handle the case where the promise resolves to an error,
+        // e.g. an Apollo network error
+        //
         // use Suspense to wait until the data is available
         throw loadingPromise
     }
-    return result.error ? (
-        <ErrorMessage errorObject={result.error} />
-    ) : (
-        renderCallback(result)
-    )
+    if (result.error) {
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Apollo error: ', result.error)
+        }
+        return <ErrorMessage errorObject={result.error} />
+    }
+    return renderCallback(result)
 }
 
 // @TODO use a shared component for this
