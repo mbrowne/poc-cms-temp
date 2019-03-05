@@ -29,7 +29,7 @@ function useUpdatePropertyDef(origEntityDef, isUnsavedEntityDef = false) {
         const updatedEntityDef = {
             ...origEntityDef,
             properties,
-            // special flag indicating that this entity def has unsaved changes
+            // client-side flag indicating that this entity def has unsaved changes
             hasChanges: true,
         }
 

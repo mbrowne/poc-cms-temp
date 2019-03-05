@@ -5,6 +5,7 @@ import { createStructuredSelector } from 'reselect'
 import { FormattedMessage } from 'react-intl'
 import { NavLink } from 'react-router-dom'
 import { isEmpty, startCase } from 'lodash'
+import { useApolloClient } from 'react-apollo-hooks'
 import { makeSelectMenu } from 'containers/App/selectors'
 import { getPluginState } from '../state'
 import * as queries from '../graphql/queries'
@@ -15,9 +16,6 @@ import EmptyAttributesBlock from 'components/EmptyAttributesBlock'
 import List from 'components/List'
 import AttributeRow from 'components/AttributeRow'
 import NotFoundPage from '../NotFoundPage'
-
-// temp
-import { useApolloClient } from 'react-apollo-hooks'
 
 /*
 interface EntityDefinitionProps extends RouteComponentProps {
@@ -34,12 +32,15 @@ interface Menu {
 }
 */
 
-const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
-    menu,
-    match,
-    history,
-    showButtons,
-}) => {
+const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = props => {
+    const { match } = props
+
+    return useQueryLoader(queries.entityDefinition, {
+        variables: { id: match.params.id },
+    })(({ data }) => <EntityDefinitionView {...props} data={data} />)
+}
+
+const EntityDefinitionView = ({ data, menu, match, history, showButtons }) => {
     const contentHeaderButtons = [
         {
             label: 'content-type-builder.form.button.cancel',
@@ -204,7 +205,33 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
 
     function handleEditProperty() {}
 
-    function handleDeleteProperty() {}
+    function handleDeleteProperty(propId) {
+        const properties = [...entityDef.properties]
+        const existingPropIndex = properties.findIndex(p => p.id === propId)
+        if (existingPropIndex === -1) {
+            throw Error(`Couldn't find property '${propId}'`)
+        }
+        const updatedEntityDef = {
+            ...entityDef,
+            properties: properties.splice(existingPropIndex, 1),
+            // client-side flag indicating that this entity def has unsaved changes
+            hasChanges: true,
+        }
+
+        // const result = properties.splice(existingPropIndex, 1)
+        // console.log('result: ', result)
+
+        // @TODO - this isn't working yet
+
+        console.log('updatedEntityDef', updatedEntityDef)
+
+        client.writeData({
+            data: {
+                EntityDefinition: updatedEntityDef,
+            },
+            id: entityDef.id,
+        })
+    }
 
     function renderContent(entityDef) {
         return entityDef.properties.length === 0 ? (
@@ -227,65 +254,61 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
         )
     }
 
+    const { entityDef } = data
+    const { entityDefUI } = getPluginState(data)
+    if (!entityDef) {
+        return <NotFoundPage />
+    }
+
     const client = useApolloClient()
 
-    return useQueryLoader(queries.entityDefinition, {
-        variables: { id: match.params.id },
-    })(({ data }) => {
-        const { entityDef } = data
-        const { entityDefUI } = getPluginState(data)
-        if (!entityDef) {
-            return <NotFoundPage />
-        }
+    // Url to redirect the user if they modify the unsaved entity def ID
+    const redirectRoute = match.path.replace('/:id', '')
 
-        // Url to redirect the user if they modify the unsaved entity def ID
-        const redirectRoute = match.path.replace('/:id', '')
+    const addButtons = true
 
-        const addButtons = true
+    // const name = get(storeData.getContentType(), 'id')
+    // const addButtons =
+    //     (name === this.props.match.params.modelName &&
+    //         size(get(storeData.getContentType(), 'properties')) > 0) ||
+    //     this.props.modelPage.showButtons
 
-        // const name = get(storeData.getContentType(), 'id')
-        // const addButtons =
-        //     (name === this.props.match.params.modelName &&
-        //         size(get(storeData.getContentType(), 'properties')) > 0) ||
-        //     this.props.modelPage.showButtons
+    const contentHeaderDescription =
+        entityDef.description ||
+        'content-type-builder.modelPage.contentHeader.emptyDescription.description'
 
-        const contentHeaderDescription =
-            entityDef.description ||
-            'content-type-builder.modelPage.contentHeader.emptyDescription.description'
+    const icoType = match.params.id.includes('&source=') ? '' : 'pencil'
 
-        const icoType = match.params.id.includes('&source=') ? '' : 'pencil'
-
-        return (
-            <div className={styles.entityDefPage}>
-                <div className="container-fluid">
-                    <div className="row">
-                        <PluginLeftMenu
-                            sections={menu}
-                            renderCustomLink={helpers.renderCustomLink}
-                            addCustomSection={helpers.addCustomSection}
-                        />
-                        <div className="col-md-9">
-                            <div className={styles.componentsContainer}>
-                                <ContentHeader
-                                    name={entityDef.id}
-                                    description={contentHeaderDescription}
-                                    icoType={icoType}
-                                    editIcon
-                                    editPath={`${redirectRoute}/${
-                                        match.params.id
-                                    }/(base-settings/edit/${match.params.id})`}
-                                    addButtons={addButtons}
-                                    isLoading={entityDefUI.showButtonLoader}
-                                    buttonsContent={contentHeaderButtons}
-                                />
-                                {renderContent(entityDef)}
-                            </div>
+    return (
+        <div className={styles.entityDefPage}>
+            <div className="container-fluid">
+                <div className="row">
+                    <PluginLeftMenu
+                        sections={menu}
+                        renderCustomLink={helpers.renderCustomLink}
+                        addCustomSection={helpers.addCustomSection}
+                    />
+                    <div className="col-md-9">
+                        <div className={styles.componentsContainer}>
+                            <ContentHeader
+                                name={entityDef.id}
+                                description={contentHeaderDescription}
+                                icoType={icoType}
+                                editIcon
+                                editPath={`${redirectRoute}/${
+                                    match.params.id
+                                }/(base-settings/edit/${match.params.id})`}
+                                addButtons={addButtons}
+                                isLoading={entityDefUI.showButtonLoader}
+                                buttonsContent={contentHeaderButtons}
+                            />
+                            {renderContent(entityDef)}
                         </div>
                     </div>
                 </div>
             </div>
-        )
-    })
+        </div>
+    )
 }
 
 const mapStateToProps = createStructuredSelector({
