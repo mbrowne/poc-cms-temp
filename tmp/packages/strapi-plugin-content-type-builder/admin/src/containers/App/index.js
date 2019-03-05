@@ -94,96 +94,55 @@ class App extends React.Component {
 // its hash-based routes, so I'm implementing it here to stay consistent with the Strapi approach.
 function SubRouter({ component: Component, ...props }) {
     const basePath = props.match.url
-    // :modal_formType      should be either 'baseSettings' or 'advancedSettings'
+    // :modal_formType      should be either 'base-settings' or 'advanced-settings'
     // :modal_mode          should be either 'create' or 'edit'
-
-    // return (
-    //     <React.Fragment>
-    //         <Route
-    //             path={`${basePath}/\\(:modal_formType/:modal_mode\\)`}
-    //             render={props => (
-    //                 <AddEditEntityDefForm {...props} basePath={basePath} />
-    //             )}
-    //         />
-    //         <Route
-    //             path={`${basePath}/\\(:modal_formType/:modal_mode/:modal_entityDefId\\)`}
-    //             render={props => (
-    //                 <AddEditEntityDefForm {...props} basePath={basePath} />
-    //             )}
-    //         />
-    //         <Route
-    //             path={`${basePath}/\\(choose-property-type/:modal_entityDefId\\)`}
-    //             render={props => (
-    //                 <ChoosePropertyTypeForm {...props} basePath={basePath} />
-    //             )}
-    //         />
-    //         <Route
-    //             path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId\\)`}
-    //             render={props => (
-    //                 <AddEditPropertyDefForm {...props} basePath={basePath} />
-    //             )}
-    //         />
-    //         <Route
-    //             // Note: This route is only valid for editing existing properties ('edit' mode), not creating new ones
-    //             path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId/:modal_propertyId\\)`}
-    //             render={props => (
-    //                 <AddEditPropertyDefForm {...props} basePath={basePath} />
-    //             )}
-    //         />
-    //         <Component {...props} />
-    //     </React.Fragment>
-    // )
 
     return (
         <React.Fragment>
-            <Route
-                path={`${basePath}/\\(:modal_formType/:modal_mode/:modal_entityDefId\\)`}
-                render={props => (
-                    <React.Fragment>
-                        <Route
-                            path={`${basePath}/\\(choose-property-type/:modal_entityDefId\\)`}
-                            render={props => (
-                                <ChoosePropertyTypeForm
-                                    {...props}
-                                    basePath={basePath}
-                                />
-                            )}
+            <Switch>
+                <Route
+                    path={`${basePath}/\\(choose-property-type/:modal_entityDefId\\)`}
+                    render={props => (
+                        <ChoosePropertyTypeForm
+                            {...props}
+                            basePath={basePath}
                         />
-                        <Route
-                            path=""
-                            render={() => {
-                                console.log('test')
-                                return <div>test</div>
-                            }}
-                            // render={props => (
-                            //     <AddEditEntityDefForm
-                            //         {...props}
-                            //         basePath={basePath}
-                            //     />
-                            // )}
+                    )}
+                />
+                <Route
+                    // :modal_propTypeOrPropertyId  In 'create' mode, this is the propertyType to be created
+                    //                              In 'edit' mode, this is the ID of the property to be edited
+                    path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId/:modal_propTypeOrPropertyId/:modal_formType\\)`}
+                    render={props => (
+                        <AddEditPropertyDefForm
+                            {...props}
+                            basePath={basePath}
                         />
-                    </React.Fragment>
-                )}
-            />
-            <Route
-                path={`${basePath}/\\(:modal_formType/:modal_mode\\)`}
-                render={props => (
-                    <AddEditEntityDefForm {...props} basePath={basePath} />
-                )}
-            />
-            <Route
-                path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId\\)`}
-                render={props => (
-                    <AddEditPropertyDefForm {...props} basePath={basePath} />
-                )}
-            />
-            <Route
-                // Note: This route is only valid for editing existing properties ('edit' mode), not creating new ones
-                path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId/:modal_propertyId\\)`}
-                render={props => (
-                    <AddEditPropertyDefForm {...props} basePath={basePath} />
-                )}
-            />
+                    )}
+                />
+                {/* <Route
+                    // Note: This route is only valid for editing existing properties ('edit' mode), not creating new ones
+                    path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId/:modal_propertyId\\)`}
+                    render={props => (
+                        <AddEditPropertyDefForm
+                            {...props}
+                            basePath={basePath}
+                        />
+                    )}
+                /> */}
+                <Route
+                    path={`${basePath}/\\(:modal_formType/:modal_mode\\)`}
+                    render={props => (
+                        <AddEditEntityDefForm {...props} basePath={basePath} />
+                    )}
+                />
+                <Route
+                    path={`${basePath}/\\(:modal_formType/:modal_mode/:modal_entityDefId\\)`}
+                    render={props => (
+                        <AddEditEntityDefForm {...props} basePath={basePath} />
+                    )}
+                />
+            </Switch>
             <Component {...props} />
         </React.Fragment>
     )
@@ -196,6 +155,16 @@ const InitApolloState = () => {
     client.cache.writeData({
         data: defaultState,
     })
+
+    client.addResolvers({
+        EntityDefinition: {
+            hasChanges() {
+                // this will be set to true later as needed, via a direct cache write
+                return false
+            },
+        },
+    })
+
     return null
 }
 

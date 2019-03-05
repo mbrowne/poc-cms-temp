@@ -50,7 +50,9 @@ export function useApolloStateUpdate(statePath) {
         stateUpdates.__typename =
             rawCacheData['$ROOT_QUERY.' + rootLevelKey].__typename
 
-        const oldRawCacheData = rawCacheData
+        // @TODO make this more efficient—we're running this every time even when we don't persist the state due to the debounce.
+        // But in the case where we DO persist it, we need to run JSON.stringify() here BEFORE we call writeData().
+        const oldCacheData = JSON.parse(JSON.stringify(rawCacheData))
         client.writeData({
             data: {
                 [rootLevelKey]: stateUpdates,
@@ -58,7 +60,6 @@ export function useApolloStateUpdate(statePath) {
         })
 
         if (config.persistClientState) {
-            const oldCacheData = JSON.parse(JSON.stringify(oldRawCacheData))
             if (timeout != null) {
                 clearTimeout(timeout)
             }
@@ -73,7 +74,6 @@ export function restoreApolloClientState(client, defaultState) {
     const { cache } = client
     const json = localStorage.getItem(storageKey)
     if (json) {
-        // console.log('savedState: ', JSON.parse(json))
         cache.restore(JSON.parse(json))
     } else {
         cache.writeData({
@@ -95,6 +95,7 @@ function storeClientState(cache, prevCacheData) {
     // which parts were affected by our client.writeData() call. The changed parts are the client state
     // and we assume that anything else doesn't need to be persisted to localStorage.
     const newCacheData = cache.extract()
+
     const objsToPersist = {}
     const changedKeys = []
     for (const key in newCacheData) {
@@ -111,6 +112,7 @@ function storeClientState(cache, prevCacheData) {
             changedKeys.push(key)
         }
     }
+
     const prefixLen = '$ROOT_QUERY.'.length
     const unprefixedChangedKeys = new Set(
         changedKeys.map(key => key.substring(prefixLen))

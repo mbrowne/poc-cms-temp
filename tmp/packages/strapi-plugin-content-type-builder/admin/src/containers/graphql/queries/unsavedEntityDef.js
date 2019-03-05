@@ -1,17 +1,16 @@
 import gql from 'graphql-tag'
 import { entityDefDetails, entityDefUI } from '../fragments'
 
-export const entityDefinition = gql`
+export const unsavedEntityDef = gql`
     ${entityDefDetails}
     ${entityDefUI}
 
-    query($id: ID!) {
-        entityDef: entityDefinition(id: $id) {
-            ...EntityDefDetails
-            hasChanges @client
-        }
-
+    query {
         entityDefinitionBuilder @client {
+            unsavedEntityDef {
+                ...EntityDefDetails
+            }
+
             entityDefUI {
                 ...EntityDefUI
             }

@@ -16,6 +16,9 @@ import List from 'components/List'
 import AttributeRow from 'components/AttributeRow'
 import NotFoundPage from '../NotFoundPage'
 
+// temp
+import { useApolloClient } from 'react-apollo-hooks'
+
 /*
 interface EntityDefinitionProps extends RouteComponentProps {
     menu: Menu
@@ -223,6 +226,8 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = ({
             />
         )
     }
+
+    const client = useApolloClient()
 
     return useQueryLoader(queries.entityDefinition, {
         variables: { id: match.params.id },

@@ -8,6 +8,7 @@ type EntityDefinition {
     """
     label: String
     pluralLabel: String!
+    description: String
     """
     if specified, a templateEntityDefinition means that this entity definition inherits all the properties of its template definition,
     e.g. the template of Exhibition is Event

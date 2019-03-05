@@ -5,6 +5,7 @@ export const entityDefDetails = gql`
         id
         label
         pluralLabel
+        description
         # templateEntityDefinition {
         #     id
         #     properties
@@ -16,6 +17,5 @@ export const entityDefDetails = gql`
             label
             dataType
         }
-        # ...entityDefDetails
     }
 `

@@ -364,7 +364,7 @@ PopUpForm.defaultProps = {
     popUpHeaderNavLinks: [],
     renderCustomPopUpHeader: false,
     routePath: '',
-    selectOptions: [],
+    selectOptions: {},
     values: {},
 }
 
