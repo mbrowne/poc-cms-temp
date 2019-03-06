@@ -169,10 +169,6 @@ const AddEditEntityDefFormView = props => {
         history.push(`${redirectRoute}/entity-defs/${values.id}`)
     }
 
-    const state = useConvenientState({
-        showButtonLoading: false,
-    })
-
     const [formState, setFormState] = useFormState(
         helpers.getInitialFormValues(formConfig, origEntityDef)
     )
@@ -201,7 +197,7 @@ const AddEditEntityDefFormView = props => {
             onSubmit={handleSubmit}
             renderModalBody={false}
             buttonSubmitMessage="form.button.save"
-            showLoader={state.showButtonLoading}
+            showLoader={false}
         />
     )
 }

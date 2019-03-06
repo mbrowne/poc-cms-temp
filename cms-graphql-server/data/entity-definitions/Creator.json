@@ -1,8 +1,23 @@
 {
   "id": "Creator",
   "label": null,
+  "isAbstract": false,
   "pluralLabel": "Creators",
-  "description": "",
-  "isAbstract": true,
-  "properties": []
+  "properties": [
+    {
+      "__typename": "LiteralProperty",
+      "id": "foo",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    },
+    {
+      "__typename": "LiteralProperty",
+      "id": "adfs",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    }
+  ],
+  "description": null
 }

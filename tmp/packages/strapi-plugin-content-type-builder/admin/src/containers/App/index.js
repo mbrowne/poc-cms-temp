@@ -120,16 +120,6 @@ function SubRouter({ component: Component, ...props }) {
                         />
                     )}
                 />
-                {/* <Route
-                    // Note: This route is only valid for editing existing properties ('edit' mode), not creating new ones
-                    path={`${basePath}/\\(property/:modal_mode/:modal_entityDefId/:modal_propertyId\\)`}
-                    render={props => (
-                        <AddEditPropertyDefForm
-                            {...props}
-                            basePath={basePath}
-                        />
-                    )}
-                /> */}
                 <Route
                     path={`${basePath}/\\(:modal_formType/:modal_mode\\)`}
                     render={props => (

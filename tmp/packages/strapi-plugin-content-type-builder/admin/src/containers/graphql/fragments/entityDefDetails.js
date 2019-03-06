@@ -16,6 +16,7 @@ export const entityDefDetails = gql`
             id
             label
             dataType
+            readOnly
         }
     }
 `

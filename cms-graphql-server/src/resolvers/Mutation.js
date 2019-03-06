@@ -96,7 +96,10 @@ async function saveEntityDefinition(
         'utf8'
     )
 
-    if (existingEntityDefId !== entityDef.id) {
+    // @TODO ensure that case always matches before we get here so we don't need this check
+    // (This will be necessary for the app to work correctly on case-sensitive file systems,
+    // i.e. Linux)
+    if (existingEntityDefId.toLowerCase() !== entityDef.id.toLowerCase()) {
         // If the entity def ID was renamed, we also need to delete the old file
         await fs.unlink(jsonPathExisting)
     }

@@ -5,8 +5,9 @@ import { createStructuredSelector } from 'reselect'
 import { FormattedMessage } from 'react-intl'
 import { NavLink } from 'react-router-dom'
 import { isEmpty, startCase } from 'lodash'
-import { useApolloClient } from 'react-apollo-hooks'
+import { useApolloClient, useMutation } from 'react-apollo-hooks'
 import { makeSelectMenu } from 'containers/App/selectors'
+import { useConvenientState, useApolloStateUpdate } from 'hooks'
 import { getPluginState } from '../state'
 import * as queries from '../graphql/queries'
 import styles from './styles.scss'
@@ -16,6 +17,10 @@ import EmptyAttributesBlock from 'components/EmptyAttributesBlock'
 import List from 'components/List'
 import AttributeRow from 'components/AttributeRow'
 import NotFoundPage from '../NotFoundPage'
+
+function useUpdateUnsavedEntityDef() {
+    return useApolloStateUpdate('entityDefinitionBuilder.unsavedEntityDef')
+}
 
 /*
 interface EntityDefinitionProps extends RouteComponentProps {
@@ -35,12 +40,29 @@ interface Menu {
 const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = props => {
     const { match } = props
 
+    // TEMP
+    const isUnsavedEntityDef = false
+    // const isUnsavedEntityDef = unsavedEntityDef.id === match.params.id
+
     return useQueryLoader(queries.entityDefinition, {
         variables: { id: match.params.id },
-    })(({ data }) => <EntityDefinitionView {...props} data={data} />)
+    })(({ data }) => (
+        <EntityDefinitionView
+            {...props}
+            data={data}
+            isUnsavedEntityDef={isUnsavedEntityDef}
+        />
+    ))
 }
 
-const EntityDefinitionView = ({ data, menu, match, history, showButtons }) => {
+const EntityDefinitionView = ({
+    data,
+    menu,
+    match,
+    history,
+    showButtons,
+    isUnsavedEntityDef,
+}) => {
     const contentHeaderButtons = [
         {
             label: 'content-type-builder.form.button.cancel',
@@ -191,7 +213,41 @@ const EntityDefinitionView = ({ data, menu, match, history, showButtons }) => {
         // }
     }
 
-    function handleSubmit() {}
+    async function handleSubmit(e) {
+        e.preventDefault()
+        if (!isUnsavedEntityDef) {
+            try {
+                const { __typename, hasChanges, ...entityDefInput } = entityDef
+                if (!hasChanges) {
+                    // @TODO ensure save button is grayed out in this case.
+                    // Still good to have this as a fallback though.
+                    console.warn('No changes to save')
+                } else {
+                    // Remove __typename properties
+                    entityDefInput.properties = entityDefInput.properties.map(
+                        ({ __typename, ...prop }) => prop
+                    )
+
+                    state.showButtonLoader = true
+                    await updateSavedEntityDef({
+                        variables: {
+                            id: entityDefId,
+                            entityDef: entityDefInput,
+                        },
+                    })
+                    state.showButtonLoader = false
+                }
+            } catch (e) {
+                console.error('Apollo error: ', e)
+                strapi.notification.error('Error saving data: ' + e.message)
+            }
+            strapi.notification.success(
+                'content-type-builder.notification.success.message.contentType.edit'
+            )
+        } else {
+            // strapi.notification.success('content-type-builder.notification.success.message.contentType.create')
+        }
+    }
 
     function handleCancelChanges() {}
 
@@ -211,19 +267,13 @@ const EntityDefinitionView = ({ data, menu, match, history, showButtons }) => {
         if (existingPropIndex === -1) {
             throw Error(`Couldn't find property '${propId}'`)
         }
+        properties.splice(existingPropIndex, 1)
         const updatedEntityDef = {
             ...entityDef,
-            properties: properties.splice(existingPropIndex, 1),
+            properties,
             // client-side flag indicating that this entity def has unsaved changes
             hasChanges: true,
         }
-
-        // const result = properties.splice(existingPropIndex, 1)
-        // console.log('result: ', result)
-
-        // @TODO - this isn't working yet
-
-        console.log('updatedEntityDef', updatedEntityDef)
 
         client.writeData({
             data: {
@@ -254,12 +304,18 @@ const EntityDefinitionView = ({ data, menu, match, history, showButtons }) => {
         )
     }
 
+    const entityDefId = match.params.id
     const { entityDef } = data
     const { entityDefUI } = getPluginState(data)
     if (!entityDef) {
         return <NotFoundPage />
     }
 
+    const state = useConvenientState({
+        showButtonLoader: false,
+    })
+    const updateUnsavedEntityDef = useUpdateUnsavedEntityDef()
+    const updateSavedEntityDef = useMutation(queries.updateEntityDefinition)
     const client = useApolloClient()
 
     // Url to redirect the user if they modify the unsaved entity def ID
@@ -299,7 +355,7 @@ const EntityDefinitionView = ({ data, menu, match, history, showButtons }) => {
                                     match.params.id
                                 }/(base-settings/edit/${match.params.id})`}
                                 addButtons={addButtons}
-                                isLoading={entityDefUI.showButtonLoader}
+                                isLoading={state.showButtonLoader}
                                 buttonsContent={contentHeaderButtons}
                             />
                             {renderContent(entityDef)}

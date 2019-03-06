@@ -136,11 +136,14 @@ const AddEditEntityDefFormView = props => {
     // console.log('origEntityDef: ', origEntityDef)
 
     const helpers = {
-        redirectAfterSave: (shouldOpenChoosePropertyModal = false) => {
-            const entityDefId = formState.values.id
-            history.push(redirectRoute)
-            // const path = shouldOpenPropertiesModal ? '#choose::attributes' : '';
-            // history.push(`${redirectRoute}/${entityDefId}${path}`);
+        redirectAfterSave: (redirectToChoosePropertyType = false) => {
+            if (redirectToChoosePropertyType) {
+                history.push(
+                    `${redirectRoute}/(choose-property-type/${entityDefId})`
+                )
+            } else {
+                history.push(redirectRoute)
+            }
         },
 
         getInitialFormValues: (entityDef = undefined) => {
@@ -228,11 +231,11 @@ const AddEditEntityDefFormView = props => {
         setFormState({ [target.name]: value })
     }
 
-    function handleSubmit(e) {
+    function handleSubmit(e, redirectToChoosePropertyType = true) {
         e.preventDefault()
         const { values } = formState
         updatePropertyDef(values)
-        helpers.redirectAfterSave()
+        helpers.redirectAfterSave(redirectToChoosePropertyType)
 
         // // If it's already on the server, go ahead and update it immediately
         // if (isSavedEntityDef) {
