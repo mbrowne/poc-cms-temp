@@ -140,8 +140,13 @@ function SubRouter({ component: Component, ...props }) {
     )
 }
 
+let initialized = false
+
 // Initialize Apollo local state
 const InitApolloState = () => {
+    if (initialized) {
+        return null
+    }
     const client = useApolloClient()
 
     client.cache.writeData({
@@ -157,6 +162,7 @@ const InitApolloState = () => {
         },
     })
 
+    initialized = true
     return null
 }
 

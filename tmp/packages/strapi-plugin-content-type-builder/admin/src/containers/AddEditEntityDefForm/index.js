@@ -1,25 +1,17 @@
 import React from 'react'
 import { forEach, toNumber, isObject } from 'lodash'
 import moment from 'moment'
-import { useMutation } from 'react-apollo-hooks'
-import {
-    useQueryLoader,
-    useConvenientState,
-    useFormState,
-    useApolloStateUpdate,
-} from 'hooks'
-import {
-    entityDefinition as entityDefinitionQuery,
-    updateEntityDefinition as updateEntityDefinitionMutation,
-} from '../graphql/queries'
+import { useApolloClient, useMutation } from 'react-apollo-hooks'
+import { useQueryLoader, useFormState, useApolloStateUpdate } from 'hooks'
+import * as queries from '../graphql/queries'
 import PopUpForm from 'components/PopUpForm'
 
 import formConfig from './form.json'
 
 class EntityDefinition {
     id
-    label
-    pluralLabel
+    label = null
+    pluralLabel = null
     isAbstract = false
     properties = []
 }
@@ -37,17 +29,29 @@ const popUpHeaderNavLinks = [
     },
 ]
 
-function useLoadOrCreateEntityDef(mode, entityDefId) {
-    return mode === 'edit'
-        ? useQueryLoader(entityDefinitionQuery, {
-              variables: { id: entityDefId },
-          })
-        : renderContent =>
-              renderContent({ data: { entityDef: new EntityDefinition() } })
-}
+// function useLoadOrCreateEntityDef(mode, entityDefId) {
+//     return mode === 'edit'
+//         ? useQueryLoader(queries.entityDefinition, {
+//               variables: { id: entityDefId },
+//           })
+//         : renderContent =>
+//               renderContent({ data: { entityDef: new EntityDefinition() } })
+// }
 
 function useUpdateUnsavedEntityDef() {
-    return useApolloStateUpdate('entityDefinitionBuilder.unsavedEntityDef')
+    // Workaround for Apollo's special treatment of `id` property: rename to business_id
+    const updateUnsavedEntityDef = useApolloStateUpdate(
+        'entityDefinitionBuilder.unsavedEntityDef'
+    )
+    return updates => {
+        const { id, ...values } = updates
+        return updateUnsavedEntityDef({
+            business_id: id,
+            ...values,
+        })
+    }
+
+    // return useApolloStateUpdate('entityDefinitionBuilder.unsavedEntityDef')
 }
 
 /*
@@ -62,7 +66,7 @@ const AddEditEntityDefForm = props => {
         match: { params },
     } = props
     // Get route params specific to this modal window
-    const id = params.modal_entityDefId
+    const entityDefId = params.modal_entityDefId
     const { modal_formType } = params
     if (
         modal_formType !== 'base-settings' &&
@@ -78,31 +82,84 @@ const AddEditEntityDefForm = props => {
         throw Error(`Unrecognized 'mode': ${mode}`)
     }
 
-    return useLoadOrCreateEntityDef(mode, id)(({ data }) => {
-        const { entityDef } = data
-        if (!entityDef) {
-            throw Error(`Entity definition ID '${id} not found`)
+    return useQueryLoader(queries.unsavedEntityDef)(({ data }) => {
+        const {
+            business_id,
+            ...unsavedEntityDef
+        } = data.entityDefinitionBuilder.unsavedEntityDef
+        // Workaround for Apollo's special treatment of `id` property
+        unsavedEntityDef.id = business_id
+        console.log('unsavedEntityDef: ', unsavedEntityDef)
+
+        // Indicates whether or not the entity definition being edited was saved on the server already
+        let isUnsavedEntityDef = false
+
+        // props to be passed to AddEditEntityDefFormView
+        const viewProps = {
+            ...props,
+            formType,
+            mode,
+            // @TODO
+            entityDefSelectOptions: [],
         }
+
+        if (mode === 'edit') {
+            // Are we editing an entity definition that was previously created but hasn't been saved yet?
+            if (unsavedEntityDef.id === entityDefId) {
+                isUnsavedEntityDef = true
+                return (
+                    <AddEditEntityDefFormView
+                        {...viewProps}
+                        entityDef={unsavedEntityDef}
+                        isUnsavedEntityDef={isUnsavedEntityDef}
+                    />
+                )
+            } else {
+                isUnsavedEntityDef = false
+                return useQueryLoader(queries.entityDefinition, {
+                    variables: { id: entityDefId },
+                })(result => {
+                    const { entityDef } = result.data
+                    if (!entityDef) {
+                        throw Error(
+                            `Entity definition ID '${entityDefId} not found`
+                        )
+                    }
+                    return (
+                        <AddEditEntityDefFormView
+                            {...viewProps}
+                            entityDef={entityDef}
+                            isUnsavedEntityDef={isUnsavedEntityDef}
+                        />
+                    )
+                })
+            }
+        }
+        // mode === 'create'
+        isUnsavedEntityDef = true
         return (
             <AddEditEntityDefFormView
-                {...props}
-                data={data}
-                formType={formType}
-                mode={mode}
+                {...viewProps}
+                entityDef={new EntityDefinition()}
+                isUnsavedEntityDef={isUnsavedEntityDef}
             />
         )
     })
 }
 
 const AddEditEntityDefFormView = props => {
-    const { history, match, basePath, data, mode, formType } = props
+    const {
+        history,
+        match,
+        basePath,
+        data,
+        mode,
+        formType,
+        isUnsavedEntityDef,
+        entityDefSelectOptions,
+    } = props
     const redirectRoute = props.redirectRoute || basePath
-
-    // Indicates whether or not the entity definition being edited was saved on the server already
-    const isSavedEntityDef = Boolean(data.entityDef)
-    const origEntityDef = isSavedEntityDef
-        ? data.entityDef
-        : data.entityDefinitionBuilder.unsavedEntityDef
+    const origEntityDef = props.entityDef
 
     const helpers = {
         getInitialFormValues: (formConfig, entityDef = undefined) => {
@@ -114,7 +171,12 @@ const AddEditEntityDefFormView = props => {
             })
 
             if (entityDef) {
-                const { properties, __typename, ...basicSettings } = entityDef
+                const {
+                    properties,
+                    __typename,
+                    hasChanges,
+                    ...basicSettings
+                } = entityDef
                 Object.assign(values, basicSettings)
             }
 
@@ -147,8 +209,13 @@ const AddEditEntityDefFormView = props => {
     async function handleSubmit(e) {
         e.preventDefault()
         const { values } = formState
-        // If it's already on the server, go ahead and update it immediately
-        if (isSavedEntityDef) {
+
+        if (isUnsavedEntityDef) {
+            // If it's a new entity definition not yet saved to the server, save it in local state so that the
+            // user can add properties to it and save it in the next step
+            updateUnsavedEntityDef(values)
+        } else {
+            // If it's already on the server, go ahead and update it immediately
             try {
                 await updateSavedEntityDef({
                     variables: {
@@ -161,12 +228,8 @@ const AddEditEntityDefFormView = props => {
                 strapi.notification.error('Error saving data: ' + e.message)
             }
         }
-        // Otherwise, save it in local state so that the user can add properties to it and save it in the next step
-        else {
-            updateUnsavedEntityDef(values)
-        }
-
-        history.push(`${redirectRoute}/entity-defs/${values.id}`)
+        history.push(redirectRoute)
+        // history.push(`${redirectRoute}/entity-defs/${values.id}`)
     }
 
     const [formState, setFormState] = useFormState(
@@ -174,10 +237,10 @@ const AddEditEntityDefFormView = props => {
     )
 
     const updateUnsavedEntityDef = useUpdateUnsavedEntityDef()
-    const updateSavedEntityDef = useMutation(updateEntityDefinitionMutation)
+    const updateSavedEntityDef = useMutation(queries.updateEntityDefinition)
 
     const selectOptions = {
-        parentEntityDefId: data.entityDefSelectOptions || [],
+        parentEntityDefId: entityDefSelectOptions || [],
     }
 
     return (

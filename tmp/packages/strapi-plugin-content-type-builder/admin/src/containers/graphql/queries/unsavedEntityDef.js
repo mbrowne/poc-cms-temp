@@ -9,6 +9,7 @@ export const unsavedEntityDef = gql`
         entityDefinitionBuilder @client {
             unsavedEntityDef {
                 ...EntityDefDetails
+                business_id # workaround
             }
 
             entityDefUI {
