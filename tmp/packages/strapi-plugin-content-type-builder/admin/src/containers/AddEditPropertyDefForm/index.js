@@ -13,13 +13,18 @@ import {
 } from 'hooks'
 import * as queries from '../graphql/queries'
 
-function useUpdatePropertyDef(origEntityDef, isUnsavedEntityDef = false) {
+function useUpdatePropertyDef(
+    origEntityDef,
+    origPropertyDef = null,
+    isUnsavedEntityDef = false
+) {
+    const origPropertyId = origPropertyDef.id
     const client = useApolloClient()
     return propertyDef => {
         propertyDef.__typename = 'PropertyDefinition'
         const properties = [...origEntityDef.properties]
         const existingPropIndex = properties.findIndex(
-            p => p.id === propertyDef.id
+            p => p.id === origPropertyId
         )
         if (existingPropIndex === -1) {
             properties.push(propertyDef)
@@ -136,17 +141,19 @@ const AddEditEntityDefFormView = props => {
     // console.log('origEntityDef: ', origEntityDef)
 
     const helpers = {
-        redirectAfterSave: (redirectToChoosePropertyType = false) => {
-            if (redirectToChoosePropertyType) {
-                history.push(
-                    `${redirectRoute}/(choose-property-type/${entityDefId})`
-                )
-            } else {
-                history.push(redirectRoute)
+        getExistingProperty: propId => {
+            const prop = origEntityDef.properties.find(p => p.id === propId)
+            if (!prop) {
+                throw Error('Property not found in entity definition')
             }
+            return prop
         },
 
-        getInitialFormValues: (entityDef = undefined) => {
+        getInitialFormValues: (propertyDef = undefined) => {
+            if (propertyDef) {
+                return { ...propertyDef }
+            }
+
             const dataType =
                 propertyType === 'number' ? 'integer' : propertyType
             let defaultValue = propertyType === 'number' ? 0 : ''
@@ -194,7 +201,7 @@ const AddEditEntityDefFormView = props => {
                             textTransform: 'capitalize',
                         }}
                     >
-                        {propertyType}
+                        {origPropertyDef.id}
                     </span>
                 )
             return (
@@ -206,6 +213,16 @@ const AddEditEntityDefFormView = props => {
                     <FormattedMessage id="content-type-builder.popUpForm.field" />
                 </div>
             )
+        },
+
+        redirectAfterSave: (redirectToChoosePropertyType = false) => {
+            if (redirectToChoosePropertyType) {
+                history.push(
+                    `${redirectRoute}/(choose-property-type/${entityDefId})`
+                )
+            } else {
+                history.push(redirectRoute)
+            }
         },
     }
 
@@ -259,25 +276,28 @@ const AddEditEntityDefFormView = props => {
         // history.push(`${redirectRoute}/entity-defs/${values.id}`)
     }
 
-    const {
-        mode,
-        entityDefId,
-        formType,
-        propertyType,
-        propertyId,
-    } = modalParams
+    const { mode, entityDefId, formType, propertyId } = modalParams
+    let propertyType
+    let origPropertyDef
+    if (mode === 'create') {
+        propertyType = modalParams.propertyType
+    } else {
+        origPropertyDef = helpers.getExistingProperty(propertyId)
+        // @TODO relationship properties
+        propertyType = origPropertyDef.dataType
+    }
 
     const state = useConvenientState({
         showButtonLoading: false,
     })
 
     const [formState, setFormState] = useFormState(
-        helpers.getInitialFormValues()
-        // helpers.getInitialFormValues(origEntityDef)
+        helpers.getInitialFormValues(origPropertyDef)
     )
 
     const updatePropertyDef = useUpdatePropertyDef(
         origEntityDef,
+        origPropertyDef,
         isUnsavedEntityDef
     )
 

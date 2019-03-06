@@ -6,14 +6,7 @@
   "properties": [
     {
       "__typename": "LiteralProperty",
-      "id": "foo",
-      "label": "",
-      "dataType": "string",
-      "readOnly": false
-    },
-    {
-      "__typename": "LiteralProperty",
-      "id": "adfs",
+      "id": "foo2",
       "label": "",
       "dataType": "string",
       "readOnly": false

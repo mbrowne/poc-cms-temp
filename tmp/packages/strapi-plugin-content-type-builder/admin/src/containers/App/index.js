@@ -121,12 +121,14 @@ function SubRouter({ component: Component, ...props }) {
                     )}
                 />
                 <Route
+                    // This route is only ever used for 'create' mode
                     path={`${basePath}/\\(:modal_formType/:modal_mode\\)`}
                     render={props => (
                         <AddEditEntityDefForm {...props} basePath={basePath} />
                     )}
                 />
                 <Route
+                    // This route is only ever used for 'edit' mode
                     path={`${basePath}/\\(:modal_formType/:modal_mode/:modal_entityDefId\\)`}
                     render={props => (
                         <AddEditEntityDefForm {...props} basePath={basePath} />

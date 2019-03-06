@@ -46,10 +46,11 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = props => {
 
     return useQueryLoader(queries.entityDefinition, {
         variables: { id: match.params.id },
-    })(({ data }) => (
+    })(({ data, refetch }) => (
         <EntityDefinitionView
             {...props}
             data={data}
+            refetch={refetch}
             isUnsavedEntityDef={isUnsavedEntityDef}
         />
     ))
@@ -57,6 +58,7 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = props => {
 
 const EntityDefinitionView = ({
     data,
+    refetch,
     menu,
     match,
     history,
@@ -152,7 +154,7 @@ const EntityDefinitionView = ({
                     className={`${customLinkStyles.liInnerContainer} ${
                         styles.iconPlus
                     }`}
-                    onClick={handleAddLinkClick}
+                    onClick={handleAddEntityDef}
                 >
                     <div>
                         <i className={`fa ${link.icon}`} />
@@ -202,15 +204,17 @@ const EntityDefinitionView = ({
         ),
     }
 
-    function handleAddLinkClick() {
-        // TODO
-        // if (storeData.getIsModelTemporary()) {
-        //     strapi.notification.info(
-        //         'content-type-builder.notification.info.contentType.creating.notSaved'
-        //     )
-        // } else {
-        //     this.toggleModal()
-        // }
+    function handleAddEntityDef() {
+        if (isUnsavedEntityDef) {
+            // Ask user to save already-started entity definition before creating another one
+            strapi.notification.info(
+                'content-type-builder.notification.info.contentType.creating.notSaved'
+            )
+        } else {
+            history.push(
+                `/plugins/content-type-builder/entity-defs/${entityDefId}/(base-settings/create)`
+            )
+        }
     }
 
     async function handleSubmit(e) {
@@ -218,6 +222,7 @@ const EntityDefinitionView = ({
         if (!isUnsavedEntityDef) {
             try {
                 const { __typename, hasChanges, ...entityDefInput } = entityDef
+
                 if (!hasChanges) {
                     // @TODO ensure save button is grayed out in this case.
                     // Still good to have this as a fallback though.
@@ -236,6 +241,8 @@ const EntityDefinitionView = ({
                         },
                     })
                     state.showButtonLoader = false
+
+                    refetch()
                 }
             } catch (e) {
                 console.error('Apollo error: ', e)
@@ -249,17 +256,21 @@ const EntityDefinitionView = ({
         }
     }
 
-    function handleCancelChanges() {}
+    function handleCancelChanges() {
+        refetch()
+    }
 
     function handleAddProperty() {
         history.push(
-            `/plugins/content-type-builder/entity-defs/${
-                match.params.id
-            }/(choose-property-type/${match.params.id})`
+            `/plugins/content-type-builder/entity-defs/${entityDefId}/(choose-property-type/${entityDefId})`
         )
     }
 
-    function handleEditProperty() {}
+    function handleEditProperty(propId) {
+        history.push(
+            `/plugins/content-type-builder/entity-defs/${entityDefId}/(property/edit/${entityDefId}/${propId}/base-settings)`
+        )
+    }
 
     function handleDeleteProperty(propId) {
         const properties = [...entityDef.properties]
@@ -306,7 +317,8 @@ const EntityDefinitionView = ({
 
     const entityDefId = match.params.id
     const { entityDef } = data
-    const { entityDefUI } = getPluginState(data)
+    // const { entityDefUI } = getPluginState(data)
+
     if (!entityDef) {
         return <NotFoundPage />
     }
