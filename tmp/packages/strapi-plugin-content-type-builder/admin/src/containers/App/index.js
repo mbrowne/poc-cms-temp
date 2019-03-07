@@ -9,7 +9,6 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators, compose } from 'redux'
 // import { withRouter } from 'react-router';
-import { createStructuredSelector } from 'reselect'
 import { Switch, Route, withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { pluginId } from 'app'
@@ -31,6 +30,7 @@ import saga from './sagas'
 
 import { useApolloClient } from 'react-apollo-hooks'
 import { defaultState } from '../state'
+import * as queries from '../graphql/queries'
 
 /* eslint-disable consistent-return */
 class App extends React.Component {
@@ -148,10 +148,18 @@ const InitApolloState = () => {
         return null
     }
     const client = useApolloClient()
-
-    client.cache.writeData({
-        data: defaultState,
-    })
+    try {
+        // First check to see if unsavedEntityDef is already in the cache.
+        // In that case, it means that there was already one restored from localStorage
+        // (see packages/strapi-helper-plugin/lib/src/apolloClient.js), so we don't want to overwrite it.
+        //
+        // This will throw an error if it's not in the cache yet.
+        client.readQuery({ query: queries.unsavedEntityDef })
+    } catch (e) {
+        client.cache.writeData({
+            data: defaultState,
+        })
+    }
 
     client.addResolvers({
         EntityDefinition: {

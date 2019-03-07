@@ -317,6 +317,7 @@ const EntityDefinitionView = ({
 
     const entityDefId = match.params.id
     const { entityDef } = data
+
     // const { entityDefUI } = getPluginState(data)
 
     if (!entityDef) {

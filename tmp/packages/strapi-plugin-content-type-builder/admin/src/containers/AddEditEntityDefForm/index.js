@@ -39,14 +39,14 @@ const popUpHeaderNavLinks = [
 // }
 
 function useUpdateUnsavedEntityDef() {
-    // Workaround for Apollo's special treatment of `id` property: rename to business_id
+    // Workaround for Apollo's special treatment of `id` property: rename to businessId
     const updateUnsavedEntityDef = useApolloStateUpdate(
         'entityDefinitionBuilder.unsavedEntityDef'
     )
     return updates => {
         const { id, ...values } = updates
         return updateUnsavedEntityDef({
-            business_id: id,
+            businessId: id,
             ...values,
         })
     }
@@ -82,69 +82,72 @@ const AddEditEntityDefForm = props => {
         throw Error(`Unrecognized 'mode': ${mode}`)
     }
 
-    return useQueryLoader(queries.unsavedEntityDef)(({ data }) => {
-        const {
-            business_id,
-            ...unsavedEntityDef
-        } = data.entityDefinitionBuilder.unsavedEntityDef
-        // Workaround for Apollo's special treatment of `id` property
-        unsavedEntityDef.id = business_id
-        console.log('unsavedEntityDef: ', unsavedEntityDef)
+    const client = useApolloClient()
+    const { entityDefinitionBuilder } = client.readQuery({
+        query: queries.unsavedEntityDef,
+    })
+    const {
+        businessId,
+        ...unsavedEntityDef
+    } = entityDefinitionBuilder.unsavedEntityDef
 
-        // Indicates whether or not the entity definition being edited was saved on the server already
-        let isUnsavedEntityDef = false
+    // Workaround for Apollo's special treatment of `id` property
+    unsavedEntityDef.id = businessId
+    console.log('unsavedEntityDef: ', unsavedEntityDef)
 
-        // props to be passed to AddEditEntityDefFormView
-        const viewProps = {
-            ...props,
-            formType,
-            mode,
-            // @TODO
-            entityDefSelectOptions: [],
-        }
+    // Indicates whether or not the entity definition being edited was saved on the server already
+    let isUnsavedEntityDef = false
 
-        if (mode === 'edit') {
-            // Are we editing an entity definition that was previously created but hasn't been saved yet?
-            if (unsavedEntityDef.id === entityDefId) {
-                isUnsavedEntityDef = true
+    // props to be passed to AddEditEntityDefFormView
+    const viewProps = {
+        ...props,
+        formType,
+        mode,
+        // @TODO
+        entityDefSelectOptions: [],
+    }
+
+    if (mode === 'edit') {
+        // Are we editing an entity definition that was previously created but hasn't been saved yet?
+        if (unsavedEntityDef.id === entityDefId) {
+            isUnsavedEntityDef = true
+            return (
+                <AddEditEntityDefFormView
+                    {...viewProps}
+                    entityDef={unsavedEntityDef}
+                    isUnsavedEntityDef={isUnsavedEntityDef}
+                />
+            )
+        } else {
+            isUnsavedEntityDef = false
+            return useQueryLoader(queries.entityDefinition, {
+                variables: { id: entityDefId },
+            })(result => {
+                const { entityDef } = result.data
+                if (!entityDef) {
+                    throw Error(
+                        `Entity definition ID '${entityDefId} not found`
+                    )
+                }
                 return (
                     <AddEditEntityDefFormView
                         {...viewProps}
-                        entityDef={unsavedEntityDef}
+                        entityDef={entityDef}
                         isUnsavedEntityDef={isUnsavedEntityDef}
                     />
                 )
-            } else {
-                isUnsavedEntityDef = false
-                return useQueryLoader(queries.entityDefinition, {
-                    variables: { id: entityDefId },
-                })(result => {
-                    const { entityDef } = result.data
-                    if (!entityDef) {
-                        throw Error(
-                            `Entity definition ID '${entityDefId} not found`
-                        )
-                    }
-                    return (
-                        <AddEditEntityDefFormView
-                            {...viewProps}
-                            entityDef={entityDef}
-                            isUnsavedEntityDef={isUnsavedEntityDef}
-                        />
-                    )
-                })
-            }
+            })
         }
-        // mode === 'create'
-        isUnsavedEntityDef = true
-        return (
-            <AddEditEntityDefFormView
-                {...viewProps}
-                entityDef={new EntityDefinition()}
-                isUnsavedEntityDef={isUnsavedEntityDef}
-            />
-        )
-    })
+    }
+    // mode === 'create'
+    isUnsavedEntityDef = true
+    return (
+        <AddEditEntityDefFormView
+            {...viewProps}
+            entityDef={new EntityDefinition()}
+            isUnsavedEntityDef={isUnsavedEntityDef}
+        />
+    )
 }
 
 const AddEditEntityDefFormView = props => {

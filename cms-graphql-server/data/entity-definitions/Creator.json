@@ -6,7 +6,7 @@
   "properties": [
     {
       "__typename": "LiteralProperty",
-      "id": "foo2",
+      "id": "foo",
       "label": "",
       "dataType": "string",
       "readOnly": false

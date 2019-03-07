@@ -18,14 +18,14 @@ function useUpdatePropertyDef(
     origPropertyDef = null,
     isUnsavedEntityDef = false
 ) {
-    const origPropertyId = origPropertyDef.id
+    const origPropertyId = origPropertyDef ? origPropertyDef.id : null
     const client = useApolloClient()
     return propertyDef => {
         propertyDef.__typename = 'PropertyDefinition'
         const properties = [...origEntityDef.properties]
-        const existingPropIndex = properties.findIndex(
-            p => p.id === origPropertyId
-        )
+        const existingPropIndex = origPropertyId
+            ? properties.findIndex(p => p.id === origPropertyId)
+            : -1
         if (existingPropIndex === -1) {
             properties.push(propertyDef)
         } else {
@@ -59,37 +59,41 @@ interface AddEditPropertyDefFormProps extends RouteComponentProps {
 */
 
 const AddEditPropertyDefForm = props => {
+    const client = useApolloClient()
     const modalParams = getRouteParams(props.match.params)
-    return useQueryLoader(queries.unsavedEntityDef)(({ data }) => {
-        const { unsavedEntityDef } = data.entityDefinitionBuilder
-        // Are we editing a new entity definition that hasn't been saved yet?
-        const isUnsavedEntityDef =
-            unsavedEntityDef.id === modalParams.entityDefId
 
-        if (isUnsavedEntityDef) {
-            return (
-                <AddEditEntityDefFormView
-                    {...props}
-                    isUnsavedEntityDef={isUnsavedEntityDef}
-                    modalParams={modalParams}
-                    entityDef={data.entityDefinitionBuilder.unsavedEntityDef}
-                />
-            )
-        }
-        // If we are editing an existing entity definition on the server,
-        // we now need to do the server-side query
-        return useQueryLoader(queries.entityDefinition, {
-            variables: { id: modalParams.entityDefId },
-        })(({ data }) => {
-            return (
-                <AddEditEntityDefFormView
-                    {...props}
-                    isUnsavedEntityDef={isUnsavedEntityDef}
-                    modalParams={modalParams}
-                    entityDef={data.entityDef}
-                />
-            )
-        })
+    const { entityDefinitionBuilder } = client.readQuery({
+        query: queries.unsavedEntityDef,
+    })
+    const { businessId, ...unsavedEntityDef } = entityDefinitionBuilder
+    // Workaround for Apollo's special treatment of `id` property
+    unsavedEntityDef.id = businessId
+    // Are we editing a new entity definition that hasn't been saved yet?
+    const isUnsavedEntityDef = unsavedEntityDef.id === modalParams.entityDefId
+
+    if (isUnsavedEntityDef) {
+        return (
+            <AddEditEntityDefFormView
+                {...props}
+                isUnsavedEntityDef={isUnsavedEntityDef}
+                modalParams={modalParams}
+                entityDef={unsavedEntityDef}
+            />
+        )
+    }
+    // If we are editing an existing entity definition on the server,
+    // we now need to do the server-side query
+    return useQueryLoader(queries.entityDefinition, {
+        variables: { id: modalParams.entityDefId },
+    })(({ data }) => {
+        return (
+            <AddEditEntityDefFormView
+                {...props}
+                isUnsavedEntityDef={isUnsavedEntityDef}
+                modalParams={modalParams}
+                entityDef={data.entityDef}
+            />
+        )
     })
 }
 

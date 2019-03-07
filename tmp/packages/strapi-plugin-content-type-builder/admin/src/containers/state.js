@@ -9,8 +9,8 @@ export const defaultState = {
         __typename: 'entityDefinitionBuilder',
         unsavedEntityDef: {
             __typename: 'unsavedEntityDef',
-            // workaround for Apollo's special treatment of 'id' property: rename to 'business_id'
-            business_id: null,
+            // workaround for Apollo's special treatment of 'id' property: rename to 'businessId'
+            businessId: null,
             properties: [],
         },
         entityDefUI: {
