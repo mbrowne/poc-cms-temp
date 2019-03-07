@@ -16,6 +16,7 @@
   "dependencies": {
     "apollo-server": "^2.3.3",
     "apollo-server-koa": "^2.3.3",
+    "assert-err": "^1.1.0",
     "esm": "^3.2.0",
     "graphql": "^14.1.1",
     "koa-morgan": "^1.0.1",

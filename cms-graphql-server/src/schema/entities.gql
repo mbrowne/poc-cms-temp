@@ -1,0 +1,37 @@
+type LiteralPropertyValue {
+    value: LiteralPropertyValueScalar
+}
+
+union PropertyValue = LiteralPropertyValue
+# union PropertyValue = LiteralPropertyValue | StaticAssets | Association
+
+type Entity {
+    id: ID!
+    """
+    A meaningful string identifier for this entity. This identifier should be all lowercase and hyphen-separated.
+    """
+    businessId: ID!
+    # priorBusinessIds: [ID!]!
+    entityDefId: ID!
+    state: [PropertyState!]!
+
+    # created: Date!
+    # createdBy: User!
+    # updated: Date!
+    # updatedBy: User!
+    # currentlyPublished: Boolean!
+    # """
+    #  If set to false, entity will not be published (or will be unpublished on the next deployment of the site).
+    # readyForPublishing overrides startPublishing.
+    # """
+    # readyForPublishing: Boolean!
+    # startPublishing: Date
+    # stopPublishing: Date
+}
+
+type PropertyState {
+    propertyId: ID!
+    value: PropertyValue
+    # variants: [PropertyValueVariant!]!
+    # moderationStatus: ModerationStatus
+}

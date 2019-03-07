@@ -1,4 +1,9 @@
 type EntityDefinitionResults {
-    results: [EntityDefinition]!
+    results: [EntityDefinition!]!
+    totalCount: Int!
+}
+
+type EntityResults {
+    results: [Entity!]!
     totalCount: Int!
 }

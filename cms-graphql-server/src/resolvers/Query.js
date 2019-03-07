@@ -35,6 +35,18 @@ export const Query = {
     entityDefinition(_, { id }) {
         return loadEntityDef(id)
     },
+
+    entities() {
+        const totalCount = 0
+        return {
+            results: [],
+            totalCount,
+        }
+    },
+
+    entity(_, { entityDefId, entityId }) {
+        return null
+    },
 }
 
 async function loadEntityDef(id) {
