@@ -40,6 +40,11 @@ type EntityDefinition {
     # predicates: [Predicate!]
     # # Associations to pre-fetch so they can be resolved very quickly by the graphql server (from JSON files) without having to hit the search API
     # eagerFetchAssociations: [AssociationToFetch!]
+
+    #
+    # Read-only fields:
+    #
+    propertiesCount: Int!
 }
 
 interface PropertyDefinition {

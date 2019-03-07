@@ -9,7 +9,7 @@ import {
     useQueryLoader,
     useConvenientState,
     useFormState,
-    // useApolloStateUpdate,
+    useApolloStateUpdate,
 } from 'hooks'
 import * as queries from '../graphql/queries'
 
@@ -20,6 +20,9 @@ function useUpdatePropertyDef(
 ) {
     const origPropertyId = origPropertyDef ? origPropertyDef.id : null
     const client = useApolloClient()
+    const updateUnsavedEntityDef = useApolloStateUpdate(
+        'entityDefinitionBuilder.unsavedEntityDef'
+    )
     return propertyDef => {
         propertyDef.__typename = 'PropertyDefinition'
         const properties = [...origEntityDef.properties]
@@ -39,7 +42,12 @@ function useUpdatePropertyDef(
         }
 
         if (isUnsavedEntityDef) {
-            // TODO
+            // Workaround for Apollo's special treatment of `id` property: rename to businessId
+            const { id, ...values } = updatedEntityDef
+            updateUnsavedEntityDef({
+                businessId: id,
+                ...values,
+            })
         } else {
             client.writeData({
                 data: {
@@ -65,7 +73,11 @@ const AddEditPropertyDefForm = props => {
     const { entityDefinitionBuilder } = client.readQuery({
         query: queries.unsavedEntityDef,
     })
-    const { businessId, ...unsavedEntityDef } = entityDefinitionBuilder
+    const {
+        businessId,
+        ...unsavedEntityDef
+    } = entityDefinitionBuilder.unsavedEntityDef
+
     // Workaround for Apollo's special treatment of `id` property
     unsavedEntityDef.id = businessId
     // Are we editing a new entity definition that hasn't been saved yet?

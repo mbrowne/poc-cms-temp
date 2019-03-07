@@ -14,7 +14,10 @@ const client = new ApolloClient({
     resolvers: {},
 })
 
-const defaultState = {}
-restoreApolloClientState(client, defaultState)
+// This seems to be causing the app to freeze when trying to load the content-type-builder,
+// but it only happens some of the time...might not be related to this, but commenting for now.
+//
+// const defaultState = {}
+// restoreApolloClientState(client, defaultState)
 
 export default client

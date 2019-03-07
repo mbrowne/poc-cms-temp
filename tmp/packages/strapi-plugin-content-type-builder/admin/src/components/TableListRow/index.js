@@ -28,7 +28,7 @@ class TableListRow extends React.Component {
     handleEdit = () => {
         router.push(
             `/plugins/content-type-builder/(base-settings/edit/${
-                this.props.rowItem.name
+                this.props.rowItem.id
             })`
         )
     }
@@ -36,14 +36,14 @@ class TableListRow extends React.Component {
     handleDelete = e => {
         e.preventDefault()
         e.stopPropagation()
-        this.props.onDelete(this.props.rowItem.name)
+        this.props.onDelete(this.props.rowItem.id)
         this.setState({ showWarning: false })
     }
 
     handleGoTo = () => {
         router.push(
             `/plugins/content-type-builder/entity-defs/${
-                this.props.rowItem.name
+                this.props.rowItem.id
             }${
                 this.props.rowItem.source
                     ? `&source=${this.props.rowItem.source}`
@@ -59,25 +59,8 @@ class TableListRow extends React.Component {
         this.setState({ showWarning: !this.state.showWarning })
 
     render() {
-        const name = get(this.props.rowItem, 'name', 'default')
-        const pluginSource = this.props.rowItem.source ? (
-            <FormattedMessage id="content-type-builder.from">
-                {message => (
-                    <span
-                        style={{
-                            fontStyle: 'italic',
-                            color: '#787E8F',
-                            fontWeight: '500',
-                        }}
-                    >
-                        ({message}: {this.props.rowItem.source})
-                    </span>
-                )}
-            </FormattedMessage>
-        ) : (
-            ''
-        )
-        const temporary = this.props.rowItem.isTemporary ? (
+        const name = get(this.props.rowItem, 'id', 'default')
+        const temporary = this.props.rowItem.isUnsaved ? (
             <FormattedMessage id="content-type-builder.contentType.temporaryDisplay" />
         ) : (
             ''
@@ -86,16 +69,14 @@ class TableListRow extends React.Component {
             ? '-'
             : this.props.rowItem.description
         const spanStyle = this.props.rowItem.isTemporary ? '60%' : '100%'
-        const icons = this.props.rowItem.source
-            ? []
-            : [
-                  { icoType: 'pencil', onClick: this.handleEdit },
-                  {
-                      icoType: 'trash',
-                      onClick: this.handleShowModalWarning,
-                      id: `delete${name}`,
-                  },
-              ]
+        const icons = [
+            { icoType: 'pencil', onClick: this.handleEdit },
+            {
+                icoType: 'trash',
+                onClick: this.handleShowModalWarning,
+                id: `delete${name}`,
+            },
+        ]
 
         return (
             <ListRow onClick={this.handleGoTo}>
@@ -106,8 +87,7 @@ class TableListRow extends React.Component {
                 >
                     <i className={`fa ${this.props.rowItem.icon}`} />
                     <span style={{ width: spanStyle }}>
-                        {startCase(this.props.rowItem.name)} &nbsp;
-                        {pluginSource}
+                        {startCase(this.props.rowItem.id)}
                     </span>
                     &nbsp;{temporary}
                 </div>
@@ -119,7 +99,7 @@ class TableListRow extends React.Component {
                     <div>{description}</div>
                 </div>
                 <div className="col-md-2 text-center">
-                    {this.props.rowItem.fields}
+                    {this.props.rowItem.propertiesCount}
                 </div>
                 <div className="col-md-1">
                     <IcoContainer icons={icons} />

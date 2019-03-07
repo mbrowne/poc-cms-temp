@@ -39,11 +39,11 @@ const popUpHeaderNavLinks = [
 // }
 
 function useUpdateUnsavedEntityDef() {
-    // Workaround for Apollo's special treatment of `id` property: rename to businessId
     const updateUnsavedEntityDef = useApolloStateUpdate(
         'entityDefinitionBuilder.unsavedEntityDef'
     )
     return updates => {
+        // Workaround for Apollo's special treatment of `id` property: rename to businessId
         const { id, ...values } = updates
         return updateUnsavedEntityDef({
             businessId: id,
@@ -93,7 +93,6 @@ const AddEditEntityDefForm = props => {
 
     // Workaround for Apollo's special treatment of `id` property
     unsavedEntityDef.id = businessId
-    console.log('unsavedEntityDef: ', unsavedEntityDef)
 
     // Indicates whether or not the entity definition being edited was saved on the server already
     let isUnsavedEntityDef = false
@@ -160,8 +159,8 @@ const AddEditEntityDefFormView = props => {
         formType,
         isUnsavedEntityDef,
         entityDefSelectOptions,
+        redirectRoute,
     } = props
-    const redirectRoute = props.redirectRoute || basePath
     const origEntityDef = props.entityDef
 
     const helpers = {
@@ -231,8 +230,11 @@ const AddEditEntityDefFormView = props => {
                 strapi.notification.error('Error saving data: ' + e.message)
             }
         }
-        history.push(redirectRoute)
-        // history.push(`${redirectRoute}/entity-defs/${values.id}`)
+        history.push(
+            redirectRoute
+                ? redirectRoute
+                : `/plugins/content-type-builder/entity-defs/${values.id}`
+        )
     }
 
     const [formState, setFormState] = useFormState(

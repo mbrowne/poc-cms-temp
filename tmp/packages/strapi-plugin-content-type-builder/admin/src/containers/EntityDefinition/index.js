@@ -7,7 +7,7 @@ import { NavLink } from 'react-router-dom'
 import { isEmpty, startCase } from 'lodash'
 import { useApolloClient, useMutation } from 'react-apollo-hooks'
 import { makeSelectMenu } from 'containers/App/selectors'
-import { useConvenientState, useApolloStateUpdate } from 'hooks'
+import { useConvenientState } from 'hooks'
 import { getPluginState } from '../state'
 import * as queries from '../graphql/queries'
 import styles from './styles.scss'
@@ -17,10 +17,6 @@ import EmptyAttributesBlock from 'components/EmptyAttributesBlock'
 import List from 'components/List'
 import AttributeRow from 'components/AttributeRow'
 import NotFoundPage from '../NotFoundPage'
-
-function useUpdateUnsavedEntityDef() {
-    return useApolloStateUpdate('entityDefinitionBuilder.unsavedEntityDef')
-}
 
 /*
 interface EntityDefinitionProps extends RouteComponentProps {
@@ -40,16 +36,37 @@ interface Menu {
 const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = props => {
     const { match } = props
 
-    // TEMP
-    const isUnsavedEntityDef = false
-    // const isUnsavedEntityDef = unsavedEntityDef.id === match.params.id
+    const client = useApolloClient()
+    const { entityDefinitionBuilder } = client.readQuery({
+        query: queries.unsavedEntityDef,
+    })
+
+    const {
+        businessId,
+        ...unsavedEntityDef
+    } = entityDefinitionBuilder.unsavedEntityDef
+
+    // Workaround for Apollo's special treatment of `id` property
+    unsavedEntityDef.id = businessId
+
+    const isUnsavedEntityDef = unsavedEntityDef.id === match.params.id
+    if (isUnsavedEntityDef) {
+        return (
+            <EntityDefinitionView
+                {...props}
+                entityDef={unsavedEntityDef}
+                refetch={() => {}}
+                isUnsavedEntityDef={isUnsavedEntityDef}
+            />
+        )
+    }
 
     return useQueryLoader(queries.entityDefinition, {
         variables: { id: match.params.id },
     })(({ data, refetch }) => (
         <EntityDefinitionView
             {...props}
-            data={data}
+            entityDef={data.entityDef}
             refetch={refetch}
             isUnsavedEntityDef={isUnsavedEntityDef}
         />
@@ -57,7 +74,7 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = props => {
 }
 
 const EntityDefinitionView = ({
-    data,
+    entityDef,
     refetch,
     menu,
     match,
@@ -205,7 +222,13 @@ const EntityDefinitionView = ({
     }
 
     function handleAddEntityDef() {
-        if (isUnsavedEntityDef) {
+        // this implementation might change
+        const {
+            entityDefinitionBuilder: { unsavedEntityDef },
+        } = client.readQuery({ query: queries.unsavedEntityDef })
+        const hasUnsavedEntityDef = Boolean(unsavedEntityDef.businessId)
+
+        if (hasUnsavedEntityDef) {
             // Ask user to save already-started entity definition before creating another one
             strapi.notification.info(
                 'content-type-builder.notification.info.contentType.creating.notSaved'
@@ -220,6 +243,7 @@ const EntityDefinitionView = ({
     async function handleSubmit(e) {
         e.preventDefault()
         if (!isUnsavedEntityDef) {
+            state.showButtonLoader = true
             try {
                 const { __typename, hasChanges, ...entityDefInput } = entityDef
 
@@ -233,26 +257,52 @@ const EntityDefinitionView = ({
                         ({ __typename, ...prop }) => prop
                     )
 
-                    state.showButtonLoader = true
-                    await updateSavedEntityDef({
+                    await updateEntityDef({
                         variables: {
                             id: entityDefId,
                             entityDef: entityDefInput,
                         },
                     })
-                    state.showButtonLoader = false
-
                     refetch()
                 }
+                strapi.notification.success(
+                    'content-type-builder.notification.success.message.contentType.edit'
+                )
             } catch (e) {
                 console.error('Apollo error: ', e)
                 strapi.notification.error('Error saving data: ' + e.message)
+            } finally {
+                state.showButtonLoader = false
             }
-            strapi.notification.success(
-                'content-type-builder.notification.success.message.contentType.edit'
-            )
         } else {
-            // strapi.notification.success('content-type-builder.notification.success.message.contentType.create')
+            state.showButtonLoader = true
+            try {
+                // Remove __typename properties
+                const { __typename, ...entityDefInput } = entityDef
+                entityDefInput.properties = entityDefInput.properties.map(
+                    ({ __typename, ...prop }) => prop
+                )
+                // TEMP
+                if (!entityDefInput.pluralLabel) {
+                    entityDefInput.pluralLabel = entityDefInput.id + 's'
+                }
+                // console.log('entityDefInput: ', entityDefInput)
+
+                await createEntityDef({
+                    variables: {
+                        entityDef: entityDefInput,
+                    },
+                })
+                refetch()
+                strapi.notification.success(
+                    'content-type-builder.notification.success.message.contentType.create'
+                )
+            } catch (e) {
+                console.error('Apollo error: ', e)
+                strapi.notification.error('Error saving data: ' + e.message)
+            } finally {
+                state.showButtonLoader = false
+            }
         }
     }
 
@@ -316,7 +366,6 @@ const EntityDefinitionView = ({
     }
 
     const entityDefId = match.params.id
-    const { entityDef } = data
 
     // const { entityDefUI } = getPluginState(data)
 
@@ -327,8 +376,8 @@ const EntityDefinitionView = ({
     const state = useConvenientState({
         showButtonLoader: false,
     })
-    const updateUnsavedEntityDef = useUpdateUnsavedEntityDef()
-    const updateSavedEntityDef = useMutation(queries.updateEntityDefinition)
+    const updateEntityDef = useMutation(queries.updateEntityDefinition)
+    const createEntityDef = useMutation(queries.createEntityDefinition)
     const client = useApolloClient()
 
     // Url to redirect the user if they modify the unsaved entity def ID
