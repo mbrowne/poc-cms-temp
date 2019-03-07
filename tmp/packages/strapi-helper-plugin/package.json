@@ -28,7 +28,7 @@
   "dependencies": {
     "add-asset-html-webpack-plugin": "^2.1.2",
     "apollo-cache-inmemory": "^1.4.2",
-    "apollo-client": "^2.4.12",
+    "apollo-client": "^2.5.1",
     "apollo-link": "^1.2.6",
     "apollo-link-http": "^1.5.9",
     "babel-cli": "6.26.0",

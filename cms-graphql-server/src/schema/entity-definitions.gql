@@ -7,7 +7,8 @@ type EntityDefinition {
     If left blank, the id (converted to Title Case) will be used as the label
     """
     label: String
-    pluralName: String!
+    pluralLabel: String!
+    description: String
     """
     if specified, a templateEntityDefinition means that this entity definition inherits all the properties of its template definition,
     e.g. the template of Exhibition is Event
@@ -39,6 +40,11 @@ type EntityDefinition {
     # predicates: [Predicate!]
     # # Associations to pre-fetch so they can be resolved very quickly by the graphql server (from JSON files) without having to hit the search API
     # eagerFetchAssociations: [AssociationToFetch!]
+
+    #
+    # Read-only fields:
+    #
+    propertiesCount: Int!
 }
 
 interface PropertyDefinition {
@@ -60,16 +66,26 @@ interface PropertyDefinition {
 }
 
 type LiteralProperty implements PropertyDefinition {
-    id: ID!
-    label: String!
-    readOnly: Boolean!
-    dataType: String!
     # For writable properties
     editingComponent: String
     # # This might be derived from flags
     # moderatorRoles: [Role!]
     # predicates: [Predicate!]
     # defaultValue: LiteralPropertyValue
+
+    # inherited fields:
+    id: ID!
+    label: String!
+    readOnly: Boolean!
+    dataType: String!
+}
+
+type AssociationDefinition implements PropertyDefinition {
+    # inherited fields:
+    id: ID!
+    label: String!
+    readOnly: Boolean!
+    dataType: String!
 }
 
 type EntityDefinitionModerationStatus {

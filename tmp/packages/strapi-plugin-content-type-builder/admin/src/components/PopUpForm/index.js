@@ -162,6 +162,9 @@ class PopUpForm extends React.Component {
             value = get(this.props.values, item.name, false)
         }
 
+        const selectOptions = this.props.selectOptions[item.name] || []
+        // const selectOptions = item.name === 'connection' ? this.props.selectOptions: []
+
         return (
             <Input
                 key={key}
@@ -174,7 +177,7 @@ class PopUpForm extends React.Component {
                 inputDescription={inputDescription}
                 value={value}
                 customBootstrapClass={customBootstrapClass}
-                selectOptions={this.props.selectOptions || []}
+                selectOptions={selectOptions}
                 placeholder={item.placeholder}
                 title={item.title}
                 errors={errors}
@@ -184,19 +187,35 @@ class PopUpForm extends React.Component {
         )
     }
 
-    renderNavContainer = () => (
-        <div className={styles.navContainer}>
-            {map(this.props.popUpHeaderNavLinks, (link, key) => (
-                <PopUpHeaderNavLink
-                    key={key}
-                    message={link.message}
-                    name={link.name}
-                    nameToReplace={link.nameToReplace}
-                    routePath={this.props.routePath}
-                />
-            ))}
-        </div>
-    )
+    renderNavContainer = () => {
+        return (
+            <div className={styles.navContainer}>
+                {map(this.props.popUpHeaderNavLinks, (link, key) => (
+                    <PopUpHeaderNavLink
+                        key={key}
+                        message={link.message}
+                        name={link.name}
+                        nameToReplace={link.nameToReplace}
+                        routePath={this.props.routePath}
+                    />
+                ))}
+            </div>
+        )
+    }
+
+    // renderNavContainer = () => (
+    //     <div className={styles.navContainer}>
+    //         {map(this.props.popUpHeaderNavLinks, (link, key) => (
+    //             <PopUpHeaderNavLink
+    //                 key={key}
+    //                 message={link.message}
+    //                 name={link.name}
+    //                 nameToReplace={link.nameToReplace}
+    //                 routePath={this.props.routePath}
+    //             />
+    //         ))}
+    //     </div>
+    // )
 
     renderPopUpHeader = () => {
         if (this.props.renderCustomPopUpHeader) {
@@ -325,7 +344,7 @@ PopUpForm.propTypes = {
     renderModalBody: PropTypes.oneOfType([PropTypes.bool, PropTypes.func])
         .isRequired,
     routePath: PropTypes.string,
-    selectOptions: PropTypes.array,
+    selectOptions: PropTypes.object,
     toggle: PropTypes.func.isRequired,
     values: PropTypes.object,
 }
@@ -345,7 +364,7 @@ PopUpForm.defaultProps = {
     popUpHeaderNavLinks: [],
     renderCustomPopUpHeader: false,
     routePath: '',
-    selectOptions: [],
+    selectOptions: {},
     values: {},
 }
 

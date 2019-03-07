@@ -11,7 +11,7 @@ import { useFormState } from './useFormState'
 export const Context = React.createContext()
 
 export const FormStateProvider = ({ initialValues, children }) => {
-    const { formState, setFormState } = useFormState(initialValues)
+    const [formState, setFormState] = useFormState(initialValues)
     const ctx = {
         formState,
         setFormState,

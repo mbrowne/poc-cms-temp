@@ -1,29 +1,16 @@
 {
   "id": "Creator",
-  "pluralName": "Creators",
+  "label": null,
   "isAbstract": false,
+  "pluralLabel": "Creators",
   "properties": [
     {
       "__typename": "LiteralProperty",
-      "id": "displayName",
-      "label": "Display Name",
-      "dataType": "string",
-      "readOnly": false
-    },
-    {
-      "__typename": "LiteralProperty",
-      "id": "shortBio",
-      "label": "Short Bio",
-      "dataType": "string",
-      "readOnly": false
-    },
-    {
-      "__typename": "LiteralProperty",
-      "id": "longBio",
-      "label": "Long Bio",
+      "id": "foo2",
+      "label": "",
       "dataType": "string",
       "readOnly": false
     }
   ],
-  "label": null
+  "description": null
 }

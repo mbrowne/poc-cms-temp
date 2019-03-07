@@ -17,41 +17,56 @@ const propTypes = [
 
 // Transform the input data into the format we want to save in the JSON file
 function prepareEntityDefForStorage(inputObj) {
+    if (!inputObj.properties) {
+        return inputObj
+    }
     const properties = inputObj.properties.map(propInput => {
-        const hasPropTypeInput = propTypes.some(propType =>
-            propInput.hasOwnProperty(propType)
-        )
-        if (!hasPropTypeInput) {
-            const propType = 'LiteralProperty'
-            return {
-                __typename: propType,
-                ...propInput,
-            }
-        } else {
-            throw Error('TODO')
+        // New approach: use `typename` field of PropertyInput type
+        const { typename, ...propFields } = propInput
+        return {
+            __typename: typename,
+            ...propFields,
         }
+
+        // Old approach:
+        // const hasPropTypeInput = propTypes.some(propType =>
+        //     propInput.hasOwnProperty(propType)
+        // )
+        // if (!hasPropTypeInput) {
+        //     const propType = 'LiteralProperty'
+        //     return {
+        //         __typename: propType,
+        //         ...propInput,
+        //     }
+        // } else {
+        //     throw Error('TODO')
+        // }
     })
     return { ...inputObj, properties }
 }
 
 export const Mutation = {
     createEntityDefinition(_, { entityDef }) {
-        return saveEntityDefinition(entityDef, 'create')
+        return saveEntityDefinition(entityDef)
     },
 
-    updateEntityDefinition(_, { entityDef }) {
-        return saveEntityDefinition(entityDef, 'update')
+    updateEntityDefinition(_, { id, entityDef }) {
+        return saveEntityDefinition(entityDef, id)
     },
 }
 
 async function saveEntityDefinition(
     entityDefInput,
-    mode = 'create' /* 'create' | 'update' */
+    existingEntityDefId = undefined
 ) {
-    const jsonPath = path.join(entityDefsDir, entityDefInput.id + '.json')
+    const mode = existingEntityDefId ? 'edit' : 'create'
+    const jsonPathExisting = path.join(
+        entityDefsDir,
+        (existingEntityDefId || entityDefInput.id) + '.json'
+    )
     let existingEntityDef
     try {
-        const fileData = await fs.readFile(jsonPath, 'utf8')
+        const fileData = await fs.readFile(jsonPathExisting, 'utf8')
         if (mode === 'create') {
             throw Error(
                 `Entity definition with ID '${
@@ -70,6 +85,9 @@ async function saveEntityDefinition(
 
     let entityDef
     if (mode === 'create') {
+        if (!entityDefInput.properties) {
+            throw Error('At least one property definition is required')
+        }
         entityDef = prepareEntityDefForStorage(entityDefInput)
     } else {
         // @NB in the real system we might not handle updates this way.
@@ -81,10 +99,21 @@ async function saveEntityDefinition(
     }
 
     await fs.writeFile(
-        jsonPath,
+        path.join(entityDefsDir, entityDefInput.id + '.json'),
         JSON.stringify(entityDef, undefined, 2),
         'utf8'
     )
+
+    // @TODO ensure that case always matches before we get here so we don't need this check
+    // (This will be necessary for the app to work correctly on case-sensitive file systems,
+    // i.e. Linux)
+    if (
+        mode === 'edit' &&
+        existingEntityDefId.toLowerCase() !== entityDef.id.toLowerCase()
+    ) {
+        // If the entity def ID was renamed, we also need to delete the old file
+        await fs.unlink(jsonPathExisting)
+    }
 
     const createdOrUpdated = mode === 'create' ? 'Created' : 'Updated'
     console.info(`${createdOrUpdated} entity definition successfully`)
