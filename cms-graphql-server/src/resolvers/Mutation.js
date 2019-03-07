@@ -21,18 +21,26 @@ function prepareEntityDefForStorage(inputObj) {
         return inputObj
     }
     const properties = inputObj.properties.map(propInput => {
-        const hasPropTypeInput = propTypes.some(propType =>
-            propInput.hasOwnProperty(propType)
-        )
-        if (!hasPropTypeInput) {
-            const propType = 'LiteralProperty'
-            return {
-                __typename: propType,
-                ...propInput,
-            }
-        } else {
-            throw Error('TODO')
+        // New approach: use `typename` field of PropertyInput type
+        const { typename, ...propFields } = propInput
+        return {
+            __typename: typename,
+            ...propFields,
         }
+
+        // Old approach:
+        // const hasPropTypeInput = propTypes.some(propType =>
+        //     propInput.hasOwnProperty(propType)
+        // )
+        // if (!hasPropTypeInput) {
+        //     const propType = 'LiteralProperty'
+        //     return {
+        //         __typename: propType,
+        //         ...propInput,
+        //     }
+        // } else {
+        //     throw Error('TODO')
+        // }
     })
     return { ...inputObj, properties }
 }

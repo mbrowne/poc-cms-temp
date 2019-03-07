@@ -66,16 +66,26 @@ interface PropertyDefinition {
 }
 
 type LiteralProperty implements PropertyDefinition {
-    id: ID!
-    label: String!
-    readOnly: Boolean!
-    dataType: String!
     # For writable properties
     editingComponent: String
     # # This might be derived from flags
     # moderatorRoles: [Role!]
     # predicates: [Predicate!]
     # defaultValue: LiteralPropertyValue
+
+    # inherited fields:
+    id: ID!
+    label: String!
+    readOnly: Boolean!
+    dataType: String!
+}
+
+type AssociationDefinition implements PropertyDefinition {
+    # inherited fields:
+    id: ID!
+    label: String!
+    readOnly: Boolean!
+    dataType: String!
 }
 
 type EntityDefinitionModerationStatus {

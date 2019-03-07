@@ -242,6 +242,20 @@ const EntityDefinitionView = ({
 
     async function handleSubmit(e) {
         e.preventDefault()
+
+        // Convert PropertyDefinition objects in the cache to an array of PropertyInput objects expected by
+        // the GraphQL mutations
+        const preparePropertiesInput = properties =>
+            properties.map(({ __typename, ...prop }) => ({
+                // Use __typename to populate `typename` field in PropertyInput type
+                // LiteralProperty is the default
+                typename:
+                    __typename === 'PropertyDefinition'
+                        ? 'LiteralProperty'
+                        : __typename,
+                ...prop,
+            }))
+
         if (!isUnsavedEntityDef) {
             state.showButtonLoader = true
             try {
@@ -252,9 +266,8 @@ const EntityDefinitionView = ({
                     // Still good to have this as a fallback though.
                     console.warn('No changes to save')
                 } else {
-                    // Remove __typename properties
-                    entityDefInput.properties = entityDefInput.properties.map(
-                        ({ __typename, ...prop }) => prop
+                    entityDefInput.properties = preparePropertiesInput(
+                        entityDefInput.properties
                     )
 
                     await updateEntityDef({
@@ -277,10 +290,10 @@ const EntityDefinitionView = ({
         } else {
             state.showButtonLoader = true
             try {
-                // Remove __typename properties
+                // Remove __typename property
                 const { __typename, ...entityDefInput } = entityDef
-                entityDefInput.properties = entityDefInput.properties.map(
-                    ({ __typename, ...prop }) => prop
+                entityDefInput.properties = preparePropertiesInput(
+                    entityDefInput.properties
                 )
                 // TEMP
                 if (!entityDefInput.pluralLabel) {

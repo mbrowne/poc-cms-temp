@@ -26,6 +26,7 @@ input EntityDefinitionInput {
 # }
 
 input PropertyInput {
+    typename: String = "LiteralProperty"
     id: String!
     label: String!
     dataType: String!
