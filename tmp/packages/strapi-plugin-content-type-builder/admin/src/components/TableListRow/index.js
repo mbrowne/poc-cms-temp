@@ -68,7 +68,7 @@ class TableListRow extends React.Component {
         const description = isEmpty(this.props.rowItem.description)
             ? '-'
             : this.props.rowItem.description
-        const spanStyle = this.props.rowItem.isTemporary ? '60%' : '100%'
+        const spanStyle = this.props.rowItem.isUnsaved ? '60%' : '100%'
         const icons = [
             { icoType: 'pencil', onClick: this.handleEdit },
             {

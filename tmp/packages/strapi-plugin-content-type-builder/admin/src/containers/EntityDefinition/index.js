@@ -1,12 +1,9 @@
 import React from 'react'
 import { useQueryLoader } from 'hooks/useQueryLoader'
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
 import { FormattedMessage } from 'react-intl'
 import { NavLink } from 'react-router-dom'
 import { isEmpty, startCase } from 'lodash'
 import { useApolloClient, useMutation } from 'react-apollo-hooks'
-import { makeSelectMenu } from 'containers/App/selectors'
 import { useConvenientState } from 'hooks'
 import { getPluginState } from '../state'
 import * as queries from '../graphql/queries'
@@ -50,27 +47,62 @@ const EntityDefinition /* : React.SFC<EntityDefinitionProps> */ = props => {
     unsavedEntityDef.id = businessId
 
     const isUnsavedEntityDef = unsavedEntityDef.id === match.params.id
-    if (isUnsavedEntityDef) {
-        return (
-            <EntityDefinitionView
-                {...props}
-                entityDef={unsavedEntityDef}
-                refetch={() => {}}
-                isUnsavedEntityDef={isUnsavedEntityDef}
-            />
-        )
-    }
 
-    return useQueryLoader(queries.entityDefinition, {
-        variables: { id: match.params.id },
-    })(({ data, refetch }) => (
-        <EntityDefinitionView
-            {...props}
-            entityDef={data.entityDef}
-            refetch={refetch}
-            isUnsavedEntityDef={isUnsavedEntityDef}
-        />
-    ))
+    return useQueryLoader(queries.entityDefinitions)(result => {
+        const getMenuData = () => {
+            // populate left menu with entity definitions
+            const entityDefs = result.data.entityDefs.results
+            const menu = [
+                {
+                    name: 'menu.section.contentTypeBuilder.name.plural',
+                },
+            ]
+            menu[0].items = entityDefs.map(entityDef => ({
+                icon: 'fa-caret-square-o-right',
+                name: entityDef.id,
+            }))
+
+            const hasUnsavedEntityDef = Boolean(unsavedEntityDef.id)
+            if (hasUnsavedEntityDef) {
+                menu[0].items.push({
+                    icon: 'fa-cube',
+                    name: unsavedEntityDef.id,
+                    isUnsaved: true,
+                })
+            }
+            menu[0].items.push({
+                icon: 'fa-plus',
+                name: 'button.contentType.add',
+            })
+            return menu
+        }
+
+        if (isUnsavedEntityDef) {
+            return (
+                <EntityDefinitionView
+                    {...props}
+                    entityDef={unsavedEntityDef}
+                    refetch={() => {}}
+                    menu={getMenuData()}
+                    isUnsavedEntityDef={isUnsavedEntityDef}
+                />
+            )
+        }
+
+        return useQueryLoader(queries.entityDefinition, {
+            variables: { id: match.params.id },
+        })(({ data, refetch }) => {
+            return (
+                <EntityDefinitionView
+                    {...props}
+                    entityDef={data.entityDef}
+                    refetch={refetch}
+                    menu={getMenuData()}
+                    isUnsavedEntityDef={isUnsavedEntityDef}
+                />
+            )
+        })
+    })
 }
 
 const EntityDefinitionView = ({
@@ -109,14 +141,14 @@ const EntityDefinitionView = ({
                 ? `${link.name}&source=${link.source}`
                 : link.name
             const temporary =
-                link.isTemporary ||
+                link.isUnsaved ||
                 (showButtons && linkName === match.params.id) ? (
                     <FormattedMessage id="content-type-builder.contentType.temporaryDisplay" />
                 ) : (
                     ''
                 )
             const spanStyle =
-                link.isTemporary ||
+                link.isUnsaved ||
                 (showButtons && linkName === match.params.id) ||
                 (isEmpty(temporary) && link.source)
                     ? styles.leftMenuSpan
@@ -442,8 +474,4 @@ const EntityDefinitionView = ({
     )
 }
 
-const mapStateToProps = createStructuredSelector({
-    menu: makeSelectMenu(),
-})
-
-export default connect(mapStateToProps)(EntityDefinition)
+export default EntityDefinition
