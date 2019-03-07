@@ -35,6 +35,8 @@ type EntityDefinition {
     # editingFieldsets: [FormFieldset!]
     # detailScreenFieldsets: [FormFieldset!]
 
+    adminUiSettings: EntityDefinitionAdminUiSettings!
+
     # # Since we have a standard 'name' property, we can allow an empty array and default to using name as the default sort order
     # defaultSortOrder: [PropertySortOrder!]
     # predicates: [Predicate!]
@@ -45,6 +47,12 @@ type EntityDefinition {
     # Read-only fields:
     #
     propertiesCount: Int!
+}
+
+# We might not use this type in the real system depending on how we decide to organize it, but this
+# is a convenient place to put all admin UI settings for the POC
+type EntityDefinitionAdminUiSettings {
+    propertiesToShowOnListScreen: [PropertyDefinition!]!
 }
 
 interface PropertyDefinition {
