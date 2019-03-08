@@ -2,8 +2,8 @@
   "connection": "default",
   "collectionName": "",
   "info": {
-    "name": "tag",
-    "description": ""
+    "name": "creator",
+    "description": "An artist or collaboration"
   },
   "options": {
     "timestamps": true
@@ -12,6 +12,14 @@
     "displayName": {
       "default": "",
       "type": "string"
+    },
+    "shortBio": {
+      "default": "",
+      "type": "text"
+    },
+    "longBio": {
+      "default": "",
+      "type": "text"
     }
   }
 }

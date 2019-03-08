@@ -50,7 +50,16 @@ export const Query = {
 }
 
 async function loadEntityDef(id) {
-    return JSON.parse(
+    const entityDef = JSON.parse(
         await fs.readFile(path.join(entityDefsDir, id + '.json'), 'utf8')
     )
+    // businessId is always the first property...we could store it too but that seems redundant, so we just add it here...
+    entityDef.properties.unshift({
+        __typename: 'LiteralProperty',
+        id: 'businessId',
+        label: 'ID',
+        dataType: 'string',
+        readOnly: false,
+    })
+    return entityDef
 }

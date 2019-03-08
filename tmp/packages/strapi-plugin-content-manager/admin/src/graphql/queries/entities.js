@@ -1,8 +1,9 @@
 import gql from 'graphql-tag'
 
 export const entities = gql`
-    query($entityDefId: ID!, $entityFilters: EntityFilters!) {
-        entities(where: $entityFilters) {
+    query($entityDefId: ID!, $where: EntityFilters!) {
+        entities(where: $where) {
+            totalCount
             results {
                 id
             }
@@ -29,6 +30,7 @@ export const entities = gql`
                 propertiesToShowOnListScreen {
                     id
                     label
+                    dataType
                 }
             }
         }
