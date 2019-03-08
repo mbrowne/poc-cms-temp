@@ -1,6 +1,7 @@
 import fsModule from 'fs'
 import path from 'path'
 import config from '~/config'
+import getDb from '~/mongoDatabase'
 const fs = fsModule.promises
 
 const entityDefsDir = path.join(

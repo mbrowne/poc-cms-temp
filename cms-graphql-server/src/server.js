@@ -1,9 +1,9 @@
 import Koa from 'koa'
 import { ApolloServer } from 'apollo-server-koa'
-import fs from 'fs'
 import morgan from 'koa-morgan'
 import typeDefs from './schema'
 import * as resolvers from './resolvers'
+import { initMongo } from './mongoDatabase'
 
 const PORT = process.env.PORT || 8000
 
@@ -20,8 +20,10 @@ app.use(
 
 server.applyMiddleware({ app })
 
-app.listen({ port: PORT }, () =>
-    console.log(
-        `🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`
-    )
-)
+initMongo().then(() => {
+    app.listen({ port: PORT }, () => {
+        console.log(
+            `🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`
+        )
+    })
+})
