@@ -24,6 +24,7 @@ import {
     convertEntityDefResult,
     convertAdminUiSettings,
 } from '../../utils/convertEntityDefResults'
+import { newEntity } from '../../utils/newEntity'
 import { getLayout } from './utils'
 import { editPageQuery } from './query'
 import * as mutations from './mutations'
@@ -66,13 +67,18 @@ function renderEditPage({
     // const { propertiesToShowOnEditForm } = convertAdminUiSettings(entityDef.adminUiSettings)
     // console.log('entityDef: ', entityDef)
 
-    // TEMP
-    const entity = {
-        id: null,
-        state: {
-            businessId: 'pop-art',
-            displayName: 'Pop Art',
-        },
+    // // TEMP
+    // const entity = {
+    //     id: null,
+    //     state: {
+    //         businessId: 'pop-art',
+    //         displayName: 'Pop Art',
+    //     },
+    // }
+
+    let entity
+    if (mode === 'create') {
+        entity = newEntity(entityDef)
     }
 
     const state = useConvenientState({
