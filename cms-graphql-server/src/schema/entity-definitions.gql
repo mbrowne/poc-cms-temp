@@ -53,6 +53,7 @@ type EntityDefinition {
 # is a convenient place to put all admin UI settings for the POC
 type EntityDefinitionAdminUiSettings {
     propertiesToShowOnListScreen: [PropertyDefinition!]!
+    propertiesToShowOnEditForm: [PropertyDefinition!]!
 }
 
 interface PropertyDefinition {

@@ -24,6 +24,7 @@ import LoadingIndicatorPage from 'components/LoadingIndicatorPage'
 import EmptyAttributesView from 'components/EmptyAttributesView'
 
 import Test from 'containers/Test'
+import TestEditPage from 'containers/TestEditPage'
 
 import { loadModels } from './actions'
 import {
@@ -75,6 +76,10 @@ class App extends React.Component {
         return (
             <div className="content-manager">
                 <Switch>
+                    <Route
+                        path="/plugins/content-manager/test/:entityId"
+                        component={TestEditPage}
+                    />
                     <Route
                         path="/plugins/content-manager/test"
                         component={Test}

@@ -1,6 +1,9 @@
 import gql from 'graphql-tag'
+import { entityDefDetails } from '../fragments'
 
 export const entities = gql`
+    ${entityDefDetails}
+
     query($entityDefId: ID!, $where: EntityFilters!) {
         entities(where: $where) {
             totalCount
@@ -10,29 +13,7 @@ export const entities = gql`
         }
 
         entityDef: entityDefinition(id: $entityDefId) {
-            id
-            label
-            pluralLabel
-            description
-            # templateEntityDefinition {
-            #     id
-            #     properties
-            #         ...
-            # }
-            isAbstract
-            properties {
-                id
-                label
-                dataType
-                readOnly
-            }
-            adminUiSettings {
-                propertiesToShowOnListScreen {
-                    id
-                    label
-                    dataType
-                }
-            }
+            ...EntityDefDetails
         }
     }
 `

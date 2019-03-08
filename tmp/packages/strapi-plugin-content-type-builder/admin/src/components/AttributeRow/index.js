@@ -99,19 +99,22 @@ class AttributeRow extends React.Component {
         //     </FormattedMessage>
         // </div>
         const relationStyle = !params.type ? styles.relation : ''
-        const icons = prop.readOnly
-            ? [{ icoType: 'lock' }]
-            : [
-                  { icoType: 'pencil', onClick: this.handleEdit },
-                  {
-                      icoType: 'trash',
-                      onClick: () =>
-                          this.setState({
-                              showWarning: !this.state.showWarning,
-                          }),
-                  },
-              ]
+        const icons =
+            prop.readOnly || prop.id === 'businessId'
+                ? [{ icoType: 'lock' }]
+                : [
+                      { icoType: 'pencil', onClick: this.handleEdit },
+                      {
+                          icoType: 'trash',
+                          onClick: () =>
+                              this.setState({
+                                  showWarning: !this.state.showWarning,
+                              }),
+                      },
+                  ]
         const editableStyle = prop.readOnly ? '' : styles.editable
+
+        const isNotEditable = prop.id === 'businessId' || prop.readOnly
 
         return (
             <li

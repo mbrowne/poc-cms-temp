@@ -12,6 +12,8 @@ export const EntityDefinition = {
         return {
             // just show the first 5 properties for now
             propertiesToShowOnListScreen: entityDef.properties.slice(0, 5),
+            // just show all properties for now
+            propertiesToShowOnEditForm: entityDef.properties,
         }
     },
 }
