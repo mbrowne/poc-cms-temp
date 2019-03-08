@@ -67,18 +67,15 @@ function renderEditPage({
     // const { propertiesToShowOnEditForm } = convertAdminUiSettings(entityDef.adminUiSettings)
     // console.log('entityDef: ', entityDef)
 
-    // // TEMP
-    // const entity = {
-    //     id: null,
-    //     state: {
-    //         businessId: 'pop-art',
-    //         displayName: 'Pop Art',
-    //     },
-    // }
-
     let entity
     if (mode === 'create') {
         entity = newEntity(entityDef)
+
+        // TEMP
+        entity.state = {
+            businessId: 'pop-art',
+            displayName: 'Pop Art',
+        }
     }
 
     const state = useConvenientState({
@@ -187,7 +184,7 @@ function renderEditPage({
             ([propertyId, value]) => ({
                 propertyId,
                 // TODO: associations
-                literalValue: value,
+                literalValue: JSON.stringify(value),
             })
         )
 
@@ -196,8 +193,10 @@ function renderEditPage({
         try {
             if (mode === 'create') {
                 await createEntityRequest({
-                    entityDefId,
-                    initialState: propertyState,
+                    variables: {
+                        entityDefId,
+                        initialState: propertyState,
+                    },
                 })
             } else {
                 // TODO

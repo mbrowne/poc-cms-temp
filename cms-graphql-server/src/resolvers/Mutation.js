@@ -55,6 +55,15 @@ export const Mutation = {
     updateEntityDefinition(_, { id, entityDef }) {
         return saveEntityDefinition(entityDef, id)
     },
+
+    createEntityRequest(_, { entityDefId, initialState }) {
+        console.log('initialState: ', initialState)
+    },
+
+    updateEntityRequest(_, { entityDefId, entityId, updatedState }) {
+        console.log('entityId: ', entityId)
+        console.log('updatedState: ', updatedState)
+    },
 }
 
 async function saveEntityDefinition(
