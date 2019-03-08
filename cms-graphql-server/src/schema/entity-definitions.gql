@@ -105,8 +105,3 @@ type EntityDefinitionModerationStatus {
     """
     errorMessage: ErrorMessage
 }
-
-type ErrorMessage {
-    code: Int
-    message: String
-}

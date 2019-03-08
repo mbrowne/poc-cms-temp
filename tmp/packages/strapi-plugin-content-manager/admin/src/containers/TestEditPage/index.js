@@ -2,6 +2,7 @@ import React from 'react'
 import moment from 'moment'
 import cn from 'classnames'
 import { get, isObject, toNumber } from 'lodash'
+import { useMutation } from 'react-apollo-hooks'
 
 // You can find these components in either
 // ./node_modules/strapi-helper-plugin/lib/src
@@ -17,7 +18,6 @@ import Edit from 'components/Edit'
 import EditRelations from 'components/EditRelations'
 
 import { useQueryLoader, useConvenientState, useFormState } from 'hooks'
-import { editPageQuery } from './query'
 import getQueryParameters from 'utils/getQueryParameters'
 import styles from './styles.scss'
 import {
@@ -25,6 +25,8 @@ import {
     convertAdminUiSettings,
 } from '../../utils/convertEntityDefResults'
 import { getLayout } from './utils'
+import { editPageQuery } from './query'
+import * as mutations from './mutations'
 
 const labels = {
     createFormHeading: 'New Entry',
@@ -40,19 +42,17 @@ const EditPage = props => {
     return useQueryLoader(editPageQuery, {
         variables: { entityDefId, entityId, isEditMode: mode === 'edit' },
     })(({ data }) => {
-        return (
-            <EditPageView
-                {...props}
-                data={data}
-                mode={mode}
-                entityDefId={entityDefId}
-                entityId={entityId}
-            />
-        )
+        return renderEditPage({
+            ...props,
+            data,
+            mode,
+            entityDefId,
+            entityId,
+        })
     })
 }
 
-const EditPageView = ({
+function renderEditPage({
     data,
     mode,
     match,
@@ -60,7 +60,7 @@ const EditPageView = ({
     location,
     entityDefId,
     entityId,
-}) => {
+}) {
     const entityDef = convertEntityDefResult(data.entityDef)
     const { propertiesToShowOnEditForm } = entityDef.adminUiSettings
     // const { propertiesToShowOnEditForm } = convertAdminUiSettings(entityDef.adminUiSettings)
@@ -81,6 +81,8 @@ const EditPageView = ({
     })
 
     const [formState, setFormState] = useFormState(entity.state)
+    const createEntityRequest = useMutation(mutations.createEntityRequest)
+    const updateEntityRequest = useMutation(mutations.updateEntityRequest)
 
     const showLoaders = false // TODO
     const shoeEditPageLoader = false // TODO
@@ -138,8 +140,6 @@ const EditPageView = ({
         state.setShowWarningDelete(prev => !prev)
     }
 
-    function handleSubmit() {}
-
     function handleGoBack() {
         history.goBack()
     }
@@ -172,6 +172,36 @@ const EditPageView = ({
         setFormState({
             [e.target.name]: value,
         })
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault()
+
+        const propertyState = Object.entries(formState.values).map(
+            ([propertyId, value]) => ({
+                propertyId,
+                // TODO: associations
+                literalValue: value,
+            })
+        )
+
+        console.log('propertyState: ', propertyState)
+
+        try {
+            if (mode === 'create') {
+                await createEntityRequest({
+                    entityDefId,
+                    initialState: propertyState,
+                })
+            } else {
+                // TODO
+            }
+
+            console.log('done')
+        } catch (e) {
+            console.error('Apollo error: ', e)
+            strapi.notification.error('Error saving data: ' + e.message)
+        }
     }
 
     function renderForm() {

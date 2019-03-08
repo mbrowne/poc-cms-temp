@@ -35,3 +35,12 @@ type PropertyState {
     # variants: [PropertyValueVariant!]!
     # moderationStatus: ModerationStatus
 }
+
+type EntityModerationStatus {
+    entity: Entity
+    # moderationStatuses: [PropertyModerationStatus!]
+    """
+    if the request was invalid, the above properties will be null and we will just return an error message
+    """
+    errorMessage: ErrorMessage
+}
