@@ -1,7 +1,8 @@
 import fsModule from 'fs'
 import path from 'path'
 import config from '~/config'
-import getDb from '~/mongoDatabase'
+import { graphqlInputToBackendModel } from './cms/utils'
+import { entityRepository } from './cms/repositories'
 const fs = fsModule.promises
 
 const entityDefsDir = path.join(
@@ -10,11 +11,11 @@ const entityDefsDir = path.join(
     'entity-definitions'
 )
 
-const propTypes = [
-    'literalProperty',
-    'associationProperty',
-    'staticAssetProperty',
-]
+// const propTypes = [
+//     'literalProperty',
+//     'associationProperty',
+//     'staticAssetProperty',
+// ]
 
 // Transform the input data into the format we want to save in the JSON file
 function prepareEntityDefForStorage(inputObj) {
@@ -57,8 +58,10 @@ export const Mutation = {
         return saveEntityDefinition(entityDef, id)
     },
 
-    createEntityRequest(_, { entityDefId, initialState }) {
-        console.log('initialState: ', initialState)
+    createEntityRequest(_, args) {
+        const { entity, associations } = graphqlInputToBackendModel(args)
+        console.log('entity: ', entity)
+        entityRepository.save(entity)
     },
 
     updateEntityRequest(_, { entityDefId, entityId, updatedState }) {

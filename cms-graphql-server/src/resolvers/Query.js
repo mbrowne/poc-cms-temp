@@ -1,6 +1,8 @@
 import path from 'path'
 import fsModule from 'fs'
 import config from '~/config'
+import { entityRepository } from './cms/repositories'
+import { backendEntityToGraphqlEntity } from './cms/utils'
 const fs = fsModule.promises
 
 const entityDefsDir = path.join(
@@ -36,12 +38,21 @@ export const Query = {
         return loadEntityDef(id)
     },
 
-    entities() {
-        const totalCount = 0
+    async entities() {
+        const results = (await entityRepository.find({})).map(
+            backendEntityToGraphqlEntity
+        )
+        console.log('results: ', results)
         return {
-            results: [],
-            totalCount,
+            results,
+            totalCount: results.length,
         }
+
+        // const totalCount = 0
+        // return {
+        //     results: [],
+        //     totalCount,
+        // }
     },
 
     entity(_, { entityDefId, entityId }) {

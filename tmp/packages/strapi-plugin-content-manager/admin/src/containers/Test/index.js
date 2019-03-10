@@ -42,32 +42,32 @@ const ListPage = ({ match, history, location }) => {
         variables: { entityDefId, where },
     })(({ data }) => {
         const { entityDef } = data
-        // const { totalCount, results: entities } = data.entities
-        const { totalCount } = data.entities
-        const entities = convertEntityResults([
-            {
-                id: 'abcd1234',
-                state: [
-                    {
-                        propertyId: 'businessId',
-                        value: {
-                            __typename: 'LiteralPropertyValue',
-                            value: 'pop-art',
-                        },
-                    },
-                    {
-                        propertyId: 'displayName',
-                        value: {
-                            __typename: 'LiteralPropertyValue',
-                            value: 'Pop Art',
-                        },
-                    },
-                ],
-            },
-        ])
-        console.log('totalCount: ', totalCount)
-        console.log('entities: ', entities)
-        console.log('entityDef: ', entityDef)
+        const { totalCount, results } = data.entities
+        const entities = convertEntityResults(results)
+        // const entities = convertEntityResults([
+        //     {
+        //         id: 'abcd1234',
+        //         state: [
+        //             {
+        //                 propertyId: 'businessId',
+        //                 value: {
+        //                     __typename: 'LiteralPropertyValue',
+        //                     value: '"pop-art"',
+        //                 },
+        //             },
+        //             {
+        //                 propertyId: 'displayName',
+        //                 value: {
+        //                     __typename: 'LiteralPropertyValue',
+        //                     value: '"Pop Art"',
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ])
+        // console.log('totalCount: ', totalCount)
+        // console.log('entities: ', entities)
+        // console.log('entityDef: ', entityDef)
 
         const helpers = {
             renderPluginHeader: () => {

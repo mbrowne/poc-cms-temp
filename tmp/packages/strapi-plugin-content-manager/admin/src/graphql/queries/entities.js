@@ -9,6 +9,14 @@ export const entities = gql`
             totalCount
             results {
                 id
+                state {
+                    propertyId
+                    value {
+                        ... on LiteralPropertyValue {
+                            value
+                        }
+                    }
+                }
             }
         }
 

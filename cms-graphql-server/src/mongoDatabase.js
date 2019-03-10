@@ -3,11 +3,7 @@ import { MongoClient } from 'mongodb'
 const mongoUrl = process.env.MONGO_HOST || 'mongodb://localhost:27017'
 const mongoDbName = process.env.MONGO_DATABASE || 'poc_artnet_cms_v1'
 
-let db
-
-export default function getDb() {
-    return db
-}
+export let db
 
 export async function initMongo() {
     if (!db) {

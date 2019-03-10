@@ -13,7 +13,7 @@ export function convertEntityResult(entity) {
         let value
         const valueType = propValue.__typename
         if (valueType === 'LiteralPropertyValue') {
-            value = propValue.value
+            value = JSON.parse(propValue.value)
         } else if (valueType === 'Association') {
             value = 'TODO: associations'
         } else {
