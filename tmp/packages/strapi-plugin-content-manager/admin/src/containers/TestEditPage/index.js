@@ -20,10 +20,8 @@ import EditRelations from 'components/EditRelations'
 import { useQueryLoader, useConvenientState, useFormState } from 'hooks'
 import getQueryParameters from 'utils/getQueryParameters'
 import styles from './styles.scss'
-import {
-    convertEntityDefResult,
-    convertAdminUiSettings,
-} from '../../utils/convertEntityDefResults'
+import { convertEntityDefResult } from '../../utils/convertEntityDefResults'
+import { convertEntityResult } from '../../utils/convertEntityResults'
 import { newEntity } from '../../utils/newEntity'
 import { getLayout } from './utils'
 import { editPageQuery } from './query'
@@ -34,9 +32,13 @@ const labels = {
 }
 
 const EditPage = props => {
+    const {
+        match: { params },
+    } = props
+    const { entityId } = params
+
     // TEMP
     const entityDefId = 'Tag'
-    const entityId = 'create'
     // const entityId = 'abcd1234'
     const mode = entityId === 'create' ? 'create' : 'edit'
 
@@ -48,20 +50,11 @@ const EditPage = props => {
             data,
             mode,
             entityDefId,
-            entityId,
         })
     })
 }
 
-function renderEditPage({
-    data,
-    mode,
-    match,
-    history,
-    location,
-    entityDefId,
-    entityId,
-}) {
+function renderEditPage({ data, mode, match, history, location, entityDefId }) {
     const entityDef = convertEntityDefResult(data.entityDef)
     const { propertiesToShowOnEditForm } = entityDef.adminUiSettings
     // const { propertiesToShowOnEditForm } = convertAdminUiSettings(entityDef.adminUiSettings)
@@ -76,6 +69,9 @@ function renderEditPage({
             businessId: 'pop-art',
             displayName: 'Pop Art',
         }
+    } else {
+        entity = convertEntityResult(data.entity)
+        // console.log('entity: ', entity)
     }
 
     const state = useConvenientState({
@@ -126,7 +122,9 @@ function renderEditPage({
 
     const helpers = {
         getPluginHeaderTitle: () =>
-            mode === 'create' ? labels.createFormHeading : match.params.id,
+            mode === 'create'
+                ? labels.createFormHeading
+                : entity.state.businessId,
 
         hasDisplayedAssociations: () => false,
         hasDisplayedLiteralProperties: () => true,
@@ -199,7 +197,13 @@ function renderEditPage({
                     },
                 })
             } else {
-                // TODO
+                await updateEntityRequest({
+                    variables: {
+                        entityDefId,
+                        entityId: entity.id,
+                        updatedState: propertyState,
+                    },
+                })
             }
 
             console.log('done')
@@ -233,7 +237,7 @@ function renderEditPage({
             )
         }
 
-        if (!helpers.hasDisplayedLiteralProperties) {
+        if (!helpers.hasDisplayedLiteralProperties()) {
             return (
                 <div
                     className={

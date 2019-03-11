@@ -1,3 +1,4 @@
+import { ObjectID } from 'mongodb'
 import { db } from '~/mongoDatabase'
 
 const entitiesColl = () => db.collection('entities')
@@ -8,7 +9,7 @@ export const entityRepository = {
         if (!id) {
             return entitiesColl().insertOne(rest)
         }
-        return entitiesColl().replaceOne({ _id: id }, rest)
+        return entitiesColl().replaceOne({ _id: new ObjectID(id) }, rest)
     },
 
     async find(conditions) {
@@ -16,9 +17,20 @@ export const entityRepository = {
             .find(conditions)
             .toArray()
         // console.log('results: ', results);
-        return results.map(({ _id, ...rest }) => ({
-            ...rest,
-            id: _id,
-        }))
+        return results.map(renameIdField)
     },
+
+    async getById(id) {
+        const results = await entitiesColl()
+            .find({ _id: new ObjectID(id) })
+            .toArray()
+        return renameIdField(results[0]) || null
+    },
+}
+
+function renameIdField({ _id, ...fields }) {
+    return {
+        id: _id,
+        ...fields,
+    }
 }

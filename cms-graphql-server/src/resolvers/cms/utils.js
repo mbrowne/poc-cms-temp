@@ -6,24 +6,26 @@ export function graphqlInputToBackendModel(
 ) {
     // If the entityInStorage argument was passed, then we we're updating an existing entity
     if (existingBackendEntity) {
-        const { initialState, updatedState, entityId } = entityInput
-        // TODO
+        const { updatedState } = entityInput
         const entity = { ...existingBackendEntity }
-        return entity
+        const associations = []
+        buildBackendEntityState(entity, updatedState)
+        return { entity, associations }
     }
 
+    const { initialState, entityDefId } = entityInput
     const entity = {
         id: null,
+        entityDefId,
         state: {},
     }
     const associations = []
-    const { initialState } = entityInput
     buildBackendEntityState(entity, initialState)
     return { entity, associations }
 }
 
-function buildBackendEntityState(entity, state) {
-    for (const propState of state) {
+function buildBackendEntityState(entity, stateInput) {
+    for (const propState of stateInput) {
         switch (true) {
             case propState.hasOwnProperty('literalValue'):
                 entity.state[propState.propertyId] = propState.literalValue

@@ -17,12 +17,12 @@ export const updateEntityRequest = gql`
     mutation(
         $entityDefId: ID!
         $entityId: ID!
-        $initialState: [PropertyStateInput!]!
+        $updatedState: [PropertyStateInput!]!
     ) {
         updateEntityRequest(
             entityDefId: $entityDefId
             entityId: $entityId
-            initialState: $initialState
+            updatedState: $updatedState
         ) {
             entity {
                 id

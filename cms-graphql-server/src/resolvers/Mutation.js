@@ -60,13 +60,18 @@ export const Mutation = {
 
     createEntityRequest(_, args) {
         const { entity, associations } = graphqlInputToBackendModel(args)
-        console.log('entity: ', entity)
-        entityRepository.save(entity)
+        // console.log('entity: ', entity)
+        return entityRepository.save(entity)
     },
 
-    updateEntityRequest(_, { entityDefId, entityId, updatedState }) {
-        console.log('entityId: ', entityId)
-        console.log('updatedState: ', updatedState)
+    async updateEntityRequest(_, args) {
+        const existingEntity = await entityRepository.getById(args.entityId)
+        const { entity, associations } = graphqlInputToBackendModel(
+            args,
+            existingEntity
+        )
+        // console.log('entity: ', entity)
+        return entityRepository.save(entity)
     },
 }
 

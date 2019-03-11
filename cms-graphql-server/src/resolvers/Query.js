@@ -42,7 +42,6 @@ export const Query = {
         const results = (await entityRepository.find({})).map(
             backendEntityToGraphqlEntity
         )
-        console.log('results: ', results)
         return {
             results,
             totalCount: results.length,
@@ -55,8 +54,9 @@ export const Query = {
         // }
     },
 
-    entity(_, { entityDefId, entityId }) {
-        return null
+    async entity(_, { entityId /*, entityDefId */ }) {
+        const result = await entityRepository.getById(entityId)
+        return result ? backendEntityToGraphqlEntity(result) : null
     },
 }
 

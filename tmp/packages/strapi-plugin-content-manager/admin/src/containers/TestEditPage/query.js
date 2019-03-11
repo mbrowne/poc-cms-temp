@@ -1,14 +1,15 @@
 import gql from 'graphql-tag'
-import { entityDefDetails } from '../../graphql/fragments'
+import { entityDefDetails, entityDetails } from '../../graphql/fragments'
 
 // Note: "EditPage" is also used to create new entities
 export const editPageQuery = gql`
+    ${entityDetails}
     ${entityDefDetails}
 
     query($entityDefId: ID!, $isEditMode: Boolean!, $entityId: ID!) {
         entity(entityDefId: $entityDefId, entityId: $entityId)
             @include(if: $isEditMode) {
-            id
+            ...EntityDetails
         }
 
         entityDef: entityDefinition(id: $entityDefId) {
