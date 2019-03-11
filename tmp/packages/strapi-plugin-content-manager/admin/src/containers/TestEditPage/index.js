@@ -26,6 +26,8 @@ import { newEntity } from '../../utils/newEntity'
 import { getLayout } from './utils'
 import { editPageQuery } from './query'
 import * as mutations from './mutations'
+import { entities as entitiesQuery } from '../../graphql/queries'
+import { useDeleteEntityRequest } from '../../local-hooks'
 
 const labels = {
     createFormHeading: 'New Entry',
@@ -54,7 +56,7 @@ const EditPage = props => {
     })
 }
 
-function renderEditPage({ data, mode, match, history, location, entityDefId }) {
+function renderEditPage({ data, mode, history, location, entityDefId }) {
     const entityDef = convertEntityDefResult(data.entityDef)
     const { propertiesToShowOnEditForm } = entityDef.adminUiSettings
     // const { propertiesToShowOnEditForm } = convertAdminUiSettings(entityDef.adminUiSettings)
@@ -63,12 +65,11 @@ function renderEditPage({ data, mode, match, history, location, entityDefId }) {
     let entity
     if (mode === 'create') {
         entity = newEntity(entityDef)
-
-        // TEMP
-        entity.state = {
-            businessId: 'pop-art',
-            displayName: 'Pop Art',
-        }
+        // // TEMP
+        // entity.state = {
+        //     businessId: 'pop-art',
+        //     displayName: 'Pop Art',
+        // }
     } else {
         entity = convertEntityResult(data.entity)
         // console.log('entity: ', entity)
@@ -82,6 +83,7 @@ function renderEditPage({ data, mode, match, history, location, entityDefId }) {
     const [formState, setFormState] = useFormState(entity.state)
     const createEntityRequest = useMutation(mutations.createEntityRequest)
     const updateEntityRequest = useMutation(mutations.updateEntityRequest)
+    const deleteEntityRequest = useDeleteEntityRequest()
 
     const showLoaders = false // TODO
     const shoeEditPageLoader = false // TODO
@@ -131,6 +133,28 @@ function renderEditPage({ data, mode, match, history, location, entityDefId }) {
 
         // Retrieve the entity def's layout
         getLayout: () => getLayout(propertiesToShowOnEditForm),
+
+        // Get the 'source' from the URL
+        getSource: () => getQueryParameters(location.search, 'source'),
+
+        redirectAfterSave: () => {
+            //TEMP
+            history.push('/plugins/content-manager/test')
+
+            // if (location.search && location.search.includes('?redirectUrl')) {
+            //     const redirectUrl = location.search.split('?redirectUrl=')[1]
+
+            //     history.push({
+            //         pathname: redirectUrl.split('?')[0],
+            //         search: redirectUrl.split('?')[1],
+            //     })
+            // } else {
+            //     history.push({
+            //         pathname: replace(location.pathname, '/create', ''),
+            //         search: `?source=${helpers.getSource()}`,
+            //     })
+            // }
+        },
     }
 
     function toggleCancelChangesWarning() {
@@ -146,6 +170,20 @@ function renderEditPage({ data, mode, match, history, location, entityDefId }) {
     }
 
     function handleConfirm() {}
+
+    async function handleDelete() {
+        //
+        // FIXME
+        //
+        //
+
+        await deleteEntityRequest({
+            entityDefId,
+            entityId: entity.id,
+        })
+        state.showWarningDelete = false
+        helpers.redirectAfterSave()
+    }
 
     function handleBlur() {}
 
@@ -178,7 +216,8 @@ function renderEditPage({ data, mode, match, history, location, entityDefId }) {
     async function handleSubmit(e) {
         e.preventDefault()
 
-        const propertyState = Object.entries(formState.values).map(
+        const entityId = entity.id
+        const entityState = Object.entries(formState.values).map(
             ([propertyId, value]) => ({
                 propertyId,
                 // TODO: associations
@@ -186,27 +225,60 @@ function renderEditPage({ data, mode, match, history, location, entityDefId }) {
             })
         )
 
-        console.log('propertyState: ', propertyState)
+        console.log('entityState: ', entityState)
 
         try {
+            const optimisticModerationResponse = {
+                __typename: 'EntityModerationStatus',
+                entity: {
+                    __typename: 'Entity',
+                    id: entityId,
+                    state: entityState,
+                },
+            }
+
             if (mode === 'create') {
                 await createEntityRequest({
                     variables: {
                         entityDefId,
-                        initialState: propertyState,
+                        initialState: entityState,
+                    },
+                    optimisticResponse: {
+                        __typename: 'Mutation',
+                        createEntityRequest: optimisticModerationResponse,
+                    },
+                    // update cache so list screen will optimistically show updated data
+                    update: (proxy, { data: { createEntityRequest } }) => {
+                        // read current cache data
+                        const queryArgs = {
+                            query: entitiesQuery,
+                            variables: { entityDefId, where: { entityDefId } },
+                        }
+                        const data = proxy.readQuery(queryArgs)
+                        // add entity to the top of the list (TODO(?): respect sort order)
+                        data.entities.results.unshift(
+                            createEntityRequest.entity
+                        )
+                        // write our data back to the cache
+                        proxy.writeQuery({ ...queryArgs, data })
                     },
                 })
             } else {
                 await updateEntityRequest({
                     variables: {
                         entityDefId,
-                        entityId: entity.id,
-                        updatedState: propertyState,
+                        entityId: entityId,
+                        updatedState: entityState,
+                    },
+                    optimisticResponse: {
+                        __typename: 'Mutation',
+                        updateEntityRequest: optimisticModerationResponse,
                     },
                 })
             }
 
-            console.log('done')
+            strapi.notification.success('content-manager.success.record.save')
+            helpers.redirectAfterSave()
         } catch (e) {
             console.error('Apollo error: ', e)
             strapi.notification.error('Error saving data: ' + e.message)
@@ -214,7 +286,7 @@ function renderEditPage({ data, mode, match, history, location, entityDefId }) {
     }
 
     function renderForm() {
-        const source = getQueryParameters(location.search, 'source')
+        const source = helpers.getSource()
         const basePath = '/plugins/content-manager/ctm-configurations'
         const pathname =
             source !== 'content-manager'
@@ -324,7 +396,7 @@ function renderEditPage({ data, mode, match, history, location, entityDefId }) {
                                 'content-manager.popUpWarning.button.confirm',
                         }}
                         popUpWarningType="danger"
-                        onConfirm={handleConfirm}
+                        onConfirm={handleDelete}
                     />
                     <div className="row">{renderForm()}</div>
                 </div>

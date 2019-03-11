@@ -8,7 +8,7 @@ import {
     toInteger,
     upperFirst,
 } from 'lodash'
-import { useQueryLoader } from 'hooks'
+import { useQueryLoader, useConvenientState } from 'hooks'
 
 // You can find these components in either
 // ./node_modules/strapi-helper-plugin/lib/src
@@ -29,6 +29,7 @@ import styles from './styles.scss'
 import Div from '../ListPage/Div'
 
 import { convertEntityResults } from '../../utils/convertEntityResults'
+import { useDeleteEntityRequest } from '../../local-hooks'
 
 const ListPage = ({ match, history, location }) => {
     // TEMP
@@ -68,6 +69,13 @@ const ListPage = ({ match, history, location }) => {
         // console.log('totalCount: ', totalCount)
         // console.log('entities: ', entities)
         // console.log('entityDef: ', entityDef)
+
+        const state = useConvenientState({
+            showDeleteWarning: false,
+            entityIdToDelete: null,
+        })
+
+        const deleteEntityRequest = useDeleteEntityRequest()
 
         const helpers = {
             renderPluginHeader: () => {
@@ -114,7 +122,13 @@ const ListPage = ({ match, history, location }) => {
                 `?redirectUrl=/plugins/content-manager/${entityDefId}`,
         }
 
-        function handleRequestDelete() {}
+        async function handleDelete(e) {
+            await deleteEntityRequest({
+                entityDefId,
+                entityId: state.entityIdToDelete,
+            })
+            state.showDeleteWarning = false
+        }
 
         function handleChangeSort() {}
 
@@ -123,6 +137,22 @@ const ListPage = ({ match, history, location }) => {
         function handleClickSelect() {}
 
         function handleToggleDeleteAll() {}
+
+        function toggleDeleteWarning(e) {
+            if (e) {
+                e.preventDefault()
+                e.stopPropagation()
+                // state.entityIdToDelete = e.target.id
+                // console.log('state.entityIdToDelete: ', state.entityIdToDelete)
+                // console.log('e.target.id: ', e.target.id)
+
+                state.entityIdToDelete = e.target.id
+            }
+            state.setShowDeleteWarning(prev => !prev)
+            // setTimeout(() => {
+            //     state.setShowDeleteWarning(prev => !prev)
+            // }, 500)
+        }
 
         const tableHeaders =
             entityDef.adminUiSettings.propertiesToShowOnListScreen
@@ -155,7 +185,7 @@ const ListPage = ({ match, history, location }) => {
                                 entriesToDelete={[]}
                                 enableBulkActions={false}
                                 filters={[]}
-                                handleDelete={handleRequestDelete}
+                                handleDelete={toggleDeleteWarning}
                                 headers={tableHeaders}
                                 history={history}
                                 onChangeSort={handleChangeSort}
@@ -170,6 +200,21 @@ const ListPage = ({ match, history, location }) => {
                                 // search={params._q}
                                 showLoader={showLoaders}
                                 sort={''}
+                            />
+                            <PopUpWarning
+                                isOpen={state.showDeleteWarning}
+                                toggleModal={toggleDeleteWarning}
+                                content={{
+                                    title: 'content-manager.popUpWarning.title',
+                                    message:
+                                        'content-manager.popUpWarning.bodyMessage.contentType.delete',
+                                    cancel:
+                                        'content-manager.popUpWarning.button.cancel',
+                                    confirm:
+                                        'content-manager.popUpWarning.button.confirm',
+                                }}
+                                popUpWarningType="danger"
+                                onConfirm={handleDelete}
                             />
                         </div>
                     </div>

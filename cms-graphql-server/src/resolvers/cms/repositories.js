@@ -27,6 +27,15 @@ export const entityRepository = {
             .toArray()
         return renameIdField(results[0]) || null
     },
+
+    async delete(id) {
+        const entity = await this.getById(id)
+        if (!entity) {
+            throw Error(`Entity ID '${id}' not found`)
+        }
+        await entitiesColl().deleteOne({ _id: new ObjectID(id) })
+        return entity
+    },
 }
 
 function renameIdField({ _id, ...fields }) {

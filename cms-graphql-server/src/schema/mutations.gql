@@ -83,4 +83,7 @@ type Mutation {
     ): EntityModerationStatus
     # startPublishing: Date
     # stopPublishing: Date
+
+    # TODO allow deleting multiple entities at once
+    deleteEntityRequest(entityId: ID!, entityDefId: ID!): EntityModerationStatus
 }
