@@ -1,7 +1,11 @@
 import fsModule from 'fs'
 import path from 'path'
 import config from '~/config'
-import { graphqlInputToBackendModel } from './cms/utils'
+import {
+    prepareEntityDefForStorage,
+    graphqlInputToBackendModel,
+    backendEntityToGraphqlEntity,
+} from './cms/utils'
 import { entityRepository } from './cms/repositories'
 const fs = fsModule.promises
 
@@ -10,44 +14,6 @@ const entityDefsDir = path.join(
     'data',
     'entity-definitions'
 )
-
-// const propTypes = [
-//     'literalProperty',
-//     'associationProperty',
-//     'staticAssetProperty',
-// ]
-
-// Transform the input data into the format we want to save in the JSON file
-function prepareEntityDefForStorage(inputObj) {
-    if (!inputObj.properties) {
-        return inputObj
-    }
-    const properties = inputObj.properties
-        .filter(propInput => propInput.id !== 'businessId')
-        .map(propInput => {
-            // New approach: use `typename` field of PropertyInput type
-            const { typename, ...propFields } = propInput
-            return {
-                __typename: typename,
-                ...propFields,
-            }
-
-            // Old approach:
-            // const hasPropTypeInput = propTypes.some(propType =>
-            //     propInput.hasOwnProperty(propType)
-            // )
-            // if (!hasPropTypeInput) {
-            //     const propType = 'LiteralProperty'
-            //     return {
-            //         __typename: propType,
-            //         ...propInput,
-            //     }
-            // } else {
-            //     throw Error('TODO')
-            // }
-        })
-    return { ...inputObj, properties }
-}
 
 export const Mutation = {
     createEntityDefinition(_, { entityDef }) {
@@ -58,10 +24,15 @@ export const Mutation = {
         return saveEntityDefinition(entityDef, id)
     },
 
-    createEntityRequest(_, args) {
+    async createEntityRequest(_, args) {
         const { entity, associations } = graphqlInputToBackendModel(args)
         // console.log('entity: ', entity)
-        return entityRepository.save(entity)
+        const id = await entityRepository.save(entity)
+        const moderationStatus = {
+            entity: backendEntityToGraphqlEntity({ ...entity, id }),
+            errorMessage: null,
+        }
+        return moderationStatus
     },
 
     async updateEntityRequest(_, args) {
@@ -71,7 +42,12 @@ export const Mutation = {
             existingEntity
         )
         // console.log('entity: ', entity)
-        return entityRepository.save(entity)
+        await entityRepository.save(entity)
+        const moderationStatus = {
+            entity: backendEntityToGraphqlEntity(entity),
+            errorMessage: null,
+        }
+        return moderationStatus
     },
 }
 

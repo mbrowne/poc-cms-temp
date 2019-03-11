@@ -7,7 +7,8 @@ export const entityRepository = {
     async save(entity) {
         const { id, ...rest } = entity
         if (!id) {
-            return entitiesColl().insertOne(rest)
+            const result = await entitiesColl().insertOne(rest)
+            return result.insertedId
         }
         return entitiesColl().replaceOne({ _id: new ObjectID(id) }, rest)
     },
