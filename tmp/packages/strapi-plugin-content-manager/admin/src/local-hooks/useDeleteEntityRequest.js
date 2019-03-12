@@ -25,7 +25,17 @@ export function useDeleteEntityRequest() {
                         query: queries.entities,
                         variables: { entityDefId, where: { entityDefId } },
                     }
+                    // This line was sometimes failing, but couldn't reproduce it to debug,
+                    // so leaving as-is for now...
                     const data = proxy.readQuery(queryArgs)
+                    // let data
+                    // try {
+                    //     data = proxy.readQuery(queryArgs)
+                    //     console.log('data: ', data)
+                    // } catch (e) {
+                    //     console.log('e: ', e)
+                    // }
+
                     // remove the entity from the results array
                     data.entities.results.splice(
                         data.entities.results.findIndex(

@@ -20,10 +20,16 @@ app.use(
 
 server.applyMiddleware({ app })
 
-initMongo().then(() => {
-    app.listen({ port: PORT }, () => {
-        console.log(
-            `🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`
-        )
+initMongo()
+    .then(() => {
+        app.listen({ port: PORT }, () => {
+            console.log(
+                `🚀 Server ready at http://localhost:${PORT}${
+                    server.graphqlPath
+                }`
+            )
+        })
     })
-})
+    .catch(e => {
+        console.error(e)
+    })

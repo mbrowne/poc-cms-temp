@@ -46,14 +46,14 @@ const EditPage = props => {
 
     return useQueryLoader(editPageQuery, {
         variables: { entityDefId, entityId, isEditMode: mode === 'edit' },
-    })(({ data }) => {
-        return renderEditPage({
+    })(({ data }) =>
+        renderEditPage({
             ...props,
             data,
             mode,
             entityDefId,
         })
-    })
+    )
 }
 
 function renderEditPage({ data, mode, history, location, entityDefId }) {
@@ -172,11 +172,6 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
     function handleConfirm() {}
 
     async function handleDelete() {
-        //
-        // FIXME
-        //
-        //
-
         await deleteEntityRequest({
             entityDefId,
             entityId: entity.id,
