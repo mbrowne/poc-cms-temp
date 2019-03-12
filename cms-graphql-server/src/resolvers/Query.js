@@ -39,9 +39,14 @@ export const Query = {
     },
 
     async entities(_, { where }) {
-        const results = (await entityRepository.find(where)).map(
-            backendEntityToGraphqlEntity
-        )
+        const results = []
+        for (const backendEntity of await entityRepository.find(where)) {
+            results.push(await backendEntityToGraphqlEntity(backendEntity))
+        }
+
+        // const results = (await entityRepository.find(where)).map(
+        //     backendEntityToGraphqlEntity
+        // )
         return {
             results,
             totalCount: results.length,
@@ -56,7 +61,7 @@ export const Query = {
 
     async entity(_, { entityId /*, entityDefId */ }) {
         const result = await entityRepository.getById(entityId)
-        return result ? backendEntityToGraphqlEntity(result) : null
+        return result ? await backendEntityToGraphqlEntity(result) : null
     },
 }
 

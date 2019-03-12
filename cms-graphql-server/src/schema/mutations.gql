@@ -25,6 +25,9 @@ input EntityDefinitionInput {
 #     computedProperties: [ComputedPropertyInput!]
 # }
 
+# NOTE: literalValue and associationValue are separate fields
+# because graphql does not currently support polymorphic input types (i.e. unions/interfaces)
+# See https://github.com/facebook/graphql/issues/114
 input PropertyInput {
     typename: String = "LiteralProperty"
     id: String!
@@ -35,25 +38,29 @@ input PropertyInput {
     # TODO
     # flags: [PropertyFlagInput!]
 
-    # Separate fields for different sub-types of Property, since graphql does not currently support
-    # polymorphic input types (i.e. unions/interfaces)
+    # # Separate fields for different sub-types of Property, since graphql does not currently support
+    # # polymorphic input types (i.e. unions/interfaces)
     # literalProperty: LiteralPropertyInput
     # associationProperty: AssociationDefinitionInput
     # staticAssetProperty: StaticAssetPropertyInput
 }
 
 # input LiteralPropertyInput {
-#     # defaultValue: LiteralPropertyValueScalar
+#     defaultValue: LiteralPropertyValueScalar
 # }
 
 input PropertyStateInput {
     propertyId: ID!
     literalValue: LiteralPropertyValueScalar
+    associationsValue: [AssociationInput!]
+    # TODO
+    # staticAssetsValue: [StaticAssetsInput!]
 }
 
 input AssociationInput {
-    entityIds: [ID!]!
-    propertyValues: [PropertyStateInput!]!
+    destinationEntityId: ID!
+    # TODO
+    # propertyValues: [PropertyStateInput!]!
 }
 
 type Mutation {

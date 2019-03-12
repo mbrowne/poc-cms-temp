@@ -25,7 +25,6 @@ export const AssociationDefinition = {
             {},
             { id: destinationItemDef.entityDefId }
         )
-        console.log('destinationEntityDef: ', destinationEntityDef)
         return {
             ...destinationItemDef,
             entityDef: destinationEntityDef,

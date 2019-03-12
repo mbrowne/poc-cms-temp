@@ -3,10 +3,11 @@ import path from 'path'
 import config from '~/config'
 import {
     prepareEntityDefForStorage,
-    graphqlInputToBackendModel,
+    graphqlInputToBackendEntity,
+    graphqlInputToBackendAssociations,
     backendEntityToGraphqlEntity,
 } from './cms/utils'
-import { entityRepository } from './cms/repositories'
+import { entityRepository, associationRepository } from './cms/repositories'
 const fs = fsModule.promises
 
 const entityDefsDir = path.join(
@@ -14,6 +15,19 @@ const entityDefsDir = path.join(
     'data',
     'entity-definitions'
 )
+
+// {
+//     "initialState": [
+//       {
+//         "propertyId": "tagSubject",
+//         "associationsValue": [
+//           {
+//             "destinationEntityId": "1234"
+//           }
+//         ]
+//       }
+//     ]
+// }
 
 export const Mutation = {
     createEntityDefinition(_, { entityDef }) {
@@ -25,9 +39,17 @@ export const Mutation = {
     },
 
     async createEntityRequest(_, args) {
-        const { entity, associations } = graphqlInputToBackendModel(args)
+        const entity = await graphqlInputToBackendEntity(args)
+
         // console.log('entity: ', entity)
         const id = await entityRepository.save(entity)
+
+        const { associations } = await graphqlInputToBackendAssociations(
+            id,
+            args
+        )
+        await associationRepository.saveMultiple(associations)
+
         const moderationStatus = {
             entity: backendEntityToGraphqlEntity({ ...entity, id }),
             errorMessage: null,
@@ -37,10 +59,7 @@ export const Mutation = {
 
     async updateEntityRequest(_, args) {
         const existingEntity = await entityRepository.getById(args.entityId)
-        const { entity, associations } = graphqlInputToBackendModel(
-            args,
-            existingEntity
-        )
+        const entity = await graphqlInputToBackendModel(args, existingEntity)
         // console.log('entity: ', entity)
         await entityRepository.save(entity)
         const moderationStatus = {

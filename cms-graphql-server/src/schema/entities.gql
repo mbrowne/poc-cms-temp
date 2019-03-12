@@ -2,7 +2,7 @@ type LiteralPropertyValue {
     value: LiteralPropertyValueScalar
 }
 
-union PropertyValue = LiteralPropertyValue
+union PropertyValue = LiteralPropertyValue | Associations
 # union PropertyValue = LiteralPropertyValue | StaticAssets | Associations
 
 type Entity {
@@ -43,6 +43,10 @@ type EntityModerationStatus {
     if the request was invalid, the above properties will be null and we will just return an error message
     """
     errorMessage: ErrorMessage
+}
+
+type Associations {
+    associations: [Association!]!
 }
 
 """
