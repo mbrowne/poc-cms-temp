@@ -1,24 +1,46 @@
-import { map, omit } from 'lodash';
-import request from 'utils/request';
+import gql from 'graphql-tag'
+// This loads apolloClient.js in strapi-helper-plugin
+import client from 'apolloClient'
+
+const entityDefsQuery = gql`
+    {
+        entityDefinitions {
+            results {
+                id
+                label
+                pluralLabel
+            }
+        }
+    }
+`
 
 // This method is executed before the load of the plugin
-const bootstrap = (plugin) => new Promise((resolve, reject) => {
-  request('/content-manager/models', { method: 'GET' })
-    .then(models => {
-      const menu = [{
-        name: 'Content Types',
-        links: map(omit(models.models.models, 'plugins'), (model, key) => ({
-          label: model.labelPlural || model.label || key,
-          destination: key,
-        })),
-      }];
-      plugin.leftMenuSections = menu;
-      resolve(plugin);
-    })
-    .catch(e => {
-      strapi.notification.error('content-manager.error.model.fetch');
-      reject(e);
-    });
-});
+const bootstrap = async plugin => {
+    try {
+        const { data, error } = await client.query({ query: entityDefsQuery })
+        if (error) {
+            console.error('Apollo error: ', error)
+            strapi.notification.error('content-manager.error.model.fetch')
+            return plugin
+        }
+        const entityDefs = data.entityDefinitions.results
+        plugin.leftMenuSections = [
+            {
+                name: 'Data Entities',
+                links: entityDefs.map(entityDef => ({
+                    label:
+                        entityDef.pluralLabel ||
+                        entityDef.label ||
+                        entityDef.id,
+                    destination: entityDef.id,
+                })),
+            },
+        ]
+    } catch (e) {
+        console.error('Apollo error: ', e)
+        strapi.notification.error('content-manager.error.model.fetch')
+    }
+    return plugin
+}
 
-export default bootstrap;
+export default bootstrap

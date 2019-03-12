@@ -37,8 +37,8 @@ class Table extends React.Component {
                         onChange={this.props.onClickSelect}
                         key={key}
                         destination={`${this.props.route.path.replace(
-                            ':slug',
-                            this.props.routeParams.slug
+                            ':entityDefId',
+                            this.props.routeParams.entityDefId
                         )}/${record[this.props.primaryKey]}`}
                         headers={this.props.headers}
                         record={record}
