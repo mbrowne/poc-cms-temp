@@ -14,6 +14,9 @@ export const entityRepository = {
     },
 
     async find(conditions) {
+        if (!conditions.entityDefId) {
+            throw Error('entityDefId is required')
+        }
         const results = await entitiesColl()
             .find(conditions)
             .toArray()

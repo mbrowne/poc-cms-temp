@@ -3,7 +3,7 @@ type LiteralPropertyValue {
 }
 
 union PropertyValue = LiteralPropertyValue
-# union PropertyValue = LiteralPropertyValue | StaticAssets | Association
+# union PropertyValue = LiteralPropertyValue | StaticAssets | Associations
 
 type Entity {
     id: ID!
@@ -43,4 +43,31 @@ type EntityModerationStatus {
     if the request was invalid, the above properties will be null and we will just return an error message
     """
     errorMessage: ErrorMessage
+}
+
+"""
+A specific association of one entity as it relates to another entity.
+e.g. 'Pablo Picasso' -> 'Paintings'  (association 1)
+ and 'Pablo Picasso' -> 'Scupltures'  (association 2)
+
+Note how there is a separate association for each pair above even though it's the same source entity.
+(This simplifies the model and also allows us to support things like weighted tags.)
+"""
+type Association {
+    id: ID!
+    """
+    This schema only contains destination entity (we always traverse associations from the source side,
+    so we will already know what the source entity is).
+    If we do need the sourceEntity for some use case, we could certainly add it. In the future we might also want
+    just an "entities" field in case we need to support non-binary relationships (e.g. ternary relationships or sibling relationships)
+    """
+    destinationEntity: Entity!
+    # """
+    # An association can have properties of its own
+    # (e.g. the weight for the association between a Creator and a Tag).
+
+    # Question: Should we name this 'state' to be consistent with Entity?
+    # Or is it clearer to leave it as 'propertyValues'?
+    # """
+    # propertyValues: [PropertyState!]!
 }

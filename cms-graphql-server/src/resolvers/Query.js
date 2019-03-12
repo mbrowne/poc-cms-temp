@@ -38,8 +38,8 @@ export const Query = {
         return loadEntityDef(id)
     },
 
-    async entities() {
-        const results = (await entityRepository.find({})).map(
+    async entities(_, { where }) {
+        const results = (await entityRepository.find(where)).map(
             backendEntityToGraphqlEntity
         )
         return {

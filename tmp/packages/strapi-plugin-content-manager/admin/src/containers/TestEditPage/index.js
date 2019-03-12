@@ -222,15 +222,67 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
 
         console.log('entityState: ', entityState)
 
+        // Needed to simulate the server response for optimistic updates
+        const convertToGraphqlOutputFormat = stateValues =>
+            Object.keys(stateValues).map(propertyId => {
+                const stateVal = stateValues[propertyId]
+                let value
+                // assume literal property value for now
+                value = {
+                    __typename: 'LiteralPropertyValue',
+                    value: JSON.stringify(stateVal),
+                }
+
+                // switch (???) {
+                //     case 'LiteralPropertyValue':
+                //         value = {
+                //             __typename: 'LiteralPropertyValue',
+                //             value: propState.literalValue,
+                //         }
+                //         break
+                //     case 'Associations':
+                //         // TODO
+                //         // UNTESTED
+                //         value = {
+                //             __typename: 'Associations',
+                //             associations: propState.entityIds.map(
+                //                 associatedEntityId => ({
+                //                     destinationEntity: {
+                //                         id: associatedEntityId,
+                //                     },
+                //                 })
+                //             ),
+                //         }
+                //         break
+                //     case 'StaticAssets':
+                //         throw Error('TODO')
+                //     default:
+                //         throw Error(
+                //             `Unable to determine value type for property state ${JSON.stringify(
+                //                 propState
+                //             )}`
+                //         )
+                // }
+                return {
+                    __typename: 'PropertyState',
+                    propertyId,
+                    value,
+                }
+            })
+
         try {
             const optimisticModerationResponse = {
                 __typename: 'EntityModerationStatus',
                 entity: {
                     __typename: 'Entity',
                     id: entityId,
-                    state: entityState,
+                    state: convertToGraphqlOutputFormat(formState.values),
                 },
             }
+            console.log(
+                'optimisticModerationResponse: ',
+                optimisticModerationResponse
+            )
 
             if (mode === 'create') {
                 await createEntityRequest({
