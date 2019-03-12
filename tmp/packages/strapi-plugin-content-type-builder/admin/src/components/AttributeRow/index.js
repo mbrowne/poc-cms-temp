@@ -128,7 +128,7 @@ class AttributeRow extends React.Component {
                 <div className={styles.flex}>
                     <div className={styles.nameContainer}>
                         {this.renderAttributesBox()}
-                        <div>{prop.id}</div>
+                        <div>{prop.label}</div>
                     </div>
                     <div className={styles.relationContainer}>
                         {relationType}

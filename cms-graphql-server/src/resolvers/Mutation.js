@@ -96,12 +96,37 @@ async function saveEntityDefinition(
         }
         entityDef = prepareEntityDefForStorage(entityDefInput)
     } else {
+        // TEMP
+        // ignore association and static assets properties until UI supports them
+        // (to avoid overwriting changes manually made to the JSON)
+        const nonLiteralProps = existingEntityDef.properties.filter(
+            p => p.__typename !== 'LiteralProperty'
+        )
+        // const nonLiteralProps = {}
+        // for (const p of nonLiteralPropsArray) {
+        //     nonLiteralProps[p.id] = p
+        // }
+
         // @NB in the real system we might not handle updates this way.
         // This always keeps all old properties unless they're overwritten.
+        const updates = prepareEntityDefForStorage(entityDefInput)
+
+        // TEMP
+        updates.properties = [
+            ...updates.properties.filter(
+                p => p.__typename === 'LiteralProperty'
+            ),
+            ...nonLiteralProps,
+        ]
+
         entityDef = {
             ...existingEntityDef,
-            ...prepareEntityDefForStorage(entityDefInput),
+            ...updates,
         }
+        // entityDef = {
+        //     ...existingEntityDef,
+        //     ...prepareEntityDefForStorage(entityDefInput),
+        // }
     }
 
     await fs.writeFile(

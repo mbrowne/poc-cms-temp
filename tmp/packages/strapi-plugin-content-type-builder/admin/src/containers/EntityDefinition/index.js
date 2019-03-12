@@ -292,7 +292,6 @@ const EntityDefinitionView = ({
             state.showButtonLoader = true
             try {
                 const { __typename, hasChanges, ...entityDefInput } = entityDef
-
                 if (!hasChanges) {
                     // @TODO ensure save button is grayed out in this case.
                     // Still good to have this as a fallback though.

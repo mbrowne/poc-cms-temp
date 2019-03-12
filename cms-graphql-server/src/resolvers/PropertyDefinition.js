@@ -1,4 +1,5 @@
 import { resolveTypeFromTypename } from '~/utils'
+import { Query } from './Query'
 
 export const PropertyDefinition = {
     __resolveType(obj, context, info) {
@@ -17,4 +18,17 @@ export const LiteralProperty = {
 
 export const AssociationDefinition = {
     label: PropertyDefinition.label,
+    // NB: Not including a resolver for sourceItemDef here because it's always the same as the entity
+    // that owns the association "property"
+    async destinationItemDef({ destinationItemDef }) {
+        const destinationEntityDef = await Query.entityDefinition(
+            {},
+            { id: destinationItemDef.entityDefId }
+        )
+        console.log('destinationEntityDef: ', destinationEntityDef)
+        return {
+            ...destinationItemDef,
+            entityDef: destinationEntityDef,
+        }
+    },
 }

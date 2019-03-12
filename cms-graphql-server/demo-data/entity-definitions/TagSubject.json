@@ -1,0 +1,16 @@
+{
+  "id": "TagSubject",
+  "label": null,
+  "pluralLabel": "TagSubjects",
+  "description": "Type of tag, e.g. \"Artwork Type\", \"Object Type\", \"Material\", \"Period\", etc.",
+  "isAbstract": false,
+  "properties": [
+    {
+      "__typename": "LiteralProperty",
+      "id": "name",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    }
+  ]
+}

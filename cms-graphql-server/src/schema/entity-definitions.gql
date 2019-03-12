@@ -90,11 +90,76 @@ type LiteralProperty implements PropertyDefinition {
 }
 
 type AssociationDefinition implements PropertyDefinition {
+    sourceItemDef: AssociationItemDefinition!
+    """
+    Note: this GraphQL schema assumes that we only need to support binary relationships.
+    The underlying domain model is capable of supporting ternary relationships if needed, in which
+    case this field would need to be rewritten as:
+        destinationItemDefs: [AssociationItemDefinition!]!
+
+    Or to support non-directional relationships, it would need to be just:
+        associationItemDefs: [AssociationItemDefinition!]!
+    """
+    destinationItemDef: AssociationItemDefinition!
+
     # inherited fields:
     id: ID!
     label: String!
     readOnly: Boolean!
     dataType: String!
+}
+
+"""
+There is one AssociationItemDefinition for each end of the association.
+Example: Creator-Artwork relationship
+
+AssociationItemDefinition #1 (source side) {
+    name: 'creator'
+    entityDef: artworksEntityDefinition
+    cardinality: ONE
+}
+
+AssociationItemDefinition #2 (destination side) {
+    name: 'artworks'
+    entityDef: creatorEntityDefinition
+    cardinality: ZERO_OR_MORE
+}
+"""
+type AssociationItemDefinition {
+    """
+    The 'name' attribue here allows for custom-named properties that can be used to traverse the association in either direction.
+
+    For example, consider the relationship between a gallery and the artists it represents, and suppose
+    that the association is defined as a property of 'Gallery' called 'representedArtists'. So a Gallery entity might look like this:
+
+    Gallery {
+       name: 'Demo Gallery',
+       representedArtists: [pabloPicasso, andyWarhol],
+       ...
+    }
+
+    In this example, 'representedArtists' is the 'name' of the AssociationItemDefinition.
+    (Note: 'representedArtists' also the 'name' of the AssociationDefinition, since this property belongs to Gallery and Gallery is the
+    owning side of this association. This is easier to see with a full example - refer to mocks.)
+
+    We might also want to traverse the association from the other direction, and we might want a custom name for the property
+    that would be exposed on the other side of the association, in this case 'Artist'.
+
+    Since there's one AssociationItemDefinition for the source side of the association and another AssociationItemDefinition
+    for the destination side, we can achieve this custom name simply by setting the 'name' property of the AssociationItemDefinition
+    for the destination side. Suppose we named it 'galleriesRepresentedBy'. Then there would be a 'galleriesRepresentedBy' property on
+    Artist entities:
+
+    Artist {
+      firstName: 'Pablo',
+      lastName: 'Picasso',
+      galleriesRepresentedBy: [demoGallery, ...]
+      ...
+    }
+    """
+    name: String
+    entityDef: EntityDefinition!
+    cardinality: Cardinality!
 }
 
 type EntityDefinitionModerationStatus {
