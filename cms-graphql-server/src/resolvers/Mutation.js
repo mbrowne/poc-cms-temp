@@ -70,10 +70,10 @@ export const Mutation = {
     },
 
     async deleteEntityRequest(_, { entityId /*, entityDefId */ }) {
-        const deletedEntity = await entityRepository.delete(entityId)
+        const deletedEntities = await entityRepository.delete(entityId)
         console.log(`Successfully deleted entity ID '${entityId}'`)
         const moderationStatus = {
-            entity: deletedEntity,
+            entity: deletedEntities[0],
             errorMessage: null,
         }
         return moderationStatus

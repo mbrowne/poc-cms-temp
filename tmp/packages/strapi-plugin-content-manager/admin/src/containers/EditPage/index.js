@@ -71,6 +71,10 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
         // console.log('entity: ', entity)
     }
 
+    if (!entity.state.businessId) {
+        throw Error(`Missing businessId for entity ID '${entity.id}'`)
+    }
+
     const state = useConvenientState({
         showWarning: false,
         showWarningDelete: false,

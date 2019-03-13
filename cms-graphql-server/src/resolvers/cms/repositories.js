@@ -43,13 +43,23 @@ export const entityRepository = {
         return renameIdField(results[0]) || null
     },
 
-    async delete(id) {
-        const entity = await this.getById(id)
-        if (!entity) {
-            throw Error(`Entity ID '${id}' not found`)
+    async delete(idOrIds) {
+        const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds]
+        const entities = await this.getMultipleById(ids)
+        if (entities.length !== ids.length) {
+            const missingEntityIds = ids.filter(
+                id => !entities.find(e => e.id === id)
+            )
+            throw Error(
+                `The following entity IDs were not found: ${missingEntityIds.join(
+                    ', '
+                )}`
+            )
         }
-        await entitiesColl().deleteOne({ _id: new ObjectID(id) })
-        return entity
+        await entitiesColl().deleteMany({
+            _id: { $in: ids.map(id => new ObjectID(id)) },
+        })
+        return entities
     },
 }
 
