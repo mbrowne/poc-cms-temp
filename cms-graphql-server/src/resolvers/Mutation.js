@@ -44,7 +44,7 @@ export const Mutation = {
         entity.id = await entityRepository.save(entity)
 
         const { associations } = await graphqlInputToBackendAssociations(
-            id.toString(),
+            entity.id,
             args
         )
         await associationRepository.saveMultiple(associations)

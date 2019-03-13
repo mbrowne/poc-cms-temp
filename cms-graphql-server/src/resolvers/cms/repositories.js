@@ -9,7 +9,7 @@ export const entityRepository = {
         const { id, ...rest } = entity
         if (!id) {
             const result = await entitiesColl().insertOne(rest)
-            return result.insertedId
+            return result.insertedId.toString()
         }
         return entitiesColl().replaceOne({ _id: new ObjectID(id) }, rest)
     },
@@ -82,7 +82,7 @@ export const associationRepository = {
         const { id, ...rest } = assoc
         if (!id) {
             const result = await associationsColl().insertOne(rest)
-            return result.insertedId
+            return result.insertedId.toString()
         }
         return associationsColl().replaceOne({ _id: new ObjectID(id) }, rest)
     },
