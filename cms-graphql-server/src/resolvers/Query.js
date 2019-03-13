@@ -12,7 +12,7 @@ const entityDefsDir = path.join(
 )
 
 export const Query = {
-    async entityDefinitions(_, { page, pageSize }) {
+    async entityDefinitions(_, { where, page, pageSize }) {
         if (page || pageSize) {
             throw Error(
                 'entityDefinitions query does not yet support pagination'
@@ -21,12 +21,24 @@ export const Query = {
         const entityDefFiles = (await fs.readdir(entityDefsDir)).filter(
             filename => filename.match(/\.json$/)
         )
-        const results = await Promise.all(
+        const allEntityDefs = await Promise.all(
             entityDefFiles.map(async filename => {
                 const entityDefId = path.parse(filename).name
                 return await loadEntityDef(entityDefId)
             })
         )
+        // Filter by `where` conditions
+        const conditions = where
+        const results = conditions
+            ? allEntityDefs.filter(def => {
+                  for (const [fieldName, val] of Object.entries(conditions)) {
+                      if (def[fieldName] === val) {
+                          return true
+                      }
+                  }
+                  return false
+              })
+            : allEntityDefs
 
         return {
             results,

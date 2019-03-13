@@ -25,7 +25,7 @@ import EmptyAttributesView from 'components/EmptyAttributesView'
 
 const entityDefsQuery = gql`
     {
-        entityDefinitions {
+        entityDefinitions(where: { isAbstract: false }) {
             results {
                 id
                 propertiesCount

@@ -1,3 +1,7 @@
+input EntityDefinitionFilters {
+    isAbstract: Boolean
+}
+
 input EntityFilters {
     entityDefId: ID!
 }

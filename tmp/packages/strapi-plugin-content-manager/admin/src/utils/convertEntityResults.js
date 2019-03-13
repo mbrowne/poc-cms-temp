@@ -14,7 +14,7 @@ export function convertEntityResult(entity) {
         const valueType = propValue.__typename
         if (valueType === 'LiteralPropertyValue') {
             value = JSON.parse(propValue.value)
-        } else if (valueType === 'Association') {
+        } else if (valueType === 'Associations') {
             value = 'TODO: associations'
         } else {
             throw Error(`Unrecognized property value type '${valueType}'`)

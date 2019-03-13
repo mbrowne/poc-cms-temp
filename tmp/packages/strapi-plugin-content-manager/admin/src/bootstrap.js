@@ -4,7 +4,7 @@ import client from 'apolloClient'
 
 const entityDefsQuery = gql`
     {
-        entityDefinitions {
+        entityDefinitions(where: { isAbstract: false }) {
             results {
                 id
                 label
