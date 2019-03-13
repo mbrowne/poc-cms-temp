@@ -12,14 +12,21 @@ export const PropertyDefinition = {
     },
 }
 
-export const LiteralProperty = {
+export const LiteralPropertyDefinition = {
     label: PropertyDefinition.label,
 }
 
 export const AssociationDefinition = {
     label: PropertyDefinition.label,
-    // NB: Not including a resolver for sourceItemDef here because it's always the same as the entity
-    // that owns the association "property"
+    sourceItemDef({ sourceItemDef }) {
+        return {
+            ...sourceItemDef,
+            // NB: Not including the entityDef here since we'll probably never need to query for it.
+            // The entityDef of the sourceItemDef is always the same as the entity definition that owns
+            // the property, so it's probably redundant.
+            entityDef: new Error('TODO'),
+        }
+    },
     async destinationItemDef({ destinationItemDef }) {
         const destinationEntityDef = await Query.entityDefinition(
             {},

@@ -139,7 +139,7 @@ async function saveEntityDefinition(
         // ignore association and static assets properties until UI supports them
         // (to avoid overwriting changes manually made to the JSON)
         const nonLiteralProps = existingEntityDef.properties.filter(
-            p => p.__typename !== 'LiteralProperty'
+            p => p.__typename !== 'LiteralPropertyDefinition'
         )
         // const nonLiteralProps = {}
         // for (const p of nonLiteralPropsArray) {
@@ -153,7 +153,7 @@ async function saveEntityDefinition(
         // TEMP
         updates.properties = [
             ...updates.properties.filter(
-                p => p.__typename === 'LiteralProperty'
+                p => p.__typename === 'LiteralPropertyDefinition'
             ),
             ...nonLiteralProps,
         ]

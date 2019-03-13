@@ -15,7 +15,7 @@ import PopUpWarning from 'components/PopUpWarning'
 // Plugin's components
 import CustomDragLayer from 'components/CustomDragLayer'
 import Edit from 'components/Edit'
-import EditRelations from 'components/EditRelations'
+import EditAssociation from 'components/EditAssociation'
 
 import { useQueryLoader, useConvenientState, useFormState } from 'hooks'
 import getQueryParameters from 'utils/getQueryParameters'
@@ -209,11 +209,29 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
 
         const entityId = entity.id
         const entityState = Object.entries(formState.values).map(
-            ([propertyId, value]) => ({
-                propertyId,
-                // TODO: associations
-                literalValue: JSON.stringify(value),
-            })
+            ([propertyId, value]) => {
+                const propertyDef = entityDef.properties[propertyId]
+                switch (propertyDef.__typename) {
+                    case 'LiteralPropertyDefinition':
+                        return {
+                            propertyId,
+                            literalValue: JSON.stringify(value),
+                        }
+                    case 'AssociationDefinition':
+                        return {
+                            propertyId,
+                            associationsValue: value.map(destinationEntity => ({
+                                destinationEntityId: destinationEntity.id,
+                            })),
+                        }
+                    default:
+                        throw Error(
+                            `Unrecognized property type '${
+                                propertyDef.__typename
+                            }'`
+                        )
+                }
+            }
         )
 
         console.log('entityState: ', entityState)
@@ -328,6 +346,16 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
         }
     }
 
+    // For to-one relationships only (not to-many)
+    function handleChangeSingleAssociationValue({
+        propertyId,
+        destinationEntity,
+    }) {
+        setFormState({
+            [propertyId]: [destinationEntity],
+        })
+    }
+
     function renderForm() {
         const source = helpers.getSource()
         const basePath = '/plugins/content-manager/ctm-configurations'
@@ -370,6 +398,19 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
             )
         }
 
+        // TODO
+        // It would be better to allow the user to arrange the properties in any order on the edit form,
+        // regardless of whether it's a literal property or association property, etc.
+        const literalProps = propertiesToShowOnEditForm.filter(
+            p => p.__typename === 'LiteralPropertyDefinition'
+        )
+        const associationProps = propertiesToShowOnEditForm.filter(
+            p => p.__typename === 'AssociationDefinition'
+        )
+        // TODO StaticAssets props
+
+        // console.log('associationProps: ', associationProps)
+
         return (
             <div
                 className={
@@ -381,7 +422,7 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
                 <div className={styles.main_wrapper}>
                     <Edit
                         attributes={entityDef.properties}
-                        displayAttributes={propertiesToShowOnEditForm}
+                        displayAttributes={literalProps}
                         didCheckErrors={false}
                         formValidations={[]}
                         formErrors={[]}
@@ -394,6 +435,18 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
                         entityDef={entityDef}
                         // schema={this.getSchema()}
                     />
+                    <div className={styles.editFormAssociations}>
+                        {associationProps.map(associationDef => (
+                            <EditAssociation
+                                key={associationDef.id}
+                                associationDef={associationDef}
+                                entityState={formState.values}
+                                onChangeSingleAssociationValue={
+                                    handleChangeSingleAssociationValue
+                                }
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
         )

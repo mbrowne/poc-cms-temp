@@ -6,21 +6,21 @@
   "isAbstract": false,
   "properties": [
     {
-      "__typename": "LiteralProperty",
+      "__typename": "LiteralPropertyDefinition",
       "id": "displayName",
       "label": "",
       "dataType": "string",
       "readOnly": false
     },
     {
-      "__typename": "LiteralProperty",
+      "__typename": "LiteralPropertyDefinition",
       "id": "shortBio",
       "label": "",
       "dataType": "string",
       "readOnly": false
     },
     {
-      "__typename": "LiteralProperty",
+      "__typename": "LiteralPropertyDefinition",
       "id": "longBio",
       "label": "",
       "dataType": "string",

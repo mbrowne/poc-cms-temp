@@ -9,6 +9,14 @@ export const entityDetails = gql`
                 ... on LiteralPropertyValue {
                     value
                 }
+                ... on Associations {
+                    associations {
+                        destinationEntity {
+                            id
+                            displayName
+                        }
+                    }
+                }
             }
         }
     }

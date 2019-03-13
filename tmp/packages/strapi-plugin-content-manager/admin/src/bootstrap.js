@@ -17,9 +17,9 @@ const entityDefsQuery = gql`
 // This method is executed before the load of the plugin
 const bootstrap = async plugin => {
     try {
-        const { data, error } = await client.query({ query: entityDefsQuery })
-        if (error) {
-            console.error('Apollo error: ', error)
+        const { data, errors } = await client.query({ query: entityDefsQuery })
+        if (errors) {
+            console.error('Apollo error(s): ', JSON.stringify(errors))
             strapi.notification.error('content-manager.error.model.fetch')
             return plugin
         }

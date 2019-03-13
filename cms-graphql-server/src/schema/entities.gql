@@ -14,20 +14,12 @@ type Entity {
     # priorBusinessIds: [ID!]!
     entityDefId: ID!
     state: [PropertyState!]!
-
-    # """
-    # This is a string that usually defaults to a lowercase, hyphen-separated version of the entity's primary name or title property.
-    # It does *NOT* have to be unique across all entities of a given type, but only within a given context.
-    # e.g. a resourceName of 'flowers' doesn't need to be unique across all Artworks, but only for the
-    # Creator it's by, e.g. 'andy-warhol'.
-    # (This is assuming that Creator is configured as the 'contextEntityDefinition' for Artwork.)
-    # """
-    # resourceName: String!
-    # priorResourceNames: [String!]!
-    # """
-    # It might be useful to also be able to retrieve prior full URLs of an entity (including context, e.g. 'artists/andy-warhol/flowers')
-    # """
-    # priorUrls: [RelativeUrl!]
+    """
+    This field is derived from a title or name property for this entity, or potentially a string computed
+    from multiple properties.
+    The entity definition should allow users to configure what gets returned here.
+    """
+    displayName: String!
 
     # created: Date!
     # createdBy: User!
@@ -72,6 +64,7 @@ Note how there is a separate association for each pair above even though it's th
 (This simplifies the model and also allows us to support things like weighted tags.)
 """
 type Association {
+    # Do we need this?
     id: ID!
     """
     This schema only contains destination entity (we always traverse associations from the source side,

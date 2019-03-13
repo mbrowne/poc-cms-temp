@@ -29,7 +29,7 @@ input EntityDefinitionInput {
 # because graphql does not currently support polymorphic input types (i.e. unions/interfaces)
 # See https://github.com/facebook/graphql/issues/114
 input PropertyDefinitionInput {
-    typename: String = "LiteralProperty"
+    typename: String = "LiteralPropertyDefinition"
     id: String!
     label: String!
     dataType: String!

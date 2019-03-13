@@ -4,7 +4,6 @@ We might want to allow cardinality to be a specific number and not only the valu
 in which case Cardinality should probably be a custom scalar
 """
 enum Cardinality {
-    ZERO
     ZERO_OR_ONE
     ONE
     ZERO_OR_MORE

@@ -17,6 +17,14 @@ export const entityDefDetails = gql`
             label
             dataType
             readOnly
+            ... on AssociationDefinition {
+                destinationItemDef {
+                    cardinality
+                    entityDef {
+                        id
+                    }
+                }
+            }
         }
         adminUiSettings {
             propertiesToShowOnListScreen {
@@ -28,6 +36,14 @@ export const entityDefDetails = gql`
                 id
                 label
                 dataType
+                ... on AssociationDefinition {
+                    destinationItemDef {
+                        cardinality
+                        entityDef {
+                            id
+                        }
+                    }
+                }
             }
         }
     }

@@ -83,7 +83,7 @@ async function loadEntityDef(id) {
     )
     // businessId is always the first property...we could store it too but that seems redundant, so we just add it here...
     entityDef.properties.unshift({
-        __typename: 'LiteralProperty',
+        __typename: 'LiteralPropertyDefinition',
         id: 'businessId',
         label: 'ID',
         dataType: 'string',

@@ -30,7 +30,7 @@ type EntityDefinition {
     # hasUrl: Boolean! # In the UI, the choices could appear as "Has URL" and "Data only"
 
     properties(
-        excludeInheritedProperties: Boolean = false
+        excludeInheritedProperties: Boolean! = false
     ): [PropertyDefinition!]!
     # editingFieldsets: [FormFieldset!]
     # detailScreenFieldsets: [FormFieldset!]
@@ -69,12 +69,13 @@ interface PropertyDefinition {
     For association definitions and other complex properties, this returns 'Object'
     """
     dataType: String!
+    description: String
     # Excluded from this interface because it doesn't apply to calculated properties.
     # But all writable properties should have this
     # editingComponent: String!
 }
 
-type LiteralProperty implements PropertyDefinition {
+type LiteralPropertyDefinition implements PropertyDefinition {
     # For writable properties
     editingComponent: String
     # # This might be derived from flags
@@ -87,6 +88,7 @@ type LiteralProperty implements PropertyDefinition {
     label: String!
     readOnly: Boolean!
     dataType: String!
+    description: String
 }
 
 type AssociationDefinition implements PropertyDefinition {
@@ -107,6 +109,7 @@ type AssociationDefinition implements PropertyDefinition {
     label: String!
     readOnly: Boolean!
     dataType: String!
+    description: String
 }
 
 """

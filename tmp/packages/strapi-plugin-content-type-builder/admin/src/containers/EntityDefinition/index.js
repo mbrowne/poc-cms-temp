@@ -279,11 +279,11 @@ const EntityDefinitionView = ({
         // the GraphQL mutations
         const preparePropertiesInput = properties =>
             properties.map(({ __typename, ...prop }) => ({
-                // Use __typename to populate `typename` field in PropertyDefinitionInput type
-                // LiteralProperty is the default
+                // Use __typename to populate `typename` field in PropertyDefinitionInput type.
+                // LiteralPropertyDefinition is the default
                 typename:
                     __typename === 'PropertyDefinition'
-                        ? 'LiteralProperty'
+                        ? 'LiteralPropertyDefinition'
                         : __typename,
                 ...prop,
             }))

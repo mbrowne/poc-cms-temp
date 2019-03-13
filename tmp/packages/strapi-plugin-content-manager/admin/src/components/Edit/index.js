@@ -131,7 +131,7 @@ class Edit extends React.PureComponent {
         const appearance = get(layout, 'appearance')
         const type = !isEmpty(appearance)
             ? appearance.toLowerCase()
-            : get(layout, 'type', getInputType(details.type))
+            : get(layout, 'type', getInputType(details.dataType))
         const inputDescription = get(details, 'description', null)
         const inputStyle = type === 'textarea' ? { height: '196px' } : {}
         let className = get(layout, 'className')

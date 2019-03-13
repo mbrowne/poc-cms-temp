@@ -6,7 +6,7 @@
   "isAbstract": false,
   "properties": [
     {
-      "__typename": "LiteralProperty",
+      "__typename": "LiteralPropertyDefinition",
       "id": "displayName",
       "label": "Display Name",
       "dataType": "string",
@@ -18,6 +18,10 @@
       "label": "Tag Subject",
       "dataType": "Object",
       "readOnly": false,
+      "sourceItemDef": {
+        "name": null,
+        "cardinality": "ZERO_OR_MORE"
+      },
       "destinationItemDef": {
         "name": "tagSubject",
         "cardinality": "ONE",

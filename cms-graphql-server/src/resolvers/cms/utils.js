@@ -28,7 +28,7 @@ export function prepareEntityDefForStorage(inputObj) {
             //     propInput.hasOwnProperty(propType)
             // )
             // if (!hasPropTypeInput) {
-            //     const propType = 'LiteralProperty'
+            //     const propType = 'LiteralPropertyDefinition'
             //     return {
             //         __typename: propType,
             //         ...propInput,
