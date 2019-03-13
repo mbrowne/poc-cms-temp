@@ -25,7 +25,7 @@ export const entityRepository = {
         return results.map(renameIdField)
     },
 
-    async getMultipleById(ids) {
+    async getMultipleById(ids /*: Array<string | ObjectID> */) {
         const conditions = {
             _id: { $in: ids.map(id => new ObjectID(id)) },
         }
@@ -36,30 +36,37 @@ export const entityRepository = {
         return results.map(renameIdField)
     },
 
-    async getById(id) {
+    async getById(id /*: string | ObjectID */) {
         const results = await entitiesColl()
             .find({ _id: new ObjectID(id) })
             .toArray()
-        return renameIdField(results[0]) || null
+        if (!results.length) {
+            return null
+        }
+        return renameIdField(results[0])
     },
 
     async delete(idOrIds) {
         const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds]
-        const entities = await this.getMultipleById(ids)
-        if (entities.length !== ids.length) {
-            const missingEntityIds = ids.filter(
-                id => !entities.find(e => e.id === id)
+        const results = await this.getMultipleById(ids)
+        if (results.length !== ids.length) {
+            const missingIds = ids.filter(
+                id => !results.find(obj => obj.id === id)
             )
-            throw Error(
-                `The following entity IDs were not found: ${missingEntityIds.join(
-                    ', '
-                )}`
-            )
+            const msg = `The following entity IDs were not found: ${missingIds.join(
+                ', '
+            )}`
+            if (results.length) {
+                // partial success
+                console.warn(msg)
+            } else {
+                throw Error(msg)
+            }
         }
         await entitiesColl().deleteMany({
             _id: { $in: ids.map(id => new ObjectID(id)) },
         })
-        return entities
+        return results // entities that were deleted
     },
 }
 
@@ -80,27 +87,59 @@ export const associationRepository = {
         return associationsColl().replaceOne({ _id: new ObjectID(id) }, rest)
     },
 
-    async findAllAssociatedWithSource(sourceEntityId) {
+    // Returns all associations for the given sourceEntityId
+    async findBySourceEntityId(sourceEntityId /*: string | ObjectID */) {
+        if (typeof sourceEntityId !== 'string') {
+            sourceEntityId = sourceEntityId.toString()
+        }
         const results = await associationsColl()
             .find({
-                sourceEntityId,
+                items: {
+                    $elemMatch: {
+                        direction: 'source',
+                        entityId: sourceEntityId,
+                    },
+                },
             })
             .toArray()
         return results.map(renameIdField)
     },
 
-    // // This returns all the Associations for a particular property ID.
-    // // For a one-to-one relationship, it will only be one Association.
-    // // For a one-to-many or many-to-many relationship, it could be multiple Associations.
-    // async findAssocDestinations(sourceEntityId, propertyId) {
-    //     const results = await associationsColl().find({
-    //         sourceEntityId,
-    //         associationDef: {
-    //             name: propertyId,
-    //         },
-    //     })
-    //     return results.map(renameIdField)
-    // },
+    async getMultipleById(ids /*: Array<string | ObjectID> */) {
+        const conditions = {
+            _id: {
+                $in: ids.map(id => new ObjectID(id)),
+            },
+        }
+        // console.log('conditions: ', JSON.stringify(conditions))
+        const results = await associationsColl()
+            .find(conditions)
+            .toArray()
+        return results.map(renameIdField)
+    },
+
+    async delete(idOrIds) {
+        const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds]
+        const results = await this.getMultipleById(ids)
+        if (results.length !== ids.length) {
+            const missingIds = ids.filter(
+                id => !results.find(obj => obj.id === id)
+            )
+            const msg = `The following association IDs were not found: ${missingIds.join(
+                ', '
+            )}`
+            if (results.length) {
+                // partial success
+                console.warn(msg)
+            } else {
+                throw Error(msg)
+            }
+        }
+        await associationsColl().deleteMany({
+            _id: { $in: ids.map(id => new ObjectID(id)) },
+        })
+        return results // associations that were deleted
+    },
 }
 
 function renameIdField({ _id, ...fields }) {

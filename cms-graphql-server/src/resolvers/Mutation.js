@@ -40,18 +40,19 @@ export const Mutation = {
 
     async createEntityRequest(_, args) {
         const entity = await graphqlInputToBackendEntity(args)
-
         // console.log('entity: ', entity)
-        const id = await entityRepository.save(entity)
+        entity.id = await entityRepository.save(entity)
 
         const { associations } = await graphqlInputToBackendAssociations(
-            id,
+            id.toString(),
             args
         )
         await associationRepository.saveMultiple(associations)
 
+        console.log(`Successfully created entity ID '${entity.id}'`)
+
         const moderationStatus = {
-            entity: backendEntityToGraphqlEntity({ ...entity, id }),
+            entity: await backendEntityToGraphqlEntity(entity),
             errorMessage: null,
         }
         return moderationStatus
@@ -59,11 +60,30 @@ export const Mutation = {
 
     async updateEntityRequest(_, args) {
         const existingEntity = await entityRepository.getById(args.entityId)
-        const entity = await graphqlInputToBackendModel(args, existingEntity)
-        // console.log('entity: ', entity)
+        const entity = await graphqlInputToBackendEntity(args, existingEntity)
+        const existingAssociations = await associationRepository.findBySourceEntityId(
+            args.entityId
+        )
+        const {
+            associations,
+            oldAssociationIdsToDelete,
+        } = await graphqlInputToBackendAssociations(
+            args.entityId,
+            args,
+            existingAssociations
+        )
+        // console.log('associations: ', JSON.stringify(associations))
+        // console.log('oldAssociationIdsToDelete: ', oldAssociationIdsToDelete)
+
+        // // console.log('entity: ', entity)
         await entityRepository.save(entity)
+        await associationRepository.delete(oldAssociationIdsToDelete)
+        await associationRepository.saveMultiple(associations)
+
+        console.log(`Successfully updated entity ID '${entity.id}'`)
+
         const moderationStatus = {
-            entity: backendEntityToGraphqlEntity(entity),
+            entity: await backendEntityToGraphqlEntity(entity),
             errorMessage: null,
         }
         return moderationStatus

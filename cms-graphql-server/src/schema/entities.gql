@@ -15,6 +15,20 @@ type Entity {
     entityDefId: ID!
     state: [PropertyState!]!
 
+    # """
+    # This is a string that usually defaults to a lowercase, hyphen-separated version of the entity's primary name or title property.
+    # It does *NOT* have to be unique across all entities of a given type, but only within a given context.
+    # e.g. a resourceName of 'flowers' doesn't need to be unique across all Artworks, but only for the
+    # Creator it's by, e.g. 'andy-warhol'.
+    # (This is assuming that Creator is configured as the 'contextEntityDefinition' for Artwork.)
+    # """
+    # resourceName: String!
+    # priorResourceNames: [String!]!
+    # """
+    # It might be useful to also be able to retrieve prior full URLs of an entity (including context, e.g. 'artists/andy-warhol/flowers')
+    # """
+    # priorUrls: [RelativeUrl!]
+
     # created: Date!
     # createdBy: User!
     # updated: Date!

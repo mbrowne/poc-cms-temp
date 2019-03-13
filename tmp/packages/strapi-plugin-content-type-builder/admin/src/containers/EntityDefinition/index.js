@@ -275,11 +275,11 @@ const EntityDefinitionView = ({
     async function handleSubmit(e) {
         e.preventDefault()
 
-        // Convert PropertyDefinition objects in the cache to an array of PropertyInput objects expected by
+        // Convert PropertyDefinition objects in the cache to an array of PropertyDefinitionInput objects expected by
         // the GraphQL mutations
         const preparePropertiesInput = properties =>
             properties.map(({ __typename, ...prop }) => ({
-                // Use __typename to populate `typename` field in PropertyInput type
+                // Use __typename to populate `typename` field in PropertyDefinitionInput type
                 // LiteralProperty is the default
                 typename:
                     __typename === 'PropertyDefinition'

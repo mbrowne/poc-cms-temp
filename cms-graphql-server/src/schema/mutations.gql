@@ -15,20 +15,20 @@ input EntityDefinitionInput {
     # If we support fieldsets in the future, then this field will probably no longer be needed.
     # `properites` is optional so that you can update just the basic attributes of an entity definition
     # without re-sending all the properties.
-    properties: [PropertyInput!]
+    properties: [PropertyDefinitionInput!]
     # fieldsets: [PropertyFieldsetInput!]
 }
 
 # input PropertyFieldsetInput {
 #     title: String
-#     properties: [PropertyInput!]
-#     computedProperties: [ComputedPropertyInput!]
+#     properties: [PropertyDefinitionInput!]
+#     computedProperties: [ComputedPropertyDefinitionInput!]
 # }
 
 # NOTE: literalValue and associationValue are separate fields
 # because graphql does not currently support polymorphic input types (i.e. unions/interfaces)
 # See https://github.com/facebook/graphql/issues/114
-input PropertyInput {
+input PropertyDefinitionInput {
     typename: String = "LiteralProperty"
     id: String!
     label: String!
@@ -42,10 +42,10 @@ input PropertyInput {
     # # polymorphic input types (i.e. unions/interfaces)
     # literalProperty: LiteralPropertyInput
     # associationProperty: AssociationDefinitionInput
-    # staticAssetProperty: StaticAssetPropertyInput
+    # staticAssetProperty: StaticAssetPropertyDefinitionInput
 }
 
-# input LiteralPropertyInput {
+# input LiteralPropertyDefinitionInput {
 #     defaultValue: LiteralPropertyValueScalar
 # }
 

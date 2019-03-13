@@ -1,5 +1,6 @@
 import { entityRepository, associationRepository } from './repositories'
 import { keyBy } from 'lodash'
+import invariant from 'invariant'
 
 // const propTypes = [
 //     'literalProperty',
@@ -83,19 +84,35 @@ export function graphqlInputToBackendAssociations(
     entityInput,
     existingAssociations = []
 ) {
+    invariant(
+        typeof sourceEntityId === 'string',
+        'sourceEntityId must be a string (not a MongoDB ObjectID or anything else)'
+    )
     const { entityDefId } = entityInput
     // This function works the same way for creates and updates, with the exception that existingAssociations
     // is always an empty array when creating a new entity.
     const stateInput = entityInput.initialState || entityInput.updatedState
     const updatedAssocPropStates = stateInput.filter(ps =>
-        ps.hasOwnProperty('associationsValue')
+        // In order to indicate that all associations for a given property should be deleted, the graphql
+        // input must explicitly set `associationsValue` to an empty array (to avoid ambiguity or accidental deletions).
+        // That's why we use Array.isArray() here instead of just checking for existence of `associationsValue`.
+        Array.isArray(ps.associationsValue)
     )
     const updatedAssocPropIds = updatedAssocPropStates.map(p => p.propertyId)
 
-    const createUniqueKeyForAssoc = assoc =>
-        `${assoc.associationDefId}.${assoc.sourceEntityId}.${
-            assoc.destinationEntityId
-        }`
+    // The combination of the source entity ID, association name, and destination entity ID
+    // uniquely identifies the association
+    const createUniqueKeyForAssoc = assoc => {
+        const sourceEntityId = assoc.items.find(
+            item => item.direction === 'source'
+        ).entityId
+        const destinationEntityId = assoc.items.find(
+            item => item.direction === 'destination'
+        ).entityId
+        return `${sourceEntityId}.${
+            assoc.associationDef.name
+        }.${destinationEntityId}`
+    }
 
     // create a map that can be used to compare existing associations with the current updates, so we know which
     // associations to delete (if any)
@@ -103,7 +120,8 @@ export function graphqlInputToBackendAssociations(
     for (const existingAssoc of existingAssociations) {
         // we only care about associations for properties that are included in updatedState;
         // associations corresponding to properties that aren't being updated at all should be left alone
-        if (updatedAssocPropIds.includes(existingAssoc.associationDef.name)) {
+        const associationPropId = existingAssoc.associationDef.name
+        if (updatedAssocPropIds.includes(associationPropId)) {
             existingAssociationsMap[
                 createUniqueKeyForAssoc(existingAssoc)
             ] = existingAssoc
@@ -126,8 +144,16 @@ export function graphqlInputToBackendAssociations(
                     id: associationDefId,
                     name: propState.propertyId,
                 },
-                sourceEntityId,
-                destinationEntityId: assocInput.destinationEntityId,
+                items: [
+                    {
+                        direction: 'source',
+                        entityId: sourceEntityId,
+                    },
+                    {
+                        direction: 'destination',
+                        entityId: assocInput.destinationEntityId,
+                    },
+                ],
             }
             const key = createUniqueKeyForAssoc(assoc)
             const existingAssoc = existingAssociationsMap[key]
@@ -140,7 +166,7 @@ export function graphqlInputToBackendAssociations(
 
     const oldAssociationIdsToDelete = []
     for (const key in existingAssociationsMap) {
-        if (!newAndUpdatedAssociationsMap.hasOwnproperty(key)) {
+        if (!newAndUpdatedAssociationsMap.hasOwnProperty(key)) {
             oldAssociationIdsToDelete.push(existingAssociationsMap[key].id)
         }
     }
@@ -162,7 +188,11 @@ export async function backendEntityToGraphqlEntity(backendEntity) {
         })
     )
 
-    const backendAssociations = await associationRepository.findAllAssociatedWithSource(
+    const getDestinationEntityId = backendAssoc =>
+        backendAssoc.items.find(item => item.direction === 'destination')
+            .entityId
+
+    const backendAssociations = await associationRepository.findBySourceEntityId(
         backendEntity.id
     )
 
@@ -179,8 +209,8 @@ export async function backendEntityToGraphqlEntity(backendEntity) {
     }
 
     // get all associated entities and map by ID
-    const associatedEntityIds = backendAssociations.map(
-        assoc => assoc.destinationEntityId
+    const associatedEntityIds = backendAssociations.map(assoc =>
+        getDestinationEntityId(assoc)
     )
 
     const allAssociatedEntities = await entityRepository.getMultipleById(
@@ -199,7 +229,7 @@ export async function backendEntityToGraphqlEntity(backendEntity) {
                         id: backendAssoc.id,
                         destinationEntity:
                             associatedEntitiesById[
-                                backendAssoc.destinationEntityId
+                                getDestinationEntityId(backendAssoc)
                             ],
                     })),
                 },
