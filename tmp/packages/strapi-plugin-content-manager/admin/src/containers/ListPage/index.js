@@ -54,7 +54,7 @@ const ListPage = ({ match, history, location }) => {
                         id: 'addEntry',
                         label: 'content-manager.containers.List.addAnEntry',
                         labelValues: {
-                            entity: entityDefId || 'Content Manager',
+                            entity: entityDef.label || 'Content Manager',
                         },
                         kind: 'primaryAddShape',
                         onClick: () =>
@@ -79,7 +79,7 @@ const ListPage = ({ match, history, location }) => {
                             },
                         }}
                         title={{
-                            id: entityDefId || 'Content Manager',
+                            id: entityDef.pluralLabel || 'Content Manager',
                         }}
                         withDescriptionAnim={showLoaders}
                     />
