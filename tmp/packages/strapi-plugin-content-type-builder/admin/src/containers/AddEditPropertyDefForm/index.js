@@ -11,7 +11,7 @@ import {
     useFormState,
     useApolloStateUpdate,
 } from 'hooks'
-import * as queries from '../graphql/queries'
+import * as queries from '../../graphql/queries'
 
 function useUpdatePropertyDef(
     origEntityDef,

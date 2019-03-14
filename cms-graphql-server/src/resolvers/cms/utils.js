@@ -2,6 +2,7 @@ import { entityRepository, associationRepository } from './repositories'
 import { keyBy } from 'lodash'
 import invariant from 'invariant'
 import { Query } from '../Query'
+import { EntityDefinition } from '../EntityDefinition'
 
 // const propTypes = [
 //     'literalProperty',
@@ -185,6 +186,7 @@ export async function backendEntityToGraphqlEntity(backendEntity) {
         {},
         { id: backendEntity.entityDefId }
     )
+    entityDef.properties = await EntityDefinition.properties(entityDef, {})
 
     const literalState = Object.entries(backendEntity.state).map(
         ([propertyId, value]) => ({

@@ -29,9 +29,7 @@ type EntityDefinition {
     # contextAssociationDefinition: AssociationDefinition
     # hasUrl: Boolean! # In the UI, the choices could appear as "Has URL" and "Data only"
 
-    properties(
-        excludeInheritedProperties: Boolean! = false
-    ): [PropertyDefinition!]!
+    properties(excludeInherited: Boolean! = false): [PropertyDefinition!]!
     # editingFieldsets: [FormFieldset!]
     # detailScreenFieldsets: [FormFieldset!]
 
@@ -70,6 +68,11 @@ interface PropertyDefinition {
     """
     dataType: String!
     description: String
+    """
+    Entity definition that this property was inherited from.
+    Returns null if the property was not inherited.
+    """
+    inheritedFrom: EntityDefinition
     # Excluded from this interface because it doesn't apply to calculated properties.
     # But all writable properties should have this
     # editingComponent: String!
@@ -89,6 +92,7 @@ type LiteralPropertyDefinition implements PropertyDefinition {
     readOnly: Boolean!
     dataType: String!
     description: String
+    inheritedFrom: EntityDefinition
 }
 
 type AssociationDefinition implements PropertyDefinition {
@@ -110,6 +114,7 @@ type AssociationDefinition implements PropertyDefinition {
     readOnly: Boolean!
     dataType: String!
     description: String
+    inheritedFrom: EntityDefinition
 }
 
 """

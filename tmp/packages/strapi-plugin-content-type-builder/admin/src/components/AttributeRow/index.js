@@ -99,22 +99,21 @@ class AttributeRow extends React.Component {
         //     </FormattedMessage>
         // </div>
         const relationStyle = !params.type ? styles.relation : ''
-        const icons =
-            prop.readOnly || prop.id === 'businessId'
-                ? [{ icoType: 'lock' }]
-                : [
-                      { icoType: 'pencil', onClick: this.handleEdit },
-                      {
-                          icoType: 'trash',
-                          onClick: () =>
-                              this.setState({
-                                  showWarning: !this.state.showWarning,
-                              }),
-                      },
-                  ]
+        const isNotEditable =
+            prop.id === 'businessId' || prop.readOnly || prop.inheritedFrom
+        const icons = isNotEditable
+            ? [{ icoType: 'lock' }]
+            : [
+                  { icoType: 'pencil', onClick: this.handleEdit },
+                  {
+                      icoType: 'trash',
+                      onClick: () =>
+                          this.setState({
+                              showWarning: !this.state.showWarning,
+                          }),
+                  },
+              ]
         const editableStyle = prop.readOnly ? '' : styles.editable
-
-        const isNotEditable = prop.id === 'businessId' || prop.readOnly
 
         return (
             <li
@@ -133,7 +132,9 @@ class AttributeRow extends React.Component {
                     <div className={styles.relationContainer}>
                         {relationType}
                     </div>
-                    <div className={styles.mainField} />
+                    <div className={styles.inheritedFrom}>
+                        {prop.inheritedFrom && prop.inheritedFrom.label}
+                    </div>
                     <IcoContainer icons={icons} />
                 </div>
                 <PopUpWarning

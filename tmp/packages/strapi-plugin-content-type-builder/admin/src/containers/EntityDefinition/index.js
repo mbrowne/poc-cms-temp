@@ -7,7 +7,7 @@ import { useApolloClient, useMutation } from 'react-apollo-hooks'
 import pluralize from 'pluralize'
 import { useConvenientState } from 'hooks'
 import { getPluginState } from '../state'
-import * as queries from '../graphql/queries'
+import * as queries from '../../graphql/queries'
 import styles from './styles.scss'
 import PluginLeftMenu from 'components/PluginLeftMenu'
 import ContentHeader from 'components/ContentHeader'
@@ -242,7 +242,25 @@ const EntityDefinitionView = ({
             </div>
         ),
 
-        renderListTitle: () => null,
+        renderListTitle: () => {
+            const { templateEntityDefinition } = entityDef
+            if (templateEntityDefinition) {
+                const templateEntityDefUrl =
+                    '/plugins/content-type-builder/entity-defs/' +
+                    templateEntityDefinition.id
+                return (
+                    <span>
+                        Inherits from&nbsp;
+                        <a
+                            href="javascript:;"
+                            onClick={() => history.push(templateEntityDefUrl)}
+                        >
+                            {templateEntityDefinition.label}
+                        </a>
+                    </span>
+                )
+            }
+        },
 
         renderCustomLi: (row, key) => (
             <AttributeRow
@@ -331,7 +349,9 @@ const EntityDefinitionView = ({
                 // We should show this as a default in the UI rather than just
                 // setting it here
                 if (!entityDefInput.pluralLabel) {
-                    entityDefInput.pluralLabel = pluralize(startCase(entityDefInput.id))
+                    entityDefInput.pluralLabel = pluralize(
+                        startCase(entityDefInput.id)
+                    )
                 }
                 // console.log('entityDefInput: ', entityDefInput)
 

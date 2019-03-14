@@ -10,6 +10,7 @@ import { map } from 'lodash'
 
 import Button from 'components/Button'
 import styles from './styles.scss'
+import attributeRowStyles from '../AttributeRow/styles.scss'
 
 class List extends React.Component {
     // eslint-disable-line react/prefer-stateless-function
@@ -31,6 +32,20 @@ class List extends React.Component {
                 </div>
                 <div className={styles.ulContainer}>
                     <ul id={this.props.id}>
+                        <li className={`${attributeRowStyles.attributeRow}`}>
+                            <div className={attributeRowStyles.flex}>
+                                <div
+                                    className={attributeRowStyles.nameContainer}
+                                />
+                                <div
+                                    className={
+                                        attributeRowStyles.relationContainer
+                                    }
+                                />
+                                <div>Inherited From</div>
+                                <div />
+                            </div>
+                        </li>
                         {map(
                             this.props.listContent[
                                 this.props.listContentMappingKey
@@ -59,6 +74,7 @@ List.propTypes = {
         PropTypes.bool,
         PropTypes.func,
     ]),
+    renderCustomHeaderRow: PropTypes.func,
 }
 
 List.defaultProps = {
