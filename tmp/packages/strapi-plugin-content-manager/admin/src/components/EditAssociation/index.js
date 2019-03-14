@@ -15,29 +15,27 @@ interface EditAssociationProps {
 }
 */
 
-const EditAssociation = props => {
-    const { associationDef } = props
-    const { cardinality } = associationDef.destinationItemDef
+const EditAssociation = React.memo(props => {
+    const { cardinality } = props.associationDef.destinationItemDef
     const client = useApolloClient()
     if (cardinality === 'ZERO_OR_ONE' || cardinality === 'ONE') {
         return (
             <SelectOne
+                {...props}
                 apolloClient={client}
-                entityState={props.entityState}
-                associationDef={associationDef}
                 onChangeData={props.onChangeSingleAssociationValue}
-                onClickEntityDetails={props.onClickEntityDetails}
             />
         )
     }
-    // TODO
-    return 'many'
-}
+    return <SelectMany {...props} apolloClient={client} />
+})
 
 EditAssociation.propTypes = {
     associationDef: PropTypes.object.isRequired,
     entityState: PropTypes.object.isRequired,
     onChangeSingleAssociationValue: PropTypes.func.isRequired,
+    onAddAssociationItem: PropTypes.func.isRequired,
+    onRemoveAssociationItem: PropTypes.func.isRequired,
     onClickEntityDetails: PropTypes.func.isRequired,
 }
 

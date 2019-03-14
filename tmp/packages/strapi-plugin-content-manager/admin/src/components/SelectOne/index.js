@@ -9,18 +9,6 @@ import Select from 'react-select'
 import { FormattedMessage } from 'react-intl'
 import PropTypes from 'prop-types'
 import 'react-select/dist/react-select.css'
-import {
-    cloneDeep,
-    map,
-    includes,
-    isArray,
-    isNull,
-    isUndefined,
-    isFunction,
-    get,
-    findIndex,
-} from 'lodash'
-import fromEntries from 'fromentries'
 import invariant from 'invariant'
 
 import styles from './styles.scss'
@@ -73,6 +61,7 @@ class SelectOne extends React.Component {
             label: entity.displayName,
             entity: entity,
         }))
+
         this.setState({
             options,
             isLoading: false,
@@ -110,7 +99,7 @@ class SelectOne extends React.Component {
     handleInputChange = value => {
         const clonedOptions = this.state.options
         const filteredValues = clonedOptions.filter(data =>
-            includes(data.label, value)
+            data.label.includes(value)
         )
 
         if (filteredValues.length === 0) {
@@ -120,13 +109,12 @@ class SelectOne extends React.Component {
 
     render() {
         const { associationDef, entityState } = this.props
-        const propertyId = associationDef.id
         const description = associationDef.description ? (
             <p>{associationDef.description}</p>
         ) : (
             ''
         )
-
+        const propertyId = associationDef.id
         const associatedEntities = entityState[propertyId]
         // Temporary.
         const entryLink =

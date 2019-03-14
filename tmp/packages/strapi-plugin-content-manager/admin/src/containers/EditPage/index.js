@@ -3,6 +3,8 @@ import moment from 'moment'
 import cn from 'classnames'
 import { get, isObject, toNumber } from 'lodash'
 import { useMutation } from 'react-apollo-hooks'
+import HTML5Backend from 'react-dnd-html5-backend'
+import { DragDropContext } from 'react-dnd'
 
 // You can find these components in either
 // ./node_modules/strapi-helper-plugin/lib/src
@@ -356,6 +358,20 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
         })
     }
 
+    function handleAddAssociationItem({ propertyId, item }) {
+        setFormState({
+            [propertyId]: [...formState.values[propertyId], item],
+        })
+    }
+
+    function handleRemoveAssociationItem({ propertyId, index }) {
+        const associatedEntities = [...formState.values[propertyId]]
+        associatedEntities.splice(index, 1)
+        setFormState({
+            [propertyId]: associatedEntities,
+        })
+    }
+
     function handleClickAssociatedEntityDetails({
         associatedEntity,
         associationDef,
@@ -459,6 +475,10 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
                                 onChangeSingleAssociationValue={
                                     handleChangeSingleAssociationValue
                                 }
+                                onAddAssociationItem={handleAddAssociationItem}
+                                onRemoveAssociationItem={
+                                    handleRemoveAssociationItem
+                                }
                                 onClickEntityDetails={
                                     handleClickAssociatedEntityDetails
                                 }
@@ -519,4 +539,4 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
     )
 }
 
-export default EditPage
+export default DragDropContext(HTML5Backend)(EditPage)

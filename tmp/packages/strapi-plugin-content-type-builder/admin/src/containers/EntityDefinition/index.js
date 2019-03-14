@@ -4,6 +4,7 @@ import { FormattedMessage } from 'react-intl'
 import { NavLink } from 'react-router-dom'
 import { isEmpty, startCase } from 'lodash'
 import { useApolloClient, useMutation } from 'react-apollo-hooks'
+import pluralize from 'pluralize'
 import { useConvenientState } from 'hooks'
 import { getPluginState } from '../state'
 import * as queries from '../graphql/queries'
@@ -326,9 +327,11 @@ const EntityDefinitionView = ({
                 entityDefInput.properties = preparePropertiesInput(
                     entityDefInput.properties
                 )
-                // TEMP
+                // TODO
+                // We should show this as a default in the UI rather than just
+                // setting it here
                 if (!entityDefInput.pluralLabel) {
-                    entityDefInput.pluralLabel = entityDefInput.id + 's'
+                    entityDefInput.pluralLabel = pluralize(startCase(entityDefInput.id))
                 }
                 // console.log('entityDefInput: ', entityDefInput)
 

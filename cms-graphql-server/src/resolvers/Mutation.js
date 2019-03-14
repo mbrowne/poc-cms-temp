@@ -90,7 +90,14 @@ export const Mutation = {
     },
 
     async deleteEntityRequest(_, { entityId /*, entityDefId */ }) {
+        // First, delete any associations for which this entity is the 'source' side of the association
+        const associations = await associationRepository.findBySourceEntityId(
+            entityId
+        )
+        await associationRepository.delete(associations.map(a => a.id))
+        // Now, delete the entity itself
         const deletedEntities = await entityRepository.delete(entityId)
+
         console.log(`Successfully deleted entity ID '${entityId}'`)
         const moderationStatus = {
             entity: deletedEntities[0],
