@@ -62,6 +62,10 @@ class TableRow extends React.Component {
             }
             case 'password':
                 return '••••••••'
+            case 'object': // association property
+                return value && value.length
+                    ? value.map(entity => entity.displayName).join(', ')
+                    : '-'
             default:
                 return '-'
         }

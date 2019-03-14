@@ -1,5 +1,5 @@
 import React from 'react'
-import { toNumber, isObject } from 'lodash'
+import { toNumber, isObject, upperFirst } from 'lodash'
 import moment from 'moment'
 import { useApolloClient } from 'react-apollo-hooks'
 import { FormattedMessage } from 'react-intl'
@@ -25,6 +25,11 @@ function useUpdatePropertyDef(
     )
     return propertyDef => {
         propertyDef.__typename = 'PropertyDefinition'
+        // TEMP
+        if (!propertyDef.label) {
+            propertyDef.label = upperFirst(propertyDef.id)
+        }
+
         const properties = [...origEntityDef.properties]
         const existingPropIndex = origPropertyId
             ? properties.findIndex(p => p.id === origPropertyId)

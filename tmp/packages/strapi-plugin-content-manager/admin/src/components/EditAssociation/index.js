@@ -26,10 +26,11 @@ const EditAssociation = props => {
                 entityState={props.entityState}
                 associationDef={associationDef}
                 onChangeData={props.onChangeSingleAssociationValue}
-                // onRedirect={props.onRedirect}
+                onClickEntityDetails={props.onClickEntityDetails}
             />
         )
     }
+    // TODO
     return 'many'
 }
 
@@ -37,7 +38,7 @@ EditAssociation.propTypes = {
     associationDef: PropTypes.object.isRequired,
     entityState: PropTypes.object.isRequired,
     onChangeSingleAssociationValue: PropTypes.func.isRequired,
-    // onRedirect: PropTypes.func.isRequired,
+    onClickEntityDetails: PropTypes.func.isRequired,
 }
 
 export default EditAssociation

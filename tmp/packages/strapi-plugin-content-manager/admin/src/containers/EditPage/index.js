@@ -352,8 +352,23 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
         destinationEntity,
     }) {
         setFormState({
-            [propertyId]: [destinationEntity],
+            [propertyId]: destinationEntity ? [destinationEntity] : [],
         })
+    }
+
+    function handleClickAssociatedEntityDetails({
+        associatedEntity,
+        associationDef,
+    }) {
+        const baseUrl = `${window.location.origin}/${
+            window.location.pathname.split('/')[1]
+        }`
+        const url = `${baseUrl}/plugins/content-manager/${
+            associationDef.destinationItemDef.entityDef.id
+        }/${associatedEntity.id}`
+        // TODO this should either open in a modal window,
+        // or redirect but save the form state for when the user returns
+        window.open(url, null, 'width=1000,height=600')
     }
 
     function renderForm() {
@@ -443,6 +458,9 @@ function renderEditPage({ data, mode, history, location, entityDefId }) {
                                 entityState={formState.values}
                                 onChangeSingleAssociationValue={
                                     handleChangeSingleAssociationValue
+                                }
+                                onClickEntityDetails={
+                                    handleClickAssociatedEntityDetails
                                 }
                             />
                         ))}

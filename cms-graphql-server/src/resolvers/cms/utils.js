@@ -1,6 +1,7 @@
 import { entityRepository, associationRepository } from './repositories'
 import { keyBy } from 'lodash'
 import invariant from 'invariant'
+import { Query } from '../Query'
 
 // const propTypes = [
 //     'literalProperty',
@@ -47,7 +48,6 @@ export function graphqlInputToBackendEntity(
     existingBackendEntity = null
 ) {
     const { entityDefId } = entityInput
-    // const entityDef = await Query.entityDefinition({}, { id: entityDefId })
 
     // If the entityInStorage argument was passed, then we we're updating an existing entity
     if (existingBackendEntity) {
@@ -178,6 +178,14 @@ export function graphqlInputToBackendAssociations(
 }
 
 export async function backendEntityToGraphqlEntity(backendEntity) {
+    // FIXME
+    // We shouldn't be using the resolver to get the entity definition,
+    // but rather some utility or repository method
+    const entityDef = await Query.entityDefinition(
+        {},
+        { id: backendEntity.entityDefId }
+    )
+
     const literalState = Object.entries(backendEntity.state).map(
         ([propertyId, value]) => ({
             propertyId,
@@ -219,8 +227,11 @@ export async function backendEntityToGraphqlEntity(backendEntity) {
     const associatedEntitiesById = keyBy(allAssociatedEntities, 'id')
 
     // convert assocMap to an array of PropertyState objects
-    const assocState = Object.entries(assocMap).map(
-        ([propertyId, backendAssociations]) => {
+    const assocState = entityDef.properties
+        .filter(p => p.__typename === 'AssociationDefinition')
+        .map(associationDef => {
+            const propertyId = associationDef.id
+            const backendAssociations = assocMap[propertyId] || []
             return {
                 propertyId,
                 value: {
@@ -234,8 +245,7 @@ export async function backendEntityToGraphqlEntity(backendEntity) {
                     })),
                 },
             }
-        }
-    )
+        })
 
     return {
         ...backendEntity,

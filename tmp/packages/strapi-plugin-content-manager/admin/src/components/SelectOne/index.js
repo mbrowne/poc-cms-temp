@@ -100,11 +100,10 @@ class SelectOne extends React.Component {
     }
 
     // Redirect to the edit page
-    handleClick = (item = {}) => {
-        this.props.onRedirect({
-            model: this.props.relation.collection || this.props.relation.model,
-            id: item.value.id || item.value._id,
-            source: this.props.relation.plugin,
+    handleClickDetails = associatedEntity => {
+        this.props.onClickEntityDetails({
+            associationDef: this.props.associationDef,
+            associatedEntity,
         })
     }
 
@@ -137,7 +136,9 @@ class SelectOne extends React.Component {
                 <FormattedMessage id="content-manager.containers.Edit.clickToJump">
                     {title => (
                         <a
-                            onClick={() => this.handleClick({ value })}
+                            onClick={() =>
+                                this.handleClickDetails(associatedEntities[0])
+                            }
                             title={title}
                         >
                             <FormattedMessage id="content-manager.containers.Edit.seeDetails" />
@@ -208,7 +209,7 @@ class SelectOne extends React.Component {
 
 SelectOne.propTypes = {
     apolloClient: PropTypes.object.isRequired,
-    onRedirect: PropTypes.func.isRequired,
+    onClickEntityDetails: PropTypes.func.isRequired,
     associationDef: PropTypes.object.isRequired,
     entityState: PropTypes.object.isRequired,
     onChangeData: PropTypes.func.isRequired,

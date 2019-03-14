@@ -35,7 +35,7 @@ import PopUpWarning from 'components/PopUpWarning'
 // Plugin's components
 import CustomDragLayer from 'components/CustomDragLayer'
 import Edit from 'components/Edit'
-import EditRelations from 'components/EditRelations'
+import EditRelations from 'components/StrapiOrig_EditRelations'
 // App selectors
 import { makeSelectSchema } from 'containers/App/selectors'
 import injectReducer from 'utils/injectReducer'
