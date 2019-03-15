@@ -15,37 +15,37 @@ import InputJSONWithErrors from 'components/InputJSONWithErrors'
 import WysiwygWithErrors from 'components/WysiwygWithErrors'
 import styles from './styles.scss'
 
-const getInputType = (type = '') => {
-    switch (type.toLowerCase()) {
-        case 'boolean':
-            return 'toggle'
-        case 'bigint':
-        case 'decimal':
-        case 'float':
-        case 'integer':
-            return 'number'
-        case 'date':
-        case 'datetime':
-            return 'date'
-        case 'email':
-            return 'email'
-        case 'enumeration':
-            return 'select'
-        case 'password':
-            return 'password'
-        case 'string':
-            return 'text'
-        case 'text':
-            return 'textarea'
-        case 'file':
-        case 'files':
-            return 'file'
-        case 'json':
-            return 'json'
-        default:
-            return 'text'
-    }
-}
+// const getInputType = (type = '') => {
+//     switch (type.toLowerCase()) {
+//         case 'boolean':
+//             return 'toggle'
+//         case 'bigint':
+//         case 'decimal':
+//         case 'float':
+//         case 'integer':
+//             return 'number'
+//         case 'date':
+//         case 'datetime':
+//             return 'date'
+//         case 'email':
+//             return 'email'
+//         case 'enumeration':
+//             return 'select'
+//         case 'password':
+//             return 'password'
+//         case 'string':
+//             return 'text'
+//         case 'text':
+//             return 'textarea'
+//         case 'file':
+//         case 'files':
+//             return 'file'
+//         case 'json':
+//             return 'json'
+//         default:
+//             return 'text'
+//     }
+// }
 
 class Edit extends React.PureComponent {
     getInputErrors = attr => {
@@ -129,9 +129,10 @@ class Edit extends React.PureComponent {
         // Retrieve the input's bootstrapClass from the layout
         const layout = this.getInputLayout(attr)
         const appearance = get(layout, 'appearance')
-        const type = !isEmpty(appearance)
-            ? appearance.toLowerCase()
-            : get(layout, 'type', getInputType(details.dataType))
+        const type = appearance
+        // const type = !isEmpty(appearance)
+        //     ? appearance.toLowerCase()
+        //     : get(layout, 'type', getInputType(details.dataType))
         const inputDescription = get(details, 'description', null)
         const inputStyle = type === 'textarea' ? { height: '196px' } : {}
         let className = get(layout, 'className')
