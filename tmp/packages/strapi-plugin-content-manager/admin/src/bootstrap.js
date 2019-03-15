@@ -15,7 +15,7 @@ const entityDefsQuery = gql`
 `
 
 // This method is executed before the load of the plugin
-const bootstrap = async plugin => {
+export default async function bootstrap(plugin) {
     try {
         const { data, errors } = await client.query({ query: entityDefsQuery })
         if (errors) {
@@ -42,5 +42,3 @@ const bootstrap = async plugin => {
     }
     return plugin
 }
-
-export default bootstrap

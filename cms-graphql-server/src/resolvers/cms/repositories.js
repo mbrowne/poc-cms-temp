@@ -14,10 +14,15 @@ export const entityRepository = {
         return entitiesColl().replaceOne({ _id: new ObjectID(id) }, rest)
     },
 
-    async find(conditions) {
-        if (!conditions.entityDefId) {
+    async find({ entityDefId, ...conditions }) {
+        if (!entityDefId) {
             throw Error('entityDefId is required')
         }
+        // If entityDefId is an array, find entities that match any of the provided
+        // entityDefIds
+        conditions.entityDefId = Array.isArray(entityDefId)
+            ? { $in: entityDefId }
+            : entityDefId
         const results = await entitiesColl()
             .find(conditions)
             .toArray()

@@ -4,7 +4,16 @@ export const EntityDefinition = {
         return entityDef.label || entityDef.id
     },
 
-    async properties(entityDef, { excludeInherited }) {
+    properties(entityDef, filters) {
+        // This resolver can get run multiple times...if the full array of properties was
+        // already populated, we don't want to populate it again.
+        if (entityDef.__propertiesIncludingInherited) {
+            return filterProperties(
+                entityDef.__propertiesIncludingInherited,
+                filters
+            )
+        }
+
         // businessId is always the first property...we could store it too but that seems redundant, so we just add it here...
         const businessIdProp = {
             __typename: 'LiteralPropertyDefinition',
@@ -17,9 +26,6 @@ export const EntityDefinition = {
         if (!entityDef.templateEntityDefinition) {
             ownProperties.unshift(businessIdProp)
         }
-        if (excludeInherited) {
-            return ownProperties
-        }
         // TODO multiple levels of inheritance
         const inheritedProperties = entityDef.templateEntityDefinition
             ? entityDef.templateEntityDefinition.properties.map(prop => ({
@@ -27,14 +33,22 @@ export const EntityDefinition = {
                   inheritedFrom: entityDef.templateEntityDefinition,
               }))
             : []
-        return [
-            {
-                ...businessIdProp,
-                inheritedFrom: entityDef.templateEntityDefinition,
-            },
-            ...inheritedProperties,
-            ...ownProperties,
-        ]
+
+        let allProperties
+        if (inheritedProperties.length) {
+            allProperties = [
+                {
+                    ...businessIdProp,
+                    inheritedFrom: entityDef.templateEntityDefinition,
+                },
+                ...inheritedProperties,
+                ...ownProperties,
+            ]
+        } else {
+            allProperties = ownProperties
+        }
+        entityDef.__propertiesIncludingInherited = allProperties
+        return filterProperties(allProperties, filters)
     },
 
     propertiesCount(entityDef) {
@@ -42,14 +56,19 @@ export const EntityDefinition = {
     },
 
     adminUiSettings(entityDef) {
+        const allProps = EntityDefinition.properties(entityDef, {})
         return {
             // just show the first 5 properties for now
-            propertiesToShowOnListScreen: entityDef.properties.slice(0, 5),
+            propertiesToShowOnListScreen: allProps.slice(0, 5),
             // just show all properties for now
-            propertiesToShowOnEditForm: EntityDefinition.properties(
-                entityDef,
-                {}
-            ),
+            propertiesToShowOnEditForm: allProps,
         }
     },
+}
+
+function filterProperties(props, { excludeInherited }) {
+    const tmp = excludeInherited
+        ? props.filter(p => p.id === 'businessId' || !p.inheritedFrom)
+        : props
+    return tmp
 }

@@ -15,23 +15,20 @@ const entityDefsDir = path.join(
 // if the inheritance structure is changed or a new template entity definition is added, the server
 // will need to be restarted for the resolvers to pick up on it.
 let templateEntityDefsById = {}
-loadAllEntityDefs()
-    .then(defs => {
-        const childEntityDefs = defs.filter(def =>
-            def.hasOwnProperty('templateEntityDefinition')
-        )
-        for (const def of childEntityDefs) {
-            const templateDef = def.templateEntityDefinition
-            if (!templateDef.childEntityDefs) {
-                templateDef.childEntityDefs = {}
-            }
-            templateDef.childEntityDefs[def.id] = def
-            templateEntityDefsById[templateDef.id] = templateDef
+setTimeout(async () => {
+    const defs = await loadAllEntityDefs()
+    const childEntityDefs = defs.filter(def =>
+        def.hasOwnProperty('templateEntityDefinition')
+    )
+    for (const def of childEntityDefs) {
+        const templateDef = def.templateEntityDefinition
+        if (!templateDef.childEntityDefs) {
+            templateDef.childEntityDefs = {}
         }
-    })
-    .catch(e => {
-        console.error(e)
-    })
+        templateDef.childEntityDefs[def.id] = def
+        templateEntityDefsById[templateDef.id] = templateDef
+    }
+}, 0)
 
 export const Query = {
     async entityDefinitions(_, { where, page, pageSize }) {
@@ -65,32 +62,27 @@ export const Query = {
     },
 
     async entities(_, { where }) {
-        const { entityDefId } = where
+        const { entityDefId, ...queryConditions } = where
         const templateDef = templateEntityDefsById[entityDefId]
         // Do other entity definitions inherit from this one?
         if (templateDef) {
+            const tmp = Object.keys(templateDef.childEntityDefs)
+            console.log('tmp: ', tmp)
             // If yes, fetch entities for all child types
-            // TODO
+            queryConditions.entityDefId = Object.keys(
+                templateDef.childEntityDefs
+            )
+        } else {
+            queryConditions.entityDefId = entityDefId
         }
 
-        const results = []
-        for (const backendEntity of await entityRepository.find(where)) {
-            results.push(await backendEntityToGraphqlEntity(backendEntity))
-        }
-
-        // const results = (await entityRepository.find(where)).map(
-        //     backendEntityToGraphqlEntity
-        // )
+        const filtered = (await entityRepository.find(queryConditions)).map(
+            backendEntityToGraphqlEntity
+        )
         return {
-            results,
-            totalCount: results.length,
+            results: filtered,
+            totalCount: filtered.length,
         }
-
-        // const totalCount = 0
-        // return {
-        //     results: [],
-        //     totalCount,
-        // }
     },
 
     async entity(_, { entityId /*, entityDefId */ }) {
@@ -99,26 +91,51 @@ export const Query = {
     },
 }
 
+// temporary cache - this allows us to ensure that the `templateEntityDefinition` property
+// always points to the same object if it's the same entity definition
+let loadedEntityDefs = {}
+
 async function loadAllEntityDefs() {
     const entityDefFiles = (await fs.readdir(entityDefsDir)).filter(filename =>
         filename.match(/\.json$/)
     )
-    return await Promise.all(
-        entityDefFiles.map(async filename => {
-            const entityDefId = path.parse(filename).name
-            return await loadEntityDef(entityDefId)
-        })
-    )
+
+    // Loading entity defs one after another rather than using Promise.all()
+    // so that caching logic (using `loadedEntityDefs`) works correctly
+    const defs = []
+    for (const filename of entityDefFiles) {
+        const entityDefId = path.parse(filename).name
+        defs.push(await loadEntityDef(entityDefId))
+    }
+
+    // const defs = await Promise.all(
+    //     entityDefFiles.map(async filename => {
+    //         const entityDefId = path.parse(filename).name
+    //         return await loadEntityDef(entityDefId)
+    //     })
+    // )
+
+    // clear the temporary cache
+    loadedEntityDefs = {}
+    return defs
 }
 
 async function loadEntityDef(id) {
+    if (loadedEntityDefs.hasOwnProperty(id)) {
+        return loadedEntityDefs[id]
+    }
+
     const entityDef = JSON.parse(
         await fs.readFile(path.join(entityDefsDir, id + '.json'), 'utf8')
     )
-    if (entityDef.templateEntityDefinitionId) {
+
+    const { templateEntityDefinitionId } = entityDef
+    if (templateEntityDefinitionId) {
         entityDef.templateEntityDefinition = await loadEntityDef(
-            entityDef.templateEntityDefinitionId
+            templateEntityDefinitionId
         )
     }
+
+    loadedEntityDefs[id] = entityDef
     return entityDef
 }

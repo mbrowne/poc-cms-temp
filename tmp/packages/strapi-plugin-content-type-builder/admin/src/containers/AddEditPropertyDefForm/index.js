@@ -189,6 +189,7 @@ const AddEditEntityDefFormView = props => {
                 readOnly: false,
                 dataType,
                 defaultValue,
+                inheritedFrom: null,
             }
 
             return prop

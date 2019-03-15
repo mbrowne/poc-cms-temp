@@ -133,7 +133,7 @@ class AttributeRow extends React.Component {
                         {relationType}
                     </div>
                     <div className={styles.inheritedFrom}>
-                        {prop.inheritedFrom && prop.inheritedFrom.label}
+                        {prop.inheritedFrom ? prop.inheritedFrom.label : '-'}
                     </div>
                     <IcoContainer icons={icons} />
                 </div>

@@ -297,7 +297,7 @@ const EntityDefinitionView = ({
         // Convert PropertyDefinition objects in the cache to an array of PropertyDefinitionInput objects expected by
         // the GraphQL mutations
         const preparePropertiesInput = properties =>
-            properties.map(({ __typename, ...prop }) => ({
+            properties.map(({ __typename, inheritedFrom, ...prop }) => ({
                 // Use __typename to populate `typename` field in PropertyDefinitionInput type.
                 // LiteralPropertyDefinition is the default
                 typename:
@@ -310,12 +310,20 @@ const EntityDefinitionView = ({
         if (!isUnsavedEntityDef) {
             state.showButtonLoader = true
             try {
-                const { __typename, hasChanges, ...entityDefInput } = entityDef
+                const {
+                    __typename,
+                    templateEntityDefinition,
+                    hasChanges,
+                    ...entityDefInput
+                } = entityDef
                 if (!hasChanges) {
                     // @TODO ensure save button is grayed out in this case.
                     // Still good to have this as a fallback though.
                     console.warn('No changes to save')
                 } else {
+                    entityDefInput.templateEntityDefinitionId = templateEntityDefinition
+                        ? templateEntityDefinition.id
+                        : null
                     entityDefInput.properties = preparePropertiesInput(
                         entityDefInput.properties
                     )
