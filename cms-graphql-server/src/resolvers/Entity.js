@@ -16,4 +16,15 @@ export const Entity = {
             state.displayName || state.name || state.title || state.businessId
         return propState.value.value
     },
+
+    async state(entity) {
+        if (Array.isArray(entity.state)) {
+            return entity.state
+        }
+        // If state isn't an array, then the state of an associated entity was requested,
+        // so resolve it since it was requested. (We don't resolve this by default, because
+        // there could potentially be infinite nesting.)
+        const resolvedEntity = await backendEntityToGraphqlEntity(entity)
+        return resolvedEntity.state
+    },
 }
