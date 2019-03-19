@@ -1,0 +1,26 @@
+{
+  "id": "Collaboration",
+  "label": null,
+  "pluralLabel": "Collaborations",
+  "description": "A collaboration between two or more artists",
+  "isAbstract": false,
+  "templateEntityDefinitionId": "Creator",
+  "properties": [
+    {
+      "__typename": "AssociationDefinition",
+      "id": "artists",
+      "label": "Artists",
+      "dataType": "Object",
+      "readOnly": false,
+      "sourceItemDef": {
+        "name": null,
+        "cardinality": "ZERO_OR_MORE"
+      },
+      "destinationItemDef": {
+        "name": "artists",
+        "cardinality": "ONE_OR_MORE",
+        "entityDefId": "Artist"
+      }
+    }
+  ]
+}

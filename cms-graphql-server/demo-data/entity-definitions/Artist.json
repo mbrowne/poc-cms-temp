@@ -1,0 +1,40 @@
+{
+  "id": "Artist",
+  "label": null,
+  "pluralLabel": "Artists",
+  "description": "",
+  "isAbstract": false,
+  "templateEntityDefinitionId": "Creator",
+  "properties": [
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "firstName",
+      "label": "FirstName",
+      "dataType": "string",
+      "readOnly": false
+    },
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "lastName",
+      "label": "LastName",
+      "dataType": "string",
+      "readOnly": false
+    },
+    {
+      "__typename": "AssociationDefinition",
+      "id": "primaryNationality",
+      "label": "Primary Nationality",
+      "dataType": "Object",
+      "readOnly": false,
+      "sourceItemDef": {
+        "name": null,
+        "cardinality": "ZERO_OR_MORE"
+      },
+      "destinationItemDef": {
+        "name": "primaryNationality",
+        "cardinality": "ZERO_OR_ONE",
+        "entityDefId": "Nationality"
+      }
+    }
+  ]
+}
