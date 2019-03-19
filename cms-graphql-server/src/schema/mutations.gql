@@ -15,18 +15,21 @@ input EntityDefinitionInput {
     # If we support fieldsets in the future, then this field will probably no longer be needed.
     # `properites` is optional so that you can update just the basic attributes of an entity definition
     # without re-sending all the properties.
-    properties: [PropertyInput!]
+    properties: [PropertyDefinitionInput!]
     # fieldsets: [PropertyFieldsetInput!]
 }
 
 # input PropertyFieldsetInput {
 #     title: String
-#     properties: [PropertyInput!]
-#     computedProperties: [ComputedPropertyInput!]
+#     properties: [PropertyDefinitionInput!]
+#     computedProperties: [ComputedPropertyDefinitionInput!]
 # }
 
-input PropertyInput {
-    typename: String = "LiteralProperty"
+# NOTE: literalValue and associationValue are separate fields
+# because graphql does not currently support polymorphic input types (i.e. unions/interfaces)
+# See https://github.com/facebook/graphql/issues/114
+input PropertyDefinitionInput {
+    typename: String = "LiteralPropertyDefinition"
     id: String!
     label: String!
     dataType: String!
@@ -35,16 +38,30 @@ input PropertyInput {
     # TODO
     # flags: [PropertyFlagInput!]
 
-    # Separate fields for different sub-types of Property, since graphql does not currently support
-    # polymorphic input types (i.e. unions/interfaces)
+    # # Separate fields for different sub-types of Property, since graphql does not currently support
+    # # polymorphic input types (i.e. unions/interfaces)
     # literalProperty: LiteralPropertyInput
     # associationProperty: AssociationDefinitionInput
-    # staticAssetProperty: StaticAssetPropertyInput
+    # staticAssetProperty: StaticAssetPropertyDefinitionInput
 }
 
-# input LiteralPropertyInput {
-#     # defaultValue: LiteralPropertyValueScalar
+# input LiteralPropertyDefinitionInput {
+#     defaultValue: LiteralPropertyValueScalar
 # }
+
+input PropertyStateInput {
+    propertyId: ID!
+    literalValue: LiteralPropertyValueScalar
+    associationsValue: [AssociationInput!]
+    # TODO
+    # staticAssetsValue: [StaticAssetsInput!]
+}
+
+input AssociationInput {
+    destinationEntityId: ID!
+    # TODO
+    # propertyValues: [PropertyStateInput!]!
+}
 
 type Mutation {
     createEntityDefinition(
@@ -55,4 +72,25 @@ type Mutation {
         id: ID!
         entityDef: EntityDefinitionInput!
     ): EntityDefinitionModerationStatus
+
+    createEntityRequest(
+        entityDefId: ID!
+        initialState: [PropertyStateInput!]!
+    ): EntityModerationStatus
+    # startPublishing: Date,
+    # stopPublishing: Date
+
+    updateEntityRequest(
+        entityId: ID!
+        entityDefId: ID!
+        """
+        Note: only properties that have actually been updated need to be passed here
+        """
+        updatedState: [PropertyStateInput!]!
+    ): EntityModerationStatus
+    # startPublishing: Date
+    # stopPublishing: Date
+
+    # TODO allow deleting multiple entities at once
+    deleteEntityRequest(entityId: ID!, entityDefId: ID!): EntityModerationStatus
 }

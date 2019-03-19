@@ -1,4 +1,6 @@
 type Query {
-    entityDefinitions: EntityDefinitionResults!
+    entityDefinitions(where: EntityDefinitionFilters): EntityDefinitionResults!
     entityDefinition(id: ID!): EntityDefinition
+    entities(where: EntityFilters!): EntityResults!
+    entity(entityDefId: ID!, entityId: ID!): Entity
 }

@@ -3,7 +3,7 @@ import { forEach, toNumber, isObject } from 'lodash'
 import moment from 'moment'
 import { useApolloClient, useMutation } from 'react-apollo-hooks'
 import { useQueryLoader, useFormState, useApolloStateUpdate } from 'hooks'
-import * as queries from '../graphql/queries'
+import * as queries from '../../graphql/queries'
 import PopUpForm from 'components/PopUpForm'
 
 import formConfig from './form.json'

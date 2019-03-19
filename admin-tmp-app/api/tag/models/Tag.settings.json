@@ -9,7 +9,7 @@
     "timestamps": true
   },
   "attributes": {
-    "name": {
+    "displayName": {
       "default": "",
       "type": "string"
     }

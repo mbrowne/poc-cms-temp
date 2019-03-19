@@ -30,7 +30,7 @@ import saga from './sagas'
 
 import { useApolloClient } from 'react-apollo-hooks'
 import { defaultState } from '../state'
-import * as queries from '../graphql/queries'
+import * as queries from '../../graphql/queries'
 
 /* eslint-disable consistent-return */
 class App extends React.Component {

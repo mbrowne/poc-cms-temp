@@ -32,7 +32,7 @@ module.exports = {
       .sort(filters.sort)
       .skip(filters.start)
       .limit(filters.limit)
-      .populate(filters.populate || populate);
+      .populate(populate);
   },
 
   /**
@@ -64,7 +64,7 @@ module.exports = {
     const filters = strapi.utils.models.convertParams('tag', params);
 
     return Tag
-      .countDocuments()
+      .count()
       .where(filters.where);
   },
 
@@ -98,7 +98,7 @@ module.exports = {
     const data = _.omit(values, Tag.associations.map(a => a.alias));
 
     // Update entry with no-relational data.
-    const entry = await Tag.updateOne(params, data, { multi: true });
+    const entry = await Tag.update(params, data, { multi: true });
 
     // Update relational data and return the entry.
     return Tag.updateRelations(Object.assign(params, { values: relations }));

@@ -1,0 +1,52 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/creators",
+      "handler": "Creator.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/creators/count",
+      "handler": "Creator.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/creators/:_id",
+      "handler": "Creator.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/creators",
+      "handler": "Creator.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/creators/:_id",
+      "handler": "Creator.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/creators/:_id",
+      "handler": "Creator.destroy",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}
