@@ -6,17 +6,19 @@ export const entityDefDetails = gql`
         label
         pluralLabel
         description
-        # templateEntityDefinition {
-        #     id
-        #     properties
-        #         ...
-        # }
+        templateEntityDefinition {
+            id
+            label
+        }
         isAbstract
         properties {
             id
             label
             dataType
             readOnly
+            inheritedFrom {
+                label
+            }
         }
     }
 `

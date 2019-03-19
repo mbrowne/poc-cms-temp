@@ -1,0 +1,30 @@
+{
+  "id": "Creator",
+  "label": null,
+  "pluralLabel": "Creators",
+  "description": "An Artist or Collaboration",
+  "isAbstract": false,
+  "properties": [
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "displayName",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    },
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "shortBio",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    },
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "longBio",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    }
+  ]
+}

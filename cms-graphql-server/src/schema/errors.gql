@@ -1,0 +1,4 @@
+type ErrorMessage {
+    code: Int
+    message: String
+}

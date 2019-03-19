@@ -9,7 +9,7 @@ import Helmet from 'react-helmet'
 import PropTypes from 'prop-types'
 import { useApolloClient } from 'react-apollo-hooks'
 import { useQueryLoader } from 'hooks'
-import * as queries from '../graphql/queries'
+import * as queries from '../../graphql/queries'
 
 // Design
 import ContentHeader from 'components/ContentHeader'

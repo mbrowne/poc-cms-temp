@@ -1,4 +1,7 @@
 export * from './Mutation'
+export * from './Entity'
 export * from './EntityDefinition'
 export * from './PropertyDefinition'
+export * from './PropertyValue'
 export * from './Query'
+export * from './scalars'

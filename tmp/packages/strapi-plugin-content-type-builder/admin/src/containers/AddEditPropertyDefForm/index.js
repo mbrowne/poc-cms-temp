@@ -1,5 +1,5 @@
 import React from 'react'
-import { toNumber, isObject } from 'lodash'
+import { toNumber, isObject, upperFirst } from 'lodash'
 import moment from 'moment'
 import { useApolloClient } from 'react-apollo-hooks'
 import { FormattedMessage } from 'react-intl'
@@ -11,7 +11,7 @@ import {
     useFormState,
     useApolloStateUpdate,
 } from 'hooks'
-import * as queries from '../graphql/queries'
+import * as queries from '../../graphql/queries'
 
 function useUpdatePropertyDef(
     origEntityDef,
@@ -25,6 +25,11 @@ function useUpdatePropertyDef(
     )
     return propertyDef => {
         propertyDef.__typename = 'PropertyDefinition'
+        // TEMP
+        if (!propertyDef.label) {
+            propertyDef.label = upperFirst(propertyDef.id)
+        }
+
         const properties = [...origEntityDef.properties]
         const existingPropIndex = origPropertyId
             ? properties.findIndex(p => p.id === origPropertyId)
@@ -184,6 +189,7 @@ const AddEditEntityDefFormView = props => {
                 readOnly: false,
                 dataType,
                 defaultValue,
+                inheritedFrom: null,
             }
 
             return prop

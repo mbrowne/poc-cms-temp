@@ -23,17 +23,33 @@ export function useConvenientState(initialState) {
                             ...accessors,
                             [key]: newVal,
                         })
+                        // Also update raw values immediately so that this works as expected:
+                        //   state.foo = 1
+                        //   console.log(state.foo)  // should log 1
+                        //
+                        // @TODO should we be doing this without mutating accessors[RAW_VALUES]?
+                        accessors[RAW_VALUES][key] = newVal
                     },
                 },
                 // Make explicit set methods as well so React's callback API
                 // (e.g. `setFoo(oldState => { ... return newState })`)
                 // is also available
                 ['set' + camelCase(key)]: {
-                    value: callback => {
-                        setRawValues(currentValues => ({
-                            ...accessors,
-                            [key]: callback(currentValues[key]),
-                        }))
+                    value: newValOrCallback => {
+                        setRawValues(currentValues => {
+                            // TODO
+                            // Question: Should we support both functions and actual values as we're doing here?
+                            // We already have the `state.foo = ...` API for using actual values so this might be redundant.
+                            // On the other hand, React users might expect it to work both ways.
+                            const newVal =
+                                typeof newValOrCallback === 'function'
+                                    ? newValOrCallback(currentValues[key])
+                                    : newValOrCallback
+                            return {
+                                ...accessors,
+                                [key]: newVal,
+                            }
+                        })
                     },
                 },
             })

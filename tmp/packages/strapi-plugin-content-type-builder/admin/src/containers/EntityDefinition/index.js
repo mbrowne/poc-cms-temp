@@ -4,9 +4,10 @@ import { FormattedMessage } from 'react-intl'
 import { NavLink } from 'react-router-dom'
 import { isEmpty, startCase } from 'lodash'
 import { useApolloClient, useMutation } from 'react-apollo-hooks'
+import pluralize from 'pluralize'
 import { useConvenientState } from 'hooks'
 import { getPluginState } from '../state'
-import * as queries from '../graphql/queries'
+import * as queries from '../../graphql/queries'
 import styles from './styles.scss'
 import PluginLeftMenu from 'components/PluginLeftMenu'
 import ContentHeader from 'components/ContentHeader'
@@ -241,7 +242,25 @@ const EntityDefinitionView = ({
             </div>
         ),
 
-        renderListTitle: () => null,
+        renderListTitle: () => {
+            const { templateEntityDefinition } = entityDef
+            if (templateEntityDefinition) {
+                const templateEntityDefUrl =
+                    '/plugins/content-type-builder/entity-defs/' +
+                    templateEntityDefinition.id
+                return (
+                    <span>
+                        Inherits from&nbsp;
+                        <a
+                            href="javascript:;"
+                            onClick={() => history.push(templateEntityDefUrl)}
+                        >
+                            {templateEntityDefinition.label}
+                        </a>
+                    </span>
+                )
+            }
+        },
 
         renderCustomLi: (row, key) => (
             <AttributeRow
@@ -275,15 +294,15 @@ const EntityDefinitionView = ({
     async function handleSubmit(e) {
         e.preventDefault()
 
-        // Convert PropertyDefinition objects in the cache to an array of PropertyInput objects expected by
+        // Convert PropertyDefinition objects in the cache to an array of PropertyDefinitionInput objects expected by
         // the GraphQL mutations
         const preparePropertiesInput = properties =>
-            properties.map(({ __typename, ...prop }) => ({
-                // Use __typename to populate `typename` field in PropertyInput type
-                // LiteralProperty is the default
+            properties.map(({ __typename, inheritedFrom, ...prop }) => ({
+                // Use __typename to populate `typename` field in PropertyDefinitionInput type.
+                // LiteralPropertyDefinition is the default
                 typename:
                     __typename === 'PropertyDefinition'
-                        ? 'LiteralProperty'
+                        ? 'LiteralPropertyDefinition'
                         : __typename,
                 ...prop,
             }))
@@ -291,13 +310,20 @@ const EntityDefinitionView = ({
         if (!isUnsavedEntityDef) {
             state.showButtonLoader = true
             try {
-                const { __typename, hasChanges, ...entityDefInput } = entityDef
-
+                const {
+                    __typename,
+                    templateEntityDefinition,
+                    hasChanges,
+                    ...entityDefInput
+                } = entityDef
                 if (!hasChanges) {
                     // @TODO ensure save button is grayed out in this case.
                     // Still good to have this as a fallback though.
                     console.warn('No changes to save')
                 } else {
+                    entityDefInput.templateEntityDefinitionId = templateEntityDefinition
+                        ? templateEntityDefinition.id
+                        : null
                     entityDefInput.properties = preparePropertiesInput(
                         entityDefInput.properties
                     )
@@ -327,9 +353,13 @@ const EntityDefinitionView = ({
                 entityDefInput.properties = preparePropertiesInput(
                     entityDefInput.properties
                 )
-                // TEMP
+                // TODO
+                // We should show this as a default in the UI rather than just
+                // setting it here
                 if (!entityDefInput.pluralLabel) {
-                    entityDefInput.pluralLabel = entityDefInput.id + 's'
+                    entityDefInput.pluralLabel = pluralize(
+                        startCase(entityDefInput.id)
+                    )
                 }
                 // console.log('entityDefInput: ', entityDefInput)
 

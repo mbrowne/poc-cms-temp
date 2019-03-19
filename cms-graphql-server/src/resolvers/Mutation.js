@@ -1,6 +1,13 @@
 import fsModule from 'fs'
 import path from 'path'
 import config from '~/config'
+import {
+    prepareEntityDefForStorage,
+    graphqlInputToBackendEntity,
+    graphqlInputToBackendAssociations,
+    backendEntityToGraphqlEntity,
+} from './cms/utils'
+import { entityRepository, associationRepository } from './cms/repositories'
 const fs = fsModule.promises
 
 const entityDefsDir = path.join(
@@ -9,41 +16,18 @@ const entityDefsDir = path.join(
     'entity-definitions'
 )
 
-const propTypes = [
-    'literalProperty',
-    'associationProperty',
-    'staticAssetProperty',
-]
-
-// Transform the input data into the format we want to save in the JSON file
-function prepareEntityDefForStorage(inputObj) {
-    if (!inputObj.properties) {
-        return inputObj
-    }
-    const properties = inputObj.properties.map(propInput => {
-        // New approach: use `typename` field of PropertyInput type
-        const { typename, ...propFields } = propInput
-        return {
-            __typename: typename,
-            ...propFields,
-        }
-
-        // Old approach:
-        // const hasPropTypeInput = propTypes.some(propType =>
-        //     propInput.hasOwnProperty(propType)
-        // )
-        // if (!hasPropTypeInput) {
-        //     const propType = 'LiteralProperty'
-        //     return {
-        //         __typename: propType,
-        //         ...propInput,
-        //     }
-        // } else {
-        //     throw Error('TODO')
-        // }
-    })
-    return { ...inputObj, properties }
-}
+// {
+//     "initialState": [
+//       {
+//         "propertyId": "tagSubject",
+//         "associationsValue": [
+//           {
+//             "destinationEntityId": "1234"
+//           }
+//         ]
+//       }
+//     ]
+// }
 
 export const Mutation = {
     createEntityDefinition(_, { entityDef }) {
@@ -52,6 +36,74 @@ export const Mutation = {
 
     updateEntityDefinition(_, { id, entityDef }) {
         return saveEntityDefinition(entityDef, id)
+    },
+
+    async createEntityRequest(_, args) {
+        const entity = await graphqlInputToBackendEntity(args)
+        // console.log('entity: ', entity)
+        entity.id = await entityRepository.save(entity)
+
+        const { associations } = await graphqlInputToBackendAssociations(
+            entity.id,
+            args
+        )
+        await associationRepository.saveMultiple(associations)
+
+        console.log(`Successfully created entity ID '${entity.id}'`)
+
+        const moderationStatus = {
+            entity: await backendEntityToGraphqlEntity(entity),
+            errorMessage: null,
+        }
+        return moderationStatus
+    },
+
+    async updateEntityRequest(_, args) {
+        const existingEntity = await entityRepository.getById(args.entityId)
+        const entity = await graphqlInputToBackendEntity(args, existingEntity)
+        const existingAssociations = await associationRepository.findBySourceEntityId(
+            args.entityId
+        )
+        const {
+            associations,
+            oldAssociationIdsToDelete,
+        } = await graphqlInputToBackendAssociations(
+            args.entityId,
+            args,
+            existingAssociations
+        )
+        // console.log('associations: ', JSON.stringify(associations))
+        // console.log('oldAssociationIdsToDelete: ', oldAssociationIdsToDelete)
+
+        // // console.log('entity: ', entity)
+        await entityRepository.save(entity)
+        await associationRepository.delete(oldAssociationIdsToDelete)
+        await associationRepository.saveMultiple(associations)
+
+        console.log(`Successfully updated entity ID '${entity.id}'`)
+
+        const moderationStatus = {
+            entity: await backendEntityToGraphqlEntity(entity),
+            errorMessage: null,
+        }
+        return moderationStatus
+    },
+
+    async deleteEntityRequest(_, { entityId /*, entityDefId */ }) {
+        // First, delete any associations for which this entity is the 'source' side of the association
+        const associations = await associationRepository.findBySourceEntityId(
+            entityId
+        )
+        await associationRepository.delete(associations.map(a => a.id))
+        // Now, delete the entity itself
+        const deletedEntities = await entityRepository.delete(entityId)
+
+        console.log(`Successfully deleted entity ID '${entityId}'`)
+        const moderationStatus = {
+            entity: deletedEntities[0],
+            errorMessage: null,
+        }
+        return moderationStatus
     },
 }
 
@@ -90,12 +142,37 @@ async function saveEntityDefinition(
         }
         entityDef = prepareEntityDefForStorage(entityDefInput)
     } else {
+        // TEMP
+        // ignore association and static assets properties until UI supports them
+        // (to avoid overwriting changes manually made to the JSON)
+        const nonLiteralProps = existingEntityDef.properties.filter(
+            p => p.__typename !== 'LiteralPropertyDefinition'
+        )
+        // const nonLiteralProps = {}
+        // for (const p of nonLiteralPropsArray) {
+        //     nonLiteralProps[p.id] = p
+        // }
+
         // @NB in the real system we might not handle updates this way.
         // This always keeps all old properties unless they're overwritten.
+        const updates = prepareEntityDefForStorage(entityDefInput)
+
+        // TEMP
+        updates.properties = [
+            ...updates.properties.filter(
+                p => p.__typename === 'LiteralPropertyDefinition'
+            ),
+            ...nonLiteralProps,
+        ]
+
         entityDef = {
             ...existingEntityDef,
-            ...prepareEntityDefForStorage(entityDefInput),
+            ...updates,
         }
+        // entityDef = {
+        //     ...existingEntityDef,
+        //     ...prepareEntityDefForStorage(entityDefInput),
+        // }
     }
 
     await fs.writeFile(

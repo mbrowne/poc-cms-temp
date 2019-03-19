@@ -99,7 +99,9 @@ class AttributeRow extends React.Component {
         //     </FormattedMessage>
         // </div>
         const relationStyle = !params.type ? styles.relation : ''
-        const icons = prop.readOnly
+        const isNotEditable =
+            prop.id === 'businessId' || prop.readOnly || prop.inheritedFrom
+        const icons = isNotEditable
             ? [{ icoType: 'lock' }]
             : [
                   { icoType: 'pencil', onClick: this.handleEdit },
@@ -125,12 +127,14 @@ class AttributeRow extends React.Component {
                 <div className={styles.flex}>
                     <div className={styles.nameContainer}>
                         {this.renderAttributesBox()}
-                        <div>{prop.id}</div>
+                        <div>{prop.label}</div>
                     </div>
                     <div className={styles.relationContainer}>
                         {relationType}
                     </div>
-                    <div className={styles.mainField} />
+                    <div className={styles.inheritedFrom}>
+                        {prop.inheritedFrom ? prop.inheritedFrom.label : '-'}
+                    </div>
                     <IcoContainer icons={icons} />
                 </div>
                 <PopUpWarning

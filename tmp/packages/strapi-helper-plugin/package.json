@@ -57,6 +57,7 @@
     "express": "^4.15.4",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^0.11.2",
+    "fromentries": "^1.1.0",
     "graphql": "^14.1.1",
     "graphql-tag": "^2.10.1",
     "history": "^4.6.3",

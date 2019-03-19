@@ -1,236 +1,232 @@
-/**
- *
- * SelectMany
- *
- */
-
-import React from 'react';
-import Select from 'react-select';
-import { FormattedMessage } from 'react-intl';
-import PropTypes from 'prop-types';
-import { cloneDeep, includes, isArray, isNull, isUndefined, get, findIndex, isEmpty } from 'lodash';
-
-// Utils.
-import request from 'utils/request';
-import templateObject from 'utils/templateObject';
+import React from 'react'
+import Select from 'react-select'
+import { FormattedMessage } from 'react-intl'
+import PropTypes from 'prop-types'
+import { isEmpty } from 'lodash'
 
 // CSS.
-import 'react-select/dist/react-select.css';
+import 'react-select/dist/react-select.css'
 // Component.
-import SortableList from './SortableList';
+import SortableList from './SortableList'
 // CSS.
-import styles from './styles.scss';
+import styles from './styles.scss'
+
+import * as queries from '../../graphql/queries'
 
 class SelectMany extends React.PureComponent {
-  state = {
-    isLoading: true,
-    options: [],
-    toSkip: 0,
-  };
-
-  componentDidMount() {
-    this.getOptions('');
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (isEmpty(prevProps.record) && !isEmpty(this.props.record)) {
-      const values = (get(this.props.record, this.props.relation.alias) || [])
-        .map(el => (el.id || el._id));
-
-      const options = this.state.options.filter(el => {
-        return !values.includes(el.value.id || el.value._id);
-      });
-
-      this.state.options = options;
+    state = {
+        isLoading: true,
+        options: [],
+        toSkip: 0,
     }
 
-    if (prevState.toSkip !== this.state.toSkip) {
-      this.getOptions('');
+    componentDidMount() {
+        this.getOptions()
     }
-  }
 
-  getOptions = query => {
-    const params = {
-      _limit: 20,
-      _start: this.state.toSkip,
-      source: this.props.relation.plugin || 'content-manager',
-    };
-
-    // Set `query` parameter if necessary
-    if (query) {
-      delete params._limit;
-      delete params._skip;
-      params[`${this.props.relation.displayedAttribute}_contains`] = query;
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.toSkip !== this.state.toSkip) {
+            this.getOptions()
+        }
     }
-    // Request URL
-    const requestUrl = `/content-manager/explorer/${this.props.relation.model ||
-      this.props.relation.collection}`;
 
-    // Call our request helper (see 'utils/request')
-    return request(requestUrl, {
-      method: 'GET',
-      params,
-    })
-      .then(response => {
-        const options = isArray(response)
-          ? response.map(item => ({
-            value: item,
-            label: templateObject({ mainField: this.props.relation.displayedAttribute }, item)
-              .mainField,
-          }))
-          : [
-            {
-              value: response,
-              label: response[this.props.relation.displayedAttribute],
+    async getOptions() {
+        const { associationDef, apolloClient } = this.props
+        const { data, errors } = await apolloClient.query({
+            query: queries.associationSelectOptions,
+            variables: {
+                where: {
+                    entityDefId: associationDef.destinationItemDef.entityDef.id,
+                },
             },
-          ];
+        })
+        if (errors) {
+            console.error('Apollo error(s): ', JSON.stringify(errors))
+            strapi.notification.error(
+                'content-manager.notification.error.relationship.fetch'
+            )
+            return
+        }
 
-        const newOptions = cloneDeep(this.state.options);
-        options.map(option => {
-          // Don't add the values when searching
-          if (findIndex(newOptions, o => o.value.id === option.value.id) === -1) {
-            return newOptions.push(option);
-          }
-        });
+        const options = data.entities.results.map(entity => ({
+            value: entity,
+            label: entity.displayName,
+        }))
 
-        return this.setState({
-          options: newOptions,
-          isLoading: false,
-        });
-      })
-      .catch(() => {
-        strapi.notification.error('content-manager.notification.error.relationship.fetch');
-      });
-  };
+        // Remove any options from the list that are already associated
+        const values = (
+            this.props.entityState[this.props.associationDef.id] || []
+        ).map(el => el.id)
+        const newOptions = options.filter(el => {
+            return !values.includes(el.value.id)
+        })
 
-  handleInputChange = (value) => {
-    const clonedOptions = this.state.options;
-    const filteredValues = clonedOptions.filter(data => includes(data.label, value));
-
-    if (filteredValues.length === 0) {
-      return this.getOptions(value);
+        this.setState({
+            options: newOptions,
+            isLoading: false,
+        })
     }
-  }
 
-  handleChange = value => {
-    // Remove new added value from available option;
-    this.state.options = this.state.options.filter(el => 
-      !((el.value._id || el.value.id) === (value.value.id || value.value._id))
-    );
+    handleInputChange = value => {
+        const clonedOptions = this.state.options
+        const filteredValues = clonedOptions.filter(data =>
+            data.label.includes(value)
+        )
 
-    this.props.onAddRelationalItem({
-      key: this.props.relation.alias,
-      value: value.value,
-    });
-  };
+        if (filteredValues.length === 0) {
+            return this.getOptions(value)
+        }
+    }
 
-  handleBottomScroll = () => {
-    this.setState(prevState => {
-      return {
-        toSkip: prevState.toSkip + 20,
-      };
-    });
-  }
+    handleChange = value => {
+        // Remove new added value from available option;
+        this.state.options = this.state.options.filter(
+            el => el.value.id !== value.value.id
+        )
 
-  handleRemove = (index) => {
-    const values = get(this.props.record, this.props.relation.alias);
+        this.props.onAddAssociationItem({
+            propertyId: this.props.associationDef.id,
+            item: value.value,
+        })
+    }
 
-    // Add removed value from available option;
-    const toAdd = {
-      value: values[index],
-      label: templateObject({ mainField: this.props.relation.displayedAttribute }, values[index]).mainField,
-    };
+    handleBottomScroll = () => {
+        this.setState(prevState => {
+            return {
+                toSkip: prevState.toSkip + 20,
+            }
+        })
+    }
 
-    this.setState(prevState => ({
-      options: prevState.options.concat([toAdd]),
-    }));
+    handleRemove = index => {
+        const {
+            entityState,
+            associationDef,
+            onRemoveAssociationItem,
+        } = this.props
+        const associatedEntities = entityState[associationDef.id]
+        const selectedEntity = associatedEntities[index]
 
-    this.props.onRemoveRelationItem({
-      key: this.props.relation.alias,
-      index,
-    });
-  }
+        // Add removed value to available options
+        const toAdd = {
+            value: selectedEntity,
+            label: selectedEntity.displayName,
+        }
 
-  // Redirect to the edit page
-  handleClick = (item = {}) => {
-    this.props.onRedirect({
-      model: this.props.relation.collection || this.props.relation.model,
-      id: item.value.id || item.value._id,
-      source: this.props.relation.plugin,
-    });
-  }
+        this.setState(prevState => ({
+            options: prevState.options.concat([toAdd]),
+        }))
 
-  render() {
-    const description = this.props.relation.description ? (
-      <p>{this.props.relation.description}</p>
-    ) : (
-      ''
-    );
-    const value = get(this.props.record, this.props.relation.alias) || [];
+        onRemoveAssociationItem({
+            propertyId: associationDef.id,
+            index,
+        })
+    }
 
-    /* eslint-disable jsx-a11y/label-has-for */
-    return (
-      <div className={`form-group ${styles.selectMany} ${value.length > 4 && styles.selectManyUpdate}`}>
-        <label htmlFor={this.props.relation.alias}>{this.props.relation.alias} <span>({value.length})</span></label>
-        {description}
-        <Select
-          className={`${styles.select}`}
-          id={this.props.relation.alias}
-          isLoading={this.state.isLoading}
-          onChange={this.handleChange}
-          onInputChange={this.handleInputChange}
-          onMenuScrollToBottom={this.handleBottomScroll}
-          options={this.state.options}    
-          placeholder={<FormattedMessage id='content-manager.containers.Edit.addAnItem' />}
-        />
-        <SortableList
-          items={
-            isNull(value) || isUndefined(value) || value.size === 0
-              ? null
-              : value.map(item => {
+    // handleRemove = index => {
+    //     const values = get(this.props.record, this.props.relation.alias)
 
-                if (item) {
-                  return {
-                    value: get(item, 'value') || item,
-                    label:
-                        get(item, 'label') ||
-                        templateObject({ mainField: this.props.relation.displayedAttribute }, item)
-                          .mainField ||
-                        item.id,
-                  };
-                }
-              })
-          }
-          isDraggingSibling={this.props.isDraggingSibling}
-          keys={this.props.relation.alias}
-          moveAttr={this.props.moveAttr}
-          moveAttrEnd={this.props.moveAttrEnd}
-          name={this.props.relation.alias}
-          onRemove={this.handleRemove}
-          distance={1}
-          onClick={this.handleClick}
-        />
-      </div>
-    );
-    /* eslint-disable jsx-a11y/label-has-for */
-  }
+    //     // Add removed value to available options
+    //     const toAdd = {
+    //         value: values[index],
+    //         label: templateObject(
+    //             { mainField: this.props.relation.displayedAttribute },
+    //             values[index]
+    //         ).mainField,
+    //     }
+
+    //     this.setState(prevState => ({
+    //         options: prevState.options.concat([toAdd]),
+    //     }))
+
+    //     this.props.onRemoveRelationItem({
+    //         key: this.props.relation.alias,
+    //         index,
+    //     })
+    // }
+
+    // Redirect to the edit page
+    handleClickDetails = associatedEntity => {
+        this.props.onClickEntityDetails({
+            associationDef: this.props.associationDef,
+            associatedEntity,
+        })
+    }
+
+    render() {
+        const { state } = this
+        const {
+            associationDef,
+            entityState,
+            isDraggingSibling,
+            moveAttr,
+            moveAttrEnd,
+        } = this.props
+        const description = associationDef.description ? (
+            <p>{associationDef.description}</p>
+        ) : (
+            ''
+        )
+        const propertyId = associationDef.id
+        const associatedEntities = entityState[propertyId]
+
+        /* eslint-disable jsx-a11y/label-has-for */
+        return (
+            <div
+                className={`form-group ${
+                    styles.selectMany
+                } ${associatedEntities.length > 4 && styles.selectManyUpdate}`}
+            >
+                <label htmlFor={associationDef.id}>
+                    {associationDef.label}{' '}
+                    <span>({associatedEntities.length})</span>
+                </label>
+                {description}
+                <Select
+                    className={`${styles.select}`}
+                    id={associationDef.id}
+                    isLoading={state.isLoading}
+                    onChange={this.handleChange}
+                    onInputChange={this.handleInputChange}
+                    onMenuScrollToBottom={this.handleBottomScroll}
+                    options={state.options}
+                    placeholder={
+                        <FormattedMessage id="content-manager.containers.Edit.addAnItem" />
+                    }
+                />
+                <SortableList
+                    items={associatedEntities.map(entity => ({
+                        value: entity,
+                        label: entity.displayName,
+                    }))}
+                    isDraggingSibling={isDraggingSibling}
+                    keys={associationDef.label}
+                    moveAttr={moveAttr}
+                    moveAttrEnd={moveAttrEnd}
+                    name={associationDef.id}
+                    onRemove={this.handleRemove}
+                    distance={1}
+                    onClick={this.handleClickDetails}
+                />
+            </div>
+        )
+        /* eslint-disable jsx-a11y/label-has-for */
+    }
 }
 
 SelectMany.defaultProps = {
-  isDraggingSibling: false,
-  moveAttr: () => {},
-  moveAttrEnd: () => {},
-};
+    isDraggingSibling: false,
+    moveAttr: () => {},
+    moveAttrEnd: () => {},
+}
 
 SelectMany.propTypes = {
-  isDraggingSibling: PropTypes.bool,
-  moveAttr: PropTypes.func,
-  moveAttrEnd: PropTypes.func,
-  onAddRelationalItem: PropTypes.func.isRequired,
-  onRedirect: PropTypes.func.isRequired,
-  onRemoveRelationItem: PropTypes.func.isRequired,
-  record: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]).isRequired,
-  relation: PropTypes.object.isRequired,
-};
+    apolloClient: PropTypes.object.isRequired,
+    associationDef: PropTypes.object.isRequired,
+    entityState: PropTypes.object.isRequired,
+    onAddAssociationItem: PropTypes.func.isRequired,
+    onRemoveAssociationItem: PropTypes.func.isRequired,
+    onClickEntityDetails: PropTypes.func.isRequired,
+}
 
-export default SelectMany;
+export default SelectMany
