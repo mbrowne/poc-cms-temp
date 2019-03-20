@@ -15,6 +15,15 @@ const pluginsDirPath = path.join(process.cwd(), 'plugins')
 
 console.log('🔸  Creating symlinks...')
 
+// Create node_modules directory if it doesn't yet exist
+try {
+    fs.mkdirSync('node_modules')
+} catch (e) {
+    if (e.code !== 'EEXIST') {
+        throw e
+    }
+}
+
 // try {
 //     fs.symlinkSync('../strapi', './node_modules/strapi')
 // } catch (e) {
