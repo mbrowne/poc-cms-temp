@@ -2,7 +2,8 @@
   "lerna": "2.0.0",
   "version": "3.0.0-alpha.5.3",
   "packages": [
-    "packages/*"
+    "artnet-packages/*",
+    "strapi-packages/*"
   ],
   "commands": {}
 }
