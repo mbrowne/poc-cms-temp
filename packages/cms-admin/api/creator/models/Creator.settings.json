@@ -1,0 +1,25 @@
+{
+  "connection": "default",
+  "collectionName": "",
+  "info": {
+    "name": "creator",
+    "description": "An artist or collaboration"
+  },
+  "options": {
+    "timestamps": true
+  },
+  "attributes": {
+    "displayName": {
+      "default": "",
+      "type": "string"
+    },
+    "shortBio": {
+      "default": "",
+      "type": "text"
+    },
+    "longBio": {
+      "default": "",
+      "type": "text"
+    }
+  }
+}
