@@ -16,7 +16,6 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const isSetup = process.env.IS_MONOREPO || false;
 const appPath = process.env.APP_PATH || path.resolve(process.env.PWD, '..', ( isAdmin ?  '' : '..' ));
-// const appPath = '/Users/mbrowne/GoogleDrive/www/poc-cms-client-and-server/cms/packages/strapi-admin/admin'
 
 const adminPath = (() => {
   if (isAdmin && isSetup) {
@@ -108,17 +107,27 @@ if (process.env.npm_lifecycle_event === 'start') {
         })
       : [];
 
+  // artnet added
+  const packagesDir = fs.realpathSync(path.resolve(appPath, '..'));
+
   // Construct object of plugin' paths.
   plugins.folders = plugins.src.reduce((acc, current) => {
+    // artnet modified
     acc[current] = path.resolve(
-      appPath,
-      'plugins',
-      current,
-      'node_modules',
+      packagesDir,
       'strapi-helper-plugin',
       'lib',
       'src',
-    );
+    )
+    // acc[current] = path.resolve(
+    //   appPath,
+    //   'plugins',
+    //   current,
+    //   'node_modules',
+    //   'strapi-helper-plugin',
+    //   'lib',
+    //   'src',
+    // );
 
     return acc;
   }, {});
@@ -128,7 +137,9 @@ if (process.env.npm_lifecycle_event === 'start') {
 const foldersToInclude = [path.join(adminPath, 'admin', 'src')]
   .concat(
     plugins.src.reduce((acc, current) => {
-      acc.push(path.resolve(appPath, 'plugins', current, 'admin', 'src'), plugins.folders[current]);
+      // artnet modified
+      acc.push(path.resolve(appPath, 'plugins', current, 'admin', 'src'))
+      // acc.push(path.resolve(appPath, 'plugins', current, 'admin', 'src'), plugins.folders[current]);
 
       return acc;
     }, []),
@@ -145,7 +156,6 @@ module.exports = options => {
 
   return {
     entry: options.entry,
-    context: adminPath,
     output: Object.assign(
       {
         // Compile into js/build.js
@@ -323,7 +333,13 @@ module.exports = options => {
         'admin/src',
         'node_modules/strapi-helper-plugin/lib/src',
         'node_modules/strapi-helper-plugin/node_modules',
-        'node_modules'
+        'node_modules',
+        // // artnet added
+        // fs.realpathSync('../strapi-helper-plugin/lib/src'),
+        // fs.realpathSync('../strapi-helper-plugin/node_modules'),
+        
+        // fs.realpathSync('../../node_modules'),
+        // fs.realpathSync('../'),
       ],
       alias: options.alias,
       symlinks: false,

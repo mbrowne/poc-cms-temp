@@ -35,13 +35,37 @@ const plugins = {
 };
 
 if (process.env.npm_lifecycle_event === 'start') {
+  // artnet added
+  const pluginsDir = path.resolve(appPath, 'plugins')
+
   try {
-    fs.accessSync(path.resolve(appPath, 'plugins'), fs.constants.R_OK);
+    // artnet modified
+    fs.accessSync(pluginsDir, fs.constants.R_OK);
+    // fs.accessSync(path.resolve(appPath, 'plugins'), fs.constants.R_OK);
   } catch (e) {
     // Allow app without plugins.
     plugins.exist = true;
   }
 
+  // artnet modified
+  plugins.src =
+    process.env.IS_ADMIN === 'true' && !plugins.exist
+      ? fs.readdirSync(path.resolve(pluginsDir)).filter(x => {
+        let hasAdminFolder;
+
+        // Don't inject the plugins that don't have an admin into the app
+        try {
+          fs.accessSync(path.resolve(pluginsDir, x, 'admin', 'src', 'containers', 'App'));
+          hasAdminFolder = true;
+        } catch (err) {
+          hasAdminFolder = false;
+        }
+
+        return x[0] !== '.' && hasAdminFolder;
+      })
+      : [];
+
+  /*
   plugins.src =
     process.env.IS_ADMIN === 'true' && !plugins.exist
       ? fs.readdirSync(path.resolve(appPath, 'plugins')).filter(x => {
@@ -58,8 +82,31 @@ if (process.env.npm_lifecycle_event === 'start') {
         return x[0] !== '.' && hasAdminFolder;
       })
       : [];
+  */
 
   plugins.folders = plugins.src.reduce((acc, current) => {
+    // // artnet modified
+    // acc[current] = path.resolve(
+    //   appPath,
+    //   '..',
+    //   '..',
+    //   'strapi-packages',
+    //   'strapi-plugin-' + current,
+    //   'node_modules',
+    //   'strapi-helper-plugin',
+    //   'lib',
+    //   'src',
+    // );
+
+    // acc[current] = path.resolve(
+    //   appPath,
+    //   'admin',
+    //   'node_modules',
+    //   'strapi-helper-plugin',
+    //   'lib',
+    //   'src',
+    // );
+
     acc[current] = path.resolve(
       appPath,
       'plugins',
@@ -73,6 +120,7 @@ if (process.env.npm_lifecycle_event === 'start') {
     return acc;
   }, {});
 }
+console.log('plugins.folders: ', plugins.folders);
 
 const port = argv.port || process.env.PORT || 3000;
 
@@ -87,7 +135,6 @@ module.exports = require('./webpack.base.babel')({
     },
     plugins.src.reduce((acc, current) => {
       acc[current] = path.resolve(plugins.folders[current], 'app.js');
-
       return acc;
     }, {}),
   ),
@@ -235,9 +282,6 @@ module.exports = require('./webpack.base.babel')({
   // Emit a source map for easier debugging
   devtool: 'cheap-module-source-map',
 });
-
-console.log('module.exports.entry', module.exports.entry)
-console.log('include', module.exports.module.rules[0].oneOf[0].include)
 
 /**
  * We dynamically generate the HTML content in development so that the different

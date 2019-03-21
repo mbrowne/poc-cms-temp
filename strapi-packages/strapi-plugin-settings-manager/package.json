@@ -26,11 +26,11 @@
     "cross-env": "^5.2.0",
     "flag-icon-css": "^2.8.0",
     "react-select": "^1.0.0-rc.5",
-    "rimraf": "^2.6.3",
-    "strapi-helper-plugin": "3.0.0-alpha.21"
+    "rimraf": "^2.6.3"
   },
   "dependencies": {
-    "shelljs": "^0.7.8"
+    "shelljs": "^0.7.8",
+    "strapi-helper-plugin": "3.0.0-alpha.21"
   },
   "author": {
     "name": "Strapi team",

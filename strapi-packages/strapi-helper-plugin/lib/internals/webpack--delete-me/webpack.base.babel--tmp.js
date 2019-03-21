@@ -44,6 +44,9 @@ if (isAdmin && !isSetup) {
     'server.json',
   );
 
+  // TEMP
+  // const serverConfig = '/Users/mbrowne/GoogleDrive/www/poc-cms-client-and-server/cms/packages/cms-admin/config/environments/development/server.json'
+
   try {
     const { templateConfiguration } = require('strapi-utils');
     // const { templateConfiguration } = require(path.join(adminPath, 'node_modules', 'strapi-utils'));
@@ -82,53 +85,65 @@ const plugins = {
   folders: {},
 };
 
-if (process.env.npm_lifecycle_event === 'start') {
-  try {
-    fs.accessSync(path.resolve(appPath, 'plugins'), fs.constants.R_OK);
-  } catch (e) {
-    // Allow app without plugins.
-    plugins.exist = true;
-  }
+// if (process.env.npm_lifecycle_event === 'start') {
+//   try {
+//     fs.accessSync(path.resolve(appPath, 'plugins'), fs.constants.R_OK);
+//   } catch (e) {
+//     // Allow app without plugins.
+//     plugins.exist = true;
+//   }
 
-  // Read `plugins` directory and check if the plugin comes with an UI (it has an App container).
-  // If we don't do this check webpack expects the plugin to have a containers/App/reducer.js to create
-  // the plugin's store (redux).
-  plugins.src =
-    isAdmin && !plugins.exist
-      ? fs.readdirSync(path.resolve(appPath, 'plugins')).filter(x => {
-          let hasAdminFolder;
+//   // Read `plugins` directory and check if the plugin comes with an UI (it has an App container).
+//   // If we don't do this check webpack expects the plugin to have a containers/App/reducer.js to create
+//   // the plugin's store (redux).
+//   plugins.src =
+//     isAdmin && !plugins.exist
+//       ? fs.readdirSync(path.resolve(appPath, 'plugins')).filter(x => {
+//           let hasAdminFolder;
 
-          try {
-            fs.accessSync(path.resolve(appPath, 'plugins', x, 'admin', 'src', 'containers', 'App'));
-            hasAdminFolder = true;
-          } catch (err) {
-            hasAdminFolder = false;
-          }
-          return x[0] !== '.' && hasAdminFolder;
-        })
-      : [];
+//           try {
+//             fs.accessSync(path.resolve(appPath, 'plugins', x, 'admin', 'src', 'containers', 'App'));
+//             hasAdminFolder = true;
+//           } catch (err) {
+//             hasAdminFolder = false;
+//           }
+//           return x[0] !== '.' && hasAdminFolder;
+//         })
+//       : [];
 
-  // Construct object of plugin' paths.
-  plugins.folders = plugins.src.reduce((acc, current) => {
-    acc[current] = path.resolve(
-      appPath,
-      'plugins',
-      current,
-      'node_modules',
-      'strapi-helper-plugin',
-      'lib',
-      'src',
-    );
+//   // artnet added
+//   const packagesDir = fs.realpathSync(path.resolve(appPath, '..'));
 
-    return acc;
-  }, {});
-}
+//   // Construct object of plugin' paths.
+//   plugins.folders = plugins.src.reduce((acc, current) => {
+//     // artnet modified
+//     acc[current] = path.resolve(
+//       packagesDir,
+//       'strapi-helper-plugin',
+//       'lib',
+//       'src',
+//     )
+//     // acc[current] = path.resolve(
+//     //   appPath,
+//     //   'plugins',
+//     //   current,
+//     //   'node_modules',
+//     //   'strapi-helper-plugin',
+//     //   'lib',
+//     //   'src',
+//     // );
+
+//     return acc;
+//   }, {});
+// }
 
 // Tell webpack to use a loader only for those files
 const foldersToInclude = [path.join(adminPath, 'admin', 'src')]
   .concat(
     plugins.src.reduce((acc, current) => {
-      acc.push(path.resolve(appPath, 'plugins', current, 'admin', 'src'), plugins.folders[current]);
+      // artnet modified
+      acc.push(path.resolve(appPath, 'plugins', current, 'admin', 'src'))
+      // acc.push(path.resolve(appPath, 'plugins', current, 'admin', 'src'), plugins.folders[current]);
 
       return acc;
     }, []),
@@ -145,7 +160,6 @@ module.exports = options => {
 
   return {
     entry: options.entry,
-    context: adminPath,
     output: Object.assign(
       {
         // Compile into js/build.js
@@ -323,7 +337,14 @@ module.exports = options => {
         'admin/src',
         'node_modules/strapi-helper-plugin/lib/src',
         'node_modules/strapi-helper-plugin/node_modules',
-        'node_modules'
+        'node_modules',
+
+        // // artnet added
+        // fs.realpathSync('../strapi-helper-plugin/lib/src'),
+        // fs.realpathSync('../strapi-helper-plugin/node_modules'),
+        
+        // fs.realpathSync('../../node_modules'),
+        // fs.realpathSync('../'),
       ],
       alias: options.alias,
       symlinks: false,

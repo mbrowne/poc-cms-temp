@@ -30,7 +30,7 @@
     "wait-on": "^3.2.0"
   },
   "scripts": {
-    "bootstrap": "lerna bootstrap --npm-client=yarn --use-workspaces",
+    "bootstrap": "lerna bootstrap --npm-client=yarn",
     "RENAME-TO-postbootstrap": "yarn --cwd packages/cms-admin postinstall",
     "start": "(cd packages/cms-admin && yarn start)",
     "clean": "npm run removesymlinkdependencies && npx rimraf package-lock.json && npx rimraf packages/*/package-lock.json",
@@ -62,10 +62,6 @@
       "email": "hi@strapi.io",
       "url": "http://strapi.io"
     }
-  ],
-  "pre-commit": [
-    "clean",
-    "lint"
   ],
   "repository": {
     "type": "git",

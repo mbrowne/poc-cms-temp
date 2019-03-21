@@ -236,9 +236,6 @@ module.exports = require('./webpack.base.babel')({
   devtool: 'cheap-module-source-map',
 });
 
-console.log('module.exports.entry', module.exports.entry)
-console.log('include', module.exports.module.rules[0].oneOf[0].include)
-
 /**
  * We dynamically generate the HTML content in development so that the different
  * DLL Javascript files are loaded in script tags and available to our application.
