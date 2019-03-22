@@ -1,0 +1,32 @@
+{
+  "id": "Tag",
+  "label": "Tag",
+  "pluralLabel": "Tags",
+  "description": "A tag",
+  "isAbstract": false,
+  "properties": [
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "displayName",
+      "label": "Display Name",
+      "dataType": "string",
+      "readOnly": false
+    },
+    {
+      "__typename": "AssociationDefinition",
+      "id": "tagSubject",
+      "label": "Tag Subject",
+      "dataType": "Object",
+      "readOnly": false,
+      "sourceItemDef": {
+        "name": null,
+        "cardinality": "ZERO_OR_MORE"
+      },
+      "destinationItemDef": {
+        "name": "tagSubject",
+        "cardinality": "ONE",
+        "entityDefId": "TagSubject"
+      }
+    }
+  ]
+}

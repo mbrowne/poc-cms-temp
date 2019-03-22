@@ -1,0 +1,82 @@
+{
+  "baseSettings": {
+    "items": [
+      {
+        "label": {
+          "id": "content-type-builder.form.contentType.item.id"
+        },
+        "name": "id",
+        "value": "",
+        "type": "string",
+        "validations": {
+          "required": true
+        },
+        "inputDescription": {
+          "id": "content-type-builder.form.contentType.item.id.description",
+          "params": {
+            "link": {
+              "parent": {
+                "type": "a",
+                "attr": {
+                  "href": "https://strapi.io/documentation/concepts/concepts.html#models",
+                  "target": "_blank"
+                }
+              },
+              "children": {
+                "type": "FormattedMessage",
+                "attr": {
+                  "id": "content-type-builder.form.contentType.item.id.link.description"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "label": {
+          "id": "content-type-builder.form.contentType.item.templateEntityDefinitionId"
+        },
+        "name": "templateEntityDefinitionId",
+        "type": "select",
+        "items": [{}]
+      },
+      {
+        "label": {
+          "id": "content-type-builder.form.contentType.item.isAbstract"
+        },
+        "name": "isAbstract",
+        "type": "checkbox",
+        "value": false,
+        "inputDescription": {
+          "id": "content-type-builder.form.contentType.item.isAbstract.description"
+        }
+      },
+      {
+        "label": {
+          "id": "content-type-builder.form.contentType.item.description"
+        },
+        "name": "description",
+        "value": "",
+        "type": "textarea",
+        "placeholder": "content-type-builder.form.contentType.item.description.placeholder",
+        "validations": {}
+      }
+    ]
+  },
+  "advancedSettings": {
+    "items": [
+      {
+        "label": {
+          "id": "content-type-builder.form.contentType.item.label"
+        },
+        "name": "label",
+        "value": "",
+        "type": "string",
+        "validations": {},
+        "inputDescription": {
+          "id": "content-type-builder.form.contentType.item.label.description"
+        }
+      }
+    ]
+  }
+}

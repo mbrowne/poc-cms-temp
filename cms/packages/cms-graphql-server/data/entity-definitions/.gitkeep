@@ -1,0 +1,5 @@
+.DS_Store
+node_modules
+# we are using yarn, so ignore npm's package-lock.json
+package-lock.json
+/data/entity-definitions/*
