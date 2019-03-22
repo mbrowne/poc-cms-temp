@@ -74,8 +74,6 @@ if (process.env.npm_lifecycle_event === 'start') {
   }, {});
 }
 
-console.log('plugins.folders', plugins.folders)
-
 const port = argv.port || process.env.PORT || 3000;
 
 module.exports = require('./webpack.base.babel')({
@@ -237,6 +235,9 @@ module.exports = require('./webpack.base.babel')({
   // Emit a source map for easier debugging
   devtool: 'cheap-module-source-map',
 });
+
+console.log('module.exports.entry', module.exports.entry)
+console.log('include', module.exports.module.rules[0].oneOf[0].include)
 
 /**
  * We dynamically generate the HTML content in development so that the different

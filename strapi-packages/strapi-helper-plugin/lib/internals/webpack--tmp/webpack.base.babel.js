@@ -16,6 +16,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const isSetup = process.env.IS_MONOREPO || false;
 const appPath = process.env.APP_PATH || path.resolve(process.env.PWD, '..', ( isAdmin ?  '' : '..' ));
+// const appPath = '/Users/mbrowne/GoogleDrive/www/poc-cms-client-and-server/cms/packages/strapi-admin/admin'
 
 const adminPath = (() => {
   if (isAdmin && isSetup) {
@@ -44,7 +45,8 @@ if (isAdmin && !isSetup) {
   );
 
   try {
-    const { templateConfiguration } = require(path.join(adminPath, 'node_modules', 'strapi-utils'));
+    const { templateConfiguration } = require('strapi-utils');
+    // const { templateConfiguration } = require(path.join(adminPath, 'node_modules', 'strapi-utils'));
 
     let server = require(serverConfig);
     server = templateConfiguration(server);
@@ -143,6 +145,7 @@ module.exports = options => {
 
   return {
     entry: options.entry,
+    context: adminPath,
     output: Object.assign(
       {
         // Compile into js/build.js
@@ -320,7 +323,7 @@ module.exports = options => {
         'admin/src',
         'node_modules/strapi-helper-plugin/lib/src',
         'node_modules/strapi-helper-plugin/node_modules',
-        'node_modules',
+        'node_modules'
       ],
       alias: options.alias,
       symlinks: false,
