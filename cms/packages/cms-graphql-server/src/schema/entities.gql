@@ -1,0 +1,84 @@
+type LiteralPropertyValue {
+    value: LiteralPropertyValueScalar
+}
+
+union PropertyValue = LiteralPropertyValue | Associations
+# union PropertyValue = LiteralPropertyValue | StaticAssets | Associations
+
+type Entity {
+    id: ID!
+    """
+    A meaningful string identifier for this entity. This identifier should be all lowercase and hyphen-separated.
+    """
+    businessId: ID!
+    # priorBusinessIds: [ID!]!
+    entityDefId: ID!
+    state: [PropertyState!]!
+    """
+    This field is derived from a title or name property for this entity, or potentially a string computed
+    from multiple properties.
+    The entity definition should allow users to configure what gets returned here.
+    """
+    displayName: String!
+
+    # created: Date!
+    # createdBy: User!
+    # updated: Date!
+    # updatedBy: User!
+    # currentlyPublished: Boolean!
+    # """
+    #  If set to false, entity will not be published (or will be unpublished on the next deployment of the site).
+    # readyForPublishing overrides startPublishing.
+    # """
+    # readyForPublishing: Boolean!
+    # startPublishing: Date
+    # stopPublishing: Date
+}
+
+type PropertyState {
+    propertyId: ID!
+    value: PropertyValue
+    # variants: [PropertyValueVariant!]!
+    # moderationStatus: ModerationStatus
+}
+
+type EntityModerationStatus {
+    entity: Entity
+    # moderationStatuses: [PropertyModerationStatus!]
+    """
+    if the request was invalid, the above properties will be null and we will just return an error message
+    """
+    errorMessage: ErrorMessage
+}
+
+type Associations {
+    associations: [Association!]!
+}
+
+"""
+A specific association of one entity as it relates to another entity.
+e.g. 'Pablo Picasso' -> 'Paintings'  (association 1)
+ and 'Pablo Picasso' -> 'Scupltures'  (association 2)
+
+Note how there is a separate association for each pair above even though it's the same source entity.
+(This simplifies the model and also allows us to support things like weighted tags.)
+"""
+type Association {
+    # Do we need this?
+    id: ID!
+    """
+    This schema only contains destination entity (we always traverse associations from the source side,
+    so we will already know what the source entity is).
+    If we do need the sourceEntity for some use case, we could certainly add it. In the future we might also want
+    just an "entities" field in case we need to support non-binary relationships (e.g. ternary relationships or sibling relationships)
+    """
+    destinationEntity: Entity!
+    # """
+    # An association can have properties of its own
+    # (e.g. the weight for the association between a Creator and a Tag).
+
+    # Question: Should we name this 'state' to be consistent with Entity?
+    # Or is it clearer to leave it as 'propertyValues'?
+    # """
+    # propertyValues: [PropertyState!]!
+}

@@ -1,0 +1,180 @@
+type EntityDefinition {
+    """
+    example id: 'auction-house'
+    """
+    id: ID!
+    """
+    If left blank, the id (converted to Title Case) will be used as the label
+    """
+    label: String
+    pluralLabel: String!
+    description: String
+    """
+    if specified, a templateEntityDefinition means that this entity definition inherits all the properties of its template definition,
+    e.g. the template of Exhibition is Event
+    """
+    templateEntityDefinition: EntityDefinition
+
+    """
+    abstract entity definitions must be extended by other entity definitions; they cannot be used directly
+    """
+    isAbstract: Boolean!
+
+    # # This specifies the primary context of the entity definition, e.g. the primary context for Artwork would be Creator,
+    # # via the Artwork-Creator association.
+    # # This is used to help the backend generate unique human-readable IDs for every entity without resorting to numbers so much of
+    # # the time, e.g. 'andy-warhol/untitled-2' instead of 'untitled-32982'.
+    # # It could also be used as a convention for the *default* URL structure for a given entity definition, but doesn't have to be.
+    # # Its primary purpose is for generating entity IDs that are unique across all entities of a given entity type.
+    # contextAssociationDefinition: AssociationDefinition
+    # hasUrl: Boolean! # In the UI, the choices could appear as "Has URL" and "Data only"
+
+    properties(excludeInherited: Boolean! = false): [PropertyDefinition!]!
+    # editingFieldsets: [FormFieldset!]
+    # detailScreenFieldsets: [FormFieldset!]
+
+    adminUiSettings: EntityDefinitionAdminUiSettings!
+
+    # # Since we have a standard 'name' property, we can allow an empty array and default to using name as the default sort order
+    # defaultSortOrder: [PropertySortOrder!]
+    # predicates: [Predicate!]
+    # # Associations to pre-fetch so they can be resolved very quickly by the graphql server (from JSON files) without having to hit the search API
+    # eagerFetchAssociations: [AssociationToFetch!]
+
+    #
+    # Read-only fields:
+    #
+    propertiesCount: Int!
+}
+
+# We might not use this type in the real system depending on how we decide to organize it, but this
+# is a convenient place to put all admin UI settings for the POC
+type EntityDefinitionAdminUiSettings {
+    propertiesToShowOnListScreen: [PropertyDefinition!]!
+    propertiesToShowOnEditForm: [PropertyDefinition!]!
+}
+
+interface PropertyDefinition {
+    id: ID!
+    label: String!
+    # flags: [PropertyFlag!]!
+    """
+    Returns true for calculated/computed properties, since they're always read-only
+    """
+    readOnly: Boolean!
+    """
+    Data type of the property, e.g. string, number, date.
+    For association definitions and other complex properties, this returns 'Object'
+    """
+    dataType: String!
+    description: String
+    """
+    Entity definition that this property was inherited from.
+    Returns null if the property was not inherited.
+    """
+    inheritedFrom: EntityDefinition
+    # Excluded from this interface because it doesn't apply to calculated properties.
+    # But all writable properties should have this
+    # editingComponent: String!
+}
+
+type LiteralPropertyDefinition implements PropertyDefinition {
+    # For writable properties
+    editingComponent: String
+    # # This might be derived from flags
+    # moderatorRoles: [Role!]
+    # predicates: [Predicate!]
+    # defaultValue: LiteralPropertyValue
+
+    # inherited fields:
+    id: ID!
+    label: String!
+    readOnly: Boolean!
+    dataType: String!
+    description: String
+    inheritedFrom: EntityDefinition
+}
+
+type AssociationDefinition implements PropertyDefinition {
+    sourceItemDef: AssociationItemDefinition!
+    """
+    Note: this GraphQL schema assumes that we only need to support binary relationships.
+    The underlying domain model is capable of supporting ternary relationships if needed, in which
+    case this field would need to be rewritten as:
+        destinationItemDefs: [AssociationItemDefinition!]!
+
+    Or to support non-directional relationships, it would need to be just:
+        associationItemDefs: [AssociationItemDefinition!]!
+    """
+    destinationItemDef: AssociationItemDefinition!
+
+    # inherited fields:
+    id: ID!
+    label: String!
+    readOnly: Boolean!
+    dataType: String!
+    description: String
+    inheritedFrom: EntityDefinition
+}
+
+"""
+There is one AssociationItemDefinition for each end of the association.
+Example: Creator-Artwork relationship
+
+AssociationItemDefinition #1 (source side) {
+    name: 'creator'
+    entityDef: artworksEntityDefinition
+    cardinality: ONE
+}
+
+AssociationItemDefinition #2 (destination side) {
+    name: 'artworks'
+    entityDef: creatorEntityDefinition
+    cardinality: ZERO_OR_MORE
+}
+"""
+type AssociationItemDefinition {
+    """
+    The 'name' attribue here allows for custom-named properties that can be used to traverse the association in either direction.
+
+    For example, consider the relationship between a gallery and the artists it represents, and suppose
+    that the association is defined as a property of 'Gallery' called 'representedArtists'. So a Gallery entity might look like this:
+
+    Gallery {
+       name: 'Demo Gallery',
+       representedArtists: [pabloPicasso, andyWarhol],
+       ...
+    }
+
+    In this example, 'representedArtists' is the 'name' of the AssociationItemDefinition.
+    (Note: 'representedArtists' also the 'name' of the AssociationDefinition, since this property belongs to Gallery and Gallery is the
+    owning side of this association. This is easier to see with a full example - refer to mocks.)
+
+    We might also want to traverse the association from the other direction, and we might want a custom name for the property
+    that would be exposed on the other side of the association, in this case 'Artist'.
+
+    Since there's one AssociationItemDefinition for the source side of the association and another AssociationItemDefinition
+    for the destination side, we can achieve this custom name simply by setting the 'name' property of the AssociationItemDefinition
+    for the destination side. Suppose we named it 'galleriesRepresentedBy'. Then there would be a 'galleriesRepresentedBy' property on
+    Artist entities:
+
+    Artist {
+      firstName: 'Pablo',
+      lastName: 'Picasso',
+      galleriesRepresentedBy: [demoGallery, ...]
+      ...
+    }
+    """
+    name: String
+    entityDef: EntityDefinition!
+    cardinality: Cardinality!
+}
+
+type EntityDefinitionModerationStatus {
+    entityDef: EntityDefinition
+    # moderationStatuses: [PropertyModerationStatus!]
+    """
+    if the request was invalid, the above properties will be null and we will just return an error message
+    """
+    errorMessage: ErrorMessage
+}

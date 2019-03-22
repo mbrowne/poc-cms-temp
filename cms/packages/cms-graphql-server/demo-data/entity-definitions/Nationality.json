@@ -1,0 +1,16 @@
+{
+  "id": "Nationality",
+  "label": "Nationality",
+  "pluralLabel": "Nationalities",
+  "description": "",
+  "isAbstract": false,
+  "properties": [
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "name",
+      "label": "Name",
+      "dataType": "string",
+      "readOnly": false
+    }
+  ]
+}

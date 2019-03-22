@@ -1,0 +1,46 @@
+{
+  "id": "Creator",
+  "label": null,
+  "pluralLabel": "Creators",
+  "description": "An Artist or Collaboration",
+  "isAbstract": true,
+  "properties": [
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "displayName",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    },
+    {
+      "__typename": "AssociationDefinition",
+      "id": "tags",
+      "label": "Tags",
+      "dataType": "Object",
+      "readOnly": false,
+      "sourceItemDef": {
+        "name": null,
+        "cardinality": "ZERO_OR_MORE"
+      },
+      "destinationItemDef": {
+        "name": "tags",
+        "cardinality": "ZERO_OR_MORE",
+        "entityDefId": "Tag"
+      }
+    },
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "shortBio",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    },
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "longBio",
+      "label": "",
+      "dataType": "string",
+      "readOnly": false
+    }
+  ]
+}

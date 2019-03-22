@@ -1,0 +1,23 @@
+import React from 'react'
+
+export const Input = ({ id, name, label, value, onChange, ...rest }) => {
+    if (!id) {
+        id = name
+    }
+    return (
+        <div>
+            {label && <label htmlFor={id}>{label}</label>}
+            <input
+                id={id}
+                name={name}
+                value={value || ''}
+                {...rest}
+                onChange={e => handleChange(e, name, onChange)}
+            />
+        </div>
+    )
+}
+
+function handleChange(e, fieldName, onChange) {
+    onChange(e, { fieldName, value: e.target.value })
+}
