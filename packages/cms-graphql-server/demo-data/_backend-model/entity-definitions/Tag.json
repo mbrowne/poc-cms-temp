@@ -1,0 +1,16 @@
+{
+  "id": "Tag",
+  "label": "Tag",
+  "pluralLabel": "Tags",
+  "description": "A tag",
+  "isAbstract": false,
+  "properties": [
+    {
+      "__typename": "LiteralPropertyDefinition",
+      "id": "displayName",
+      "label": "Display Name",
+      "dataType": "string",
+      "readOnly": false
+    }
+  ]
+}

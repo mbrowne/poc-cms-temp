@@ -6,6 +6,7 @@
     "assert": "~1.3.0",
     "axios": "^0.18.0",
     "babel-eslint": "^6.1.2",
+    "babel-loader": "^8.0.5",
     "chalk": "^2.4.1",
     "cross-env": "^5.2.0",
     "cypress": "3.1.2",
@@ -29,6 +30,9 @@
     "wait-on": "^3.2.0"
   },
   "scripts": {
+    "bootstrap": "lerna bootstrap --npm-client=yarn",
+    "start": "yarn --cwd packages/cms-admin start",
+    "start-graphql": "yarn --cwd packages/cms-graphql-server start",
     "clean": "npm run removesymlinkdependencies && npx rimraf package-lock.json && npx rimraf packages/*/package-lock.json",
     "clean:all": "npm run removesymlinkdependencies && npx rimraf package-lock.json && npx rimraf packages/*/package-lock.json && npx rimraf packages/*/node_modules",
     "doc": "node ./scripts/documentation.js",
@@ -58,10 +62,6 @@
       "email": "hi@strapi.io",
       "url": "http://strapi.io"
     }
-  ],
-  "pre-commit": [
-    "clean",
-    "lint"
   ],
   "repository": {
     "type": "git",

@@ -6,7 +6,6 @@
 import React from 'react';
 import { upperFirst } from 'lodash';
 import PropTypes from 'prop-types';
-
 import IcoContainer from 'components/IcoContainer';
 
 import styles from './styles.scss';

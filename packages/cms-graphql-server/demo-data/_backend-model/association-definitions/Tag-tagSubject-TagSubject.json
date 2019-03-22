@@ -1,0 +1,21 @@
+{
+  "__typename": "AssociationDefinition",
+  "id": "tagSubject",
+  "label": "Tag Subject",
+  "dataType": "Object",
+  "readOnly": false,
+  "associationItems": [
+    {
+      "direction": "source",
+      "entityDefId": "Tag",
+      "name": null,
+      "cardinality": "ZERO_OR_MORE"
+    },
+    {
+      "direction": "destination",
+      "name": "tagSubject",
+      "cardinality": "ONE",
+      "entityDefId": "TagSubject"
+    }
+  ]
+}

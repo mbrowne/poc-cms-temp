@@ -4,9 +4,9 @@ module.exports = {
   find: async function (params, populate, raw = false) {
     return this.query(function(qb) {
       _.forEach(params.where, (where, key) => {
-        if (_.isArray(where.value) && where.symbol !== 'IN' && where.symbol !== 'NOT IN') {
+        if (_.isArray(where.value) && where.symbol !== 'IN') {
           for (const value in where.value) {
-            qb[parseInt(value) ? 'orWhere' : 'where'](key, where.symbol, where.value[value]);
+            qb[value ? 'where' : 'orWhere'](key, where.symbol, where.value[value]);
           }
         } else {
           qb.where(key, where.symbol, where.value);
@@ -58,7 +58,7 @@ module.exports = {
 
     const searchInt = Object.keys(this._attributes)
       .filter(attribute => attribute !== this.primaryKey && !associations.includes(attribute))
-      .filter(attribute => ['integer','biginteger', 'decimal', 'float'].includes(this._attributes[attribute].type));
+      .filter(attribute => ['integer', 'decimal', 'float'].includes(this._attributes[attribute].type));
 
     const searchBool = Object.keys(this._attributes)
       .filter(attribute => attribute !== this.primaryKey && !associations.includes(attribute))
@@ -86,9 +86,6 @@ module.exports = {
 
       // Search in columns with text using index.
       switch (this.client) {
-        case 'mysql':
-          qb.orWhereRaw(`MATCH(${searchText.join(',')}) AGAINST(? IN BOOLEAN MODE)`, `*${query}*`);
-          break;
         case 'pg': {
           const searchQuery = searchText.map(attribute =>
             _.toLower(attribute) === attribute
@@ -99,10 +96,9 @@ module.exports = {
           qb.orWhereRaw(`${searchQuery.join(' || ')} @@ to_tsquery(?)`, query);
           break;
         }
-        case 'sqlite3':
-          searchText.map(attribute => {
-            qb.orWhere(`${attribute}`, 'LIKE', `%${query}%`);
-          });
+        default:
+          qb.orWhereRaw(`MATCH(${searchText.join(',')}) AGAINST(? IN BOOLEAN MODE)`, `*${query}*`);
+          break;
       }
 
       if (params.sort) {
@@ -129,11 +125,11 @@ module.exports = {
 
     const searchNoText = Object.keys(this._attributes)
       .filter(attribute => attribute !== this.primaryKey && !associations.includes(attribute))
-      .filter(attribute => !['string', 'text', 'boolean', 'integer', 'biginteger', 'decimal', 'float'].includes(this._attributes[attribute].type));
+      .filter(attribute => !['string', 'text', 'boolean', 'integer', 'decimal', 'float'].includes(this._attributes[attribute].type));
 
     const searchInt = Object.keys(this._attributes)
       .filter(attribute => attribute !== this.primaryKey && !associations.includes(attribute))
-      .filter(attribute => ['integer', 'biginteger', 'decimal', 'float'].includes(this._attributes[attribute].type));
+      .filter(attribute => ['integer', 'decimal', 'float'].includes(this._attributes[attribute].type));
 
     const searchBool = Object.keys(this._attributes)
       .filter(attribute => attribute !== this.primaryKey && !associations.includes(attribute))
@@ -172,7 +168,7 @@ module.exports = {
           qb.orWhereRaw(`${searchQuery.join(' || ')} @@ to_tsquery(?)`, query);
           break;
         }
-        case 'mysql':
+        default:
           qb.orWhereRaw(`MATCH(${searchText.join(',')}) AGAINST(? IN BOOLEAN MODE)`, `*${query}*`);
           break;
       }

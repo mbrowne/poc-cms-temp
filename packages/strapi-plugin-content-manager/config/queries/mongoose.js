@@ -22,7 +22,6 @@ module.exports = {
     const $or = Object.keys(this.attributes).reduce((acc, curr) => {
       switch (this.attributes[curr].type) {
         case 'integer':
-        case 'biginteger':
         case 'float':
         case 'decimal':
           if (!_.isNaN(_.toNumber(params.search))) {
@@ -58,7 +57,6 @@ module.exports = {
     const $or = Object.keys(this.attributes).reduce((acc, curr) => {
       switch (this.attributes[curr].type) {
         case 'integer':
-        case 'biginteger':
         case 'float':
         case 'decimal':
           if (!_.isNaN(_.toNumber(params.search))) {

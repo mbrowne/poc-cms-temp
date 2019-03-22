@@ -13,6 +13,8 @@ import React from 'react';
 import Loadable from 'react-loadable';
 import LoadingIndicatorPage from './components/LoadingIndicatorPage';
 import { translationMessages } from './i18n';
+import { ApolloProvider } from 'react-apollo-hooks'
+import apolloClient from './apolloClient'
 
 const LoadableApp = Loadable({
   loader: () => import('containers/App'),
@@ -61,7 +63,9 @@ const store = strapi.store;
 // Define the plugin root component
 function Comp(props) {
   return (
-    <LoadableApp {...props} />
+    <ApolloProvider client={apolloClient}>
+      <LoadableApp {...props} />
+    </ApolloProvider>
   );
 }
 

@@ -32,7 +32,7 @@ export function getValidationsFromForm(form, formValidations) {
 
 export function checkFormValidity(formData, formValidations) {
   const errors = [];
-  forEach(formData, (value, key) => {
+  for (const [key, value] of Object.entries(formData)) {
     const validationValue = formValidations[findIndex(formValidations, ['name', key])];
 
     if (!isUndefined(validationValue)) {
@@ -40,11 +40,8 @@ export function checkFormValidity(formData, formValidations) {
       if (!isEmpty(inputErrors)) {
         errors.push({ name: key, errors: inputErrors });
       }
-
     }
-
-  });
-
+  }
   return errors;
 }
 

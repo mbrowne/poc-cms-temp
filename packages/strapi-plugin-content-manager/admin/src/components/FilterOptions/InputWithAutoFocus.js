@@ -20,7 +20,7 @@ const getInputType = (attrType) => {
     case 'datetime':
       return InputDate;
     case 'integer':
-    case 'biginteger':
+    case 'bigint':
     case 'decimal':
     case 'float':
       return InputNumber;

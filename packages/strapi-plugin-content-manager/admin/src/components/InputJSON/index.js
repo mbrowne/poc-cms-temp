@@ -46,7 +46,6 @@ class InputJSON extends React.Component {
       lineNumbers: true,
       matchBrackets: true,
       mode: 'application/json',
-      readOnly: this.props.disabled,
       smartIndent: true,
       styleSelectedText: true,
       tabSize: 2,
@@ -187,14 +186,12 @@ class InputJSON extends React.Component {
 }
 
 InputJSON.defaultProps = {
-  disabled: false,
   onBlur: () => {},
   onChange: () => {},
   value: null,
 };
 
 InputJSON.propTypes = {
-  disabled: PropTypes.bool,
   name: PropTypes.string.isRequired,
   onBlur: PropTypes.func,
   onChange: PropTypes.func,

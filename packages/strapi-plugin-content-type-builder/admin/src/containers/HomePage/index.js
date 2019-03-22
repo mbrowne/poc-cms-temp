@@ -4,151 +4,115 @@
  *
  */
 
-import React from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators, compose } from 'redux';
-import { createStructuredSelector } from 'reselect';
-import { size } from 'lodash';
-import Helmet from 'react-helmet';
-import PropTypes from 'prop-types';
-import { router } from 'app';
-import pluginId from '../../pluginId';
-
-import { makeSelectLoading, makeSelectMenu, makeSelectModels } from '../App/selectors';
-import { deleteContentType } from '../App/actions';
-
-import Form from '../Form';
+import React from 'react'
+import Helmet from 'react-helmet'
+import PropTypes from 'prop-types'
+import { useApolloClient } from 'react-apollo-hooks'
+import { useQueryLoader } from 'hooks'
+import * as queries from '../../graphql/queries'
 
 // Design
-import ContentHeader from '../../components/ContentHeader';
-import EmptyContentTypeView from '../../components/EmptyContentTypeView';
-import TableList from '../../components/TableList';
+import ContentHeader from 'components/ContentHeader'
+import EmptyContentTypeView from 'components/EmptyContentTypeView'
+import TableList from 'components/TableList'
 
-// Utils
-import { storeData } from '../../utils/storeData';
+import styles from './styles.scss'
 
-import selectHomePage from './selectors';
-import styles from './styles.scss';
-import saga from './sagas';
-import reducer from './reducer';
+const HomePage = props => {
+    const client = useApolloClient()
+    const { entityDefinitionBuilder } = client.readQuery({
+        query: queries.unsavedEntityDef,
+    })
+    const {
+        businessId,
+        ...unsavedEntityDef
+    } = entityDefinitionBuilder.unsavedEntityDef
 
-export class HomePage extends React.Component { // eslint-disable-line react/prefer-stateless-function
-  constructor(props) {
-    super(props);
+    // Workaround for Apollo's special treatment of `id` property
+    unsavedEntityDef.id = businessId
 
-    this.popUpHeaderNavLinks = [
-      { name: 'baseSettings', message: 'content-type-builder.popUpForm.navContainer.base', nameToReplace: 'advancedSettings' },
-      { name: 'advancedSettings', message: 'content-type-builder.popUpForm.navContainer.advanced', nameToReplace: 'baseSettings' },
-    ];
-  }
+    return useQueryLoader(queries.entityDefinitions)(({ data }) => {
+        const entityDefs = [...data.entityDefs.results]
+        if (unsavedEntityDef.id) {
+            unsavedEntityDef.isUnsaved = true
+            unsavedEntityDef.propertiesCount =
+                unsavedEntityDef.properties.length
+            entityDefs.push(unsavedEntityDef)
+        }
+        return <HomePageView {...props} entityDefs={entityDefs} />
+    })
+}
 
-  handleButtonClick = () => {
-    if (storeData.getIsModelTemporary()) {
-      strapi.notification.info('content-type-builder.notification.info.contentType.creating.notSaved');
-    } else {
-      // Send event.
-      this.context.emitEvent('willCreateContentType');
-      // Open CT modal.
-      this.toggleModal();
+const HomePageView = ({ history, entityDefs }) => {
+    const helpers = {
+        renderTableListComponent: () => {
+            const availableNumber = entityDefs.length
+            const title =
+                availableNumber > 1
+                    ? 'content-type-builder.table.contentType.title.plural'
+                    : 'content-type-builder.table.contentType.title.singular'
+            return (
+                <TableList
+                    availableNumber={availableNumber}
+                    title={title}
+                    buttonLabel="content-type-builder.button.contentType.add"
+                    onButtonClick={handleAddEntityDef}
+                    onHandleDelete={handleDelete}
+                    rowItems={entityDefs}
+                />
+            )
+        },
     }
-  }
 
-  handleDelete = (contentTypeName) => {
-    this.props.deleteContentType(contentTypeName, this.context);
-  }
+    function handleDelete(entityDefId) {
+        // TODO
+        alert('Delete is not yet implemented')
+    }
 
-  toggleModal = () => {
-    const locationHash = this.props.location.hash ? '' : '#create::contentType::baseSettings';
-    router.push(`/plugins/content-type-builder/${locationHash}`);
-  }
+    function handleAddEntityDef() {
+        // this implementation might change
+        const {
+            entityDefinitionBuilder: { unsavedEntityDef },
+        } = client.readQuery({ query: queries.unsavedEntityDef })
+        const hasUnsavedEntityDef = Boolean(unsavedEntityDef.businessId)
 
-  renderTableListComponent = () => {
-    const availableNumber = size(this.props.models);
-    const title = availableNumber > 1 ? 'content-type-builder.table.contentType.title.plural'
-      : 'content-type-builder.table.contentType.title.singular';
+        if (hasUnsavedEntityDef) {
+            // Ask user to save already-started entity definition before creating another one
+            strapi.notification.info(
+                'content-type-builder.notification.info.contentType.creating.notSaved'
+            )
+        } else {
+            history.push(`/plugins/content-type-builder/(base-settings/create)`)
+        }
+    }
+
+    const client = useApolloClient()
+
+    const component = entityDefs.length ? (
+        helpers.renderTableListComponent()
+    ) : (
+        <EmptyContentTypeView handleButtonClick={handleAddEntityDef} />
+    )
+
     return (
-      <TableList
-        availableNumber={availableNumber}
-        title={title}
-        buttonLabel="content-type-builder.button.contentType.add"
-        onButtonClick={this.handleButtonClick}
-        onHandleDelete={this.handleDelete}
-        rowItems={this.props.models}
-      />
-    );
-  }
-
-  render() {
-    const component = size(this.props.models) === 0 ?
-      <EmptyContentTypeView handleButtonClick={this.toggleModal} />
-      : this.renderTableListComponent();
-
-    return (
-      <div className={styles.homePage}>
-        <Helmet
-          title="HomePage"
-          meta={[
-            { name: 'description', content: 'Description of HomePage' },
-          ]}
-        />
-        <ContentHeader
-          name="content-type-builder.home.contentTypeBuilder.name"
-          description="content-type-builder.home.contentTypeBuilder.description"
-          styles={{ margin: '-1px 0 3rem 0'}}
-        />
-        {component}
-        <Form
-          hash={this.props.location.hash}
-          toggle={this.toggleModal}
-          routePath={this.props.match.path}
-          popUpHeaderNavLinks={this.popUpHeaderNavLinks}
-          menuData={this.props.menu}
-          redirectRoute={`${this.props.match.path}`}
-        />
-      </div>
-    );
-  }
+        <div className={styles.homePage}>
+            <Helmet
+                title="HomePage"
+                meta={[
+                    {
+                        name: 'description',
+                        content: 'Description of HomePage',
+                    },
+                ]}
+            />
+            <ContentHeader
+                name="content-type-builder.home.contentTypeBuilder.name"
+                description="content-type-builder.home.contentTypeBuilder.description"
+                styles={{ margin: '-1px 0 3rem 0' }}
+            />
+            {component}
+        </div>
+    )
 }
 
-HomePage.contextTypes = {
-  emitEvent: PropTypes.func,
-  plugins: PropTypes.object,
-  updatePlugin: PropTypes.func,
-};
-
-HomePage.propTypes =  {
-  deleteContentType: PropTypes.func.isRequired,
-  location: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
-  menu: PropTypes.array.isRequired,
-  models: PropTypes.oneOfType([
-    PropTypes.object,
-    PropTypes.array,
-  ]).isRequired,
-};
-
-const mapStateToProps = createStructuredSelector({
-  homePage: selectHomePage(),
-  modelsLoading: makeSelectLoading(),
-  models: makeSelectModels(),
-  menu: makeSelectMenu(),
-});
-
-function mapDispatchToProps(dispatch) {
-  return bindActionCreators(
-    {
-      deleteContentType,
-    },
-    dispatch,
-  );
-}
-
-const withConnect = connect(mapStateToProps, mapDispatchToProps);
-const withReducer = strapi.injectReducer({ key: 'homePage', reducer, pluginId });
-const withSaga = strapi.injectSaga({ key: 'homePage', saga, pluginId });
-
-export default compose(
-  withReducer,
-  withSaga,
-  withConnect,
-)(HomePage);
+export default HomePage

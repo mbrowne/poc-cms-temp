@@ -6,9 +6,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
-
-import IconRemove from '../../assets/images/icon_remove.svg';
-import styles from '../SelectMany/styles.scss';
+import IconRemove from 'assets/images/icon_remove.svg';
+import styles from 'components/SelectMany/styles.scss';
 
 function Content({ index, item, onClick, onRemove }) {
   return (

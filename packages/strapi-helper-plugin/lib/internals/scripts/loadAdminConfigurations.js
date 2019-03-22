@@ -24,7 +24,7 @@ if (!isSetup) {
       // console.log(e);
     }
 
-    // Force exit process if an other process doen't exit during Strapi load.
+    // Force exit process if an other process doesn't exit during Strapi load.
     process.exit();
   })();
 }

@@ -15,12 +15,10 @@ const Block = ({ children, description, style, title }) => (
   <div className="col-md-12">
     <div className={styles.ctmBlock} style={style}>
       <div className={styles.ctmBlockTitle}>
-        {!!title && <FormattedMessage id={title} />}
-        {!!description && (
-          <FormattedMessage id={description}>
-            {renderMsg}
-          </FormattedMessage>
-        )}
+        <FormattedMessage id={title} />
+        <FormattedMessage id={description}>
+          {renderMsg}
+        </FormattedMessage>
       </div>
       {children}
     </div>
@@ -30,9 +28,9 @@ const Block = ({ children, description, style, title }) => (
 
 Block.defaultProps = {
   children: null,
-  description: null,
+  description: 'app.utils.defaultMessage',
   style: {},
-  title: null,
+  title: 'app.utils.defaultMessage',
 };
 
 Block.propTypes = {

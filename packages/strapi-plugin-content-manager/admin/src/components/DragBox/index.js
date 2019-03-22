@@ -5,10 +5,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import DraggedRemovedIcon from 'components/DraggedRemovedIcon';
 
-import GrabIcon from '../../assets/images/icon_grab_blue.svg';
-import DraggedRemovedIcon from '../DraggedRemovedIcon';
-
+import GrabIcon from 'assets/images/icon_grab_blue.svg';
 
 import styles from './styles.scss';
 

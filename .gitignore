@@ -1,4 +1,10 @@
 ############################
+# Docker
+############################
+
+/docker/db
+
+############################
 # OS X
 ############################
 
@@ -95,7 +101,6 @@ node_modules
 .node_history
 package-lock.json
 **/package-lock.json
-!docs/package-lock.json
 
 
 ############################

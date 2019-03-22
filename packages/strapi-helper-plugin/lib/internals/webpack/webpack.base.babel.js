@@ -15,14 +15,14 @@ const isAdmin = process.env.IS_ADMIN === 'true';
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const isSetup = process.env.IS_MONOREPO || false;
-const appPath = process.env.APP_PATH || path.resolve(process.env.PWD || process.cwd(), '..', ( isAdmin ?  '' : '..' ));
+const appPath = process.env.APP_PATH || path.resolve(process.env.PWD, '..', ( isAdmin ?  '' : '..' ));
 
 const adminPath = (() => {
   if (isAdmin && isSetup) {
     return path.resolve(appPath, 'strapi-admin');
   }
 
-  return path.resolve(process.env.PWD || process.cwd());
+  return path.resolve(process.env.PWD);
 })();
 
 // Define remote and backend URLs.
@@ -44,12 +44,13 @@ if (isAdmin && !isSetup) {
   );
 
   try {
-    const { templateConfiguration } = require(path.join(adminPath, 'node_modules', 'strapi-utils'));
+    const { templateConfiguration } = require('strapi-utils');
+    // const { templateConfiguration } = require(path.join(adminPath, 'node_modules', 'strapi-utils'));
 
     let server = require(serverConfig);
     server = templateConfiguration(server);
 
-    if ((process.env.PWD || process.cwd()).indexOf('/admin') !== -1) {
+    if (process.env.PWD.indexOf('/admin') !== -1) {
       if (_.get(server, 'admin.build.host')) {
         URLs.host = _.get(server, 'admin.build.host', '/admin').replace(/\/$/, '') || '/';
       } else {
@@ -58,6 +59,7 @@ if (isAdmin && !isSetup) {
 
       URLs.publicPath = URLs.host;
       URLs.backend = _.get(server, 'admin.build.backend', '/');
+      URLs.graphqlServer = _.get(server, 'admin.build.graphqlServer', 'http://localhost:8000/graphql')
 
       if (_.get(server, 'admin.build.plugins.source') === 'backend') {
         URLs.mode = 'backend';
@@ -307,6 +309,8 @@ module.exports = options => {
           REMOTE_URL: JSON.stringify(URLs.host),
           BACKEND_URL: JSON.stringify(URLs.backend),
           MODE: JSON.stringify(URLs.mode), // Allow us to define the public path for the plugins assets.
+          // artnet added
+          GRAPHQL_SERVER_URI: JSON.stringify(URLs.graphqlServer),
         },
       }),
       new webpack.NamedModulesPlugin(),

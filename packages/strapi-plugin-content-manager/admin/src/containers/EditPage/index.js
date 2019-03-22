@@ -1,775 +1,542 @@
-/**
- *
- * EditPage
- *
- */
-
-import React from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators, compose } from 'redux';
-import { createStructuredSelector } from 'reselect';
-import PropTypes from 'prop-types';
-import {
-  cloneDeep,
-  findIndex,
-  get,
-  includes,
-  isEmpty,
-  toNumber,
-  toString,
-  truncate,
-  replace,
-} from 'lodash';
-import HTML5Backend from 'react-dnd-html5-backend';
-import { DragDropContext } from 'react-dnd';
-import cn from 'classnames';
+import React from 'react'
+import moment from 'moment'
+import cn from 'classnames'
+import { get, isObject, toNumber } from 'lodash'
+import { useMutation } from 'react-apollo-hooks'
+import HTML5Backend from 'react-dnd-html5-backend'
+import { DragDropContext } from 'react-dnd'
 
 // You can find these components in either
 // ./node_modules/strapi-helper-plugin/lib/src
 // or strapi/packages/strapi-helper-plugin/lib/src
-import BackHeader from 'components/BackHeader';
-import EmptyAttributesBlock from 'components/EmptyAttributesBlock';
-import LoadingIndicator from 'components/LoadingIndicator';
-import PluginHeader from 'components/PluginHeader';
-import PopUpWarning from 'components/PopUpWarning';
-import NavLink from 'components/NavLink';
-
-import getQueryParameters from 'utils/getQueryParameters';
-import inputValidations from 'utils/inputsValidations';
-
-import pluginId from '../../pluginId';
-
+import BackHeader from 'components/BackHeader'
+import EmptyAttributesBlock from 'components/EmptyAttributesBlock'
+import LoadingIndicator from 'components/LoadingIndicator'
+import PluginHeader from 'components/PluginHeader'
+import PopUpWarning from 'components/PopUpWarning'
 // Plugin's components
-import CustomDragLayer from '../../components/CustomDragLayer';
-import Edit from '../../components/Edit';
-import EditRelations from '../../components/EditRelations';
+import CustomDragLayer from 'components/CustomDragLayer'
+import Edit from 'components/Edit'
+import EditAssociation from 'components/EditAssociation'
 
-import { bindLayout } from '../../utils/bindLayout';
-import { checkFormValidity } from '../../utils/formValidations';
+import { useQueryLoader, useConvenientState, useFormState } from 'hooks'
+import getQueryParameters from 'utils/getQueryParameters'
+import styles from './styles.scss'
+import { convertEntityDefResult } from '../../utils/convertEntityDefResults'
+import { convertEntityResult } from '../../utils/convertEntityResults'
+import { newEntity } from '../../utils/newEntity'
+import { getLayout } from './utils'
+import { editPageQuery } from './query'
+import * as mutations from './mutations'
+import { entities as entitiesQuery } from '../../graphql/queries'
+import { useDeleteEntityRequest } from '../../local-hooks'
 
-// App selectors
-import { makeSelectSchema } from '../App/selectors';
+const labels = {
+    createFormHeading: 'New Entry',
+}
 
-import { generateRedirectURI } from '../ListPage/utils';
-import {
-  addRelationItem,
-  changeData,
-  deleteData,
-  getData,
-  initModelProps,
-  moveAttr,
-  moveAttrEnd,
-  onCancel,
-  onRemoveRelationItem,
-  resetProps,
-  setFileRelations,
-  setFormErrors,
-  submit,
-} from './actions';
-import reducer from './reducer';
-import saga from './saga';
-import makeSelectEditPage from './selectors';
-import styles from './styles.scss';
+const EditPage = props => {
+    const {
+        match: { params },
+    } = props
+    const { entityDefId, entityId } = params
+    const mode = entityId === 'create' ? 'create' : 'edit'
 
-export class EditPage extends React.Component {
-  state = { showWarning: false, showWarningDelete: false };
-
-  componentDidMount() {
-    this.initComponent(this.props);
-  }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.location.pathname !== this.props.location.pathname) {
-      this.props.resetProps();
-      this.initComponent(this.props);
-    }
-
-    if (
-      prevProps.editPage.submitSuccess !== this.props.editPage.submitSuccess
-    ) {
-      if (
-        !isEmpty(this.props.location.search) &&
-        includes(this.props.location.search, '?redirectUrl')
-      ) {
-        const redirectUrl = this.props.location.search.split(
-          '?redirectUrl=',
-        )[1];
-
-        this.props.history.push({
-          pathname: redirectUrl.split('?')[0],
-          search: redirectUrl.split('?')[1],
-        });
-      } else {
-        this.props.history.push({
-          pathname: replace(this.props.location.pathname, '/create', ''),
-          search: `?source=${this.getSource()}`,
-        });
-      }
-    }
-  }
-
-  componentWillUnmount() {
-    this.props.resetProps();
-  }
-
-  /**
-   * Retrieve the model's displayed relations
-   * @return {Array}
-   */
-  getDisplayedRelations = () => {
-    return get(this.getSchema(), ['editDisplay', 'relations'], []);
-  };
-
-  /**
-   * Retrieve the model's custom layout
-   *
-   */
-  getLayout = () =>
-    bindLayout.call(
-      this,
-      get(this.props.schema, ['layout', this.getModelName()], {}),
-    );
-
-  /**
-   *
-   *
-   * @type {[type]}
-   */
-  getAttributeValidations = name =>
-    get(
-      this.props.editPage.formValidations,
-      [
-        findIndex(this.props.editPage.formValidations, ['name', name]),
-        'validations',
-      ],
-      {},
-    );
-
-  getDisplayedFields = () =>
-    get(this.getSchema(), ['editDisplay', 'fields'], []);
-
-  /**
-   * Retrieve the model
-   * @type {Object}
-   */
-  getModel = () =>
-    get(this.props.schema, ['models', this.getModelName()]) ||
-    get(this.props.schema, [
-      'models',
-      'plugins',
-      this.getSource(),
-      this.getModelName(),
-    ]);
-
-  /**
-   * Retrieve specific attribute
-   * @type {String} name
-   */
-  getModelAttribute = name => get(this.getModelAttributes(), name);
-
-  /**
-   * Retrieve the model's attributes
-   * @return {Object}
-   */
-  getModelAttributes = () => this.getModel().attributes;
-
-  /**
-   * Retrieve the model's name
-   * @return {String} model's name
-   */
-  getModelName = () => this.props.match.params.slug.toLowerCase();
-
-  /**
-   * Retrieve model's schema
-   * @return {Object}
-   */
-  getSchema = () =>
-    this.getSource() !== pluginId
-      ? get(this.props.schema, [
-        'models',
-        'plugins',
-        this.getSource(),
-        this.getModelName(),
-      ])
-      : get(this.props.schema, ['models', this.getModelName()]);
-
-  getPluginHeaderTitle = () => {
-    if (this.isCreating()) {
-      return toString(this.props.editPage.pluginHeaderTitle);
-    }
-
-    const title = get(this.getSchema(), 'editDisplay.displayedField');
-    const valueToDisplay = get(this.props.editPage, ['initialRecord', title], null);
-
-    return isEmpty(toString(valueToDisplay)) ? null : truncate(valueToDisplay, { length: '24', separator: '.' });
-  };
-
-  /**
-   * Retrieve the model's source
-   * @return {String}
-   */
-  getSource = () => getQueryParameters(this.props.location.search, 'source');
-
-  /**
-   * Get url base to create edit layout link
-   * @type {String} url base
-   */
-  getContentManagerBaseUrl = () => {
-    let url = `/plugins/${pluginId}/ctm-configurations/edit-settings/`;
-
-    if (this.getSource() === 'users-permissions') {
-      url = `${url}plugins/${this.getSource()}/`;
-    }
-
-    return url;
-  };
-
-  /**
-   * Access url base from injected component to create edit model link
-   * @type {String} url base
-   */
-  getContentTypeBuilderBaseUrl = () => '/plugins/content-type-builder/models/';
-
-  /**
-   * Initialize component
-   */
-  initComponent = props => {
-    this.props.initModelProps(
-      this.getModelName(),
-      this.isCreating(),
-      this.getSource(),
-      this.getModelAttributes(),
-      this.getDisplayedFields(),
-    );
-
-    if (!this.isCreating()) {
-      const mainField =
-        get(this.getModel(), 'info.mainField') || this.getModel().primaryKey;
-      this.props.getData(props.match.params.id, this.getSource(), mainField);
-    }
-
-    // Get all relations made with the upload plugin
-    const fileRelations = Object.keys(
-      get(this.getSchema(), 'relations', {}),
-    ).reduce((acc, current) => {
-      const association = get(this.getSchema(), ['relations', current], {});
-
-      if (
-        association.plugin === 'upload' &&
-        association[association.type] === 'file'
-      ) {
-        const relation = {
-          name: current,
-          multiple: association.nature === 'manyToManyMorph',
-        };
-
-        acc.push(relation);
-      }
-      return acc;
-    }, []);
-
-    // Update the reducer so we can use it to create the appropriate FormData in the saga
-    this.props.setFileRelations(fileRelations);
-  };
-
-  handleAddRelationItem = ({ key, value }) => {
-    this.props.addRelationItem({
-      key,
-      value,
-    });
-  };
-
-  handleBlur = ({ target }) => {
-    const defaultValue = get(this.getModelAttribute(target.name), 'default');
-
-    if (isEmpty(target.value) && defaultValue && target.value !== false) {
-      return this.props.changeData({
-        target: {
-          name: `record.${target.name}`,
-          value: defaultValue,
-        },
-      });
-    }
-
-    const errorIndex = findIndex(this.props.editPage.formErrors, [
-      'name',
-      target.name,
-    ]);
-    const errors = inputValidations(
-      target.value,
-      this.getAttributeValidations(target.name),
-      target.type,
-    );
-    const formErrors = cloneDeep(this.props.editPage.formErrors);
-
-    if (errorIndex === -1 && !isEmpty(errors)) {
-      formErrors.push({ name: target.name, errors });
-    } else if (errorIndex !== -1 && isEmpty(errors)) {
-      formErrors.splice(errorIndex, 1);
-    } else if (!isEmpty(errors)) {
-      formErrors.splice(errorIndex, 1, { name: target.name, errors });
-    }
-
-    return this.props.setFormErrors(formErrors);
-  };
-
-  handleChange = e => {
-    let value = e.target.value;
-    // Check if date
-    if (
-      ['float', 'integer', 'biginteger', 'decimal'].indexOf(
-        get(this.getSchema(), ['fields', e.target.name, 'type']),
-      ) !== -1
-    ) {
-      value = toNumber(e.target.value);
-    }
-
-    const target = {
-      name: `record.${e.target.name}`,
-      value,
-    };
-
-    this.props.changeData({ target });
-  };
-
-  handleConfirm = () => {
-    const { showWarningDelete } = this.state;
-
-    if (showWarningDelete) {
-      this.props.deleteData();
-      this.toggleDelete();
-    } else {
-      this.props.onCancel();
-      this.toggle();
-    }
-  };
-
-  handleGoBack = () => this.props.history.goBack();
-
-  handleRedirect = ({ model, id, source = pluginId }) => {
-    /* eslint-disable */
-    switch (model) {
-      case 'permission':
-      case 'role':
-      case 'file':
-        // Exclude special models which are handled by plugins.
-        if (source !== pluginId) {
-          break;
-        }
-      default:
-        const pathname = `${this.props.match.path
-          .replace(':slug', model)
-          .replace(':id', id)}`;
-
-        this.props.history.push({
-          pathname,
-          search: `?source=${source}&redirectURI=${generateRedirectURI({
-            model,
-            search: `?source=${source}`,
-          })}`,
-        });
-    }
-    /* eslint-enable */
-  };
-
-  handleSubmit = e => {
-    e.preventDefault();
-    const formErrors = checkFormValidity(
-      this.generateFormFromRecord(),
-      this.props.editPage.formValidations,
-    );
-
-    if (isEmpty(formErrors)) {
-      this.props.submit(this.context);
-    }
-
-    this.props.setFormErrors(formErrors);
-  };
-
-  hasDisplayedFields = () => {
-    return get(this.getModel(), ['editDisplay', 'fields'], []).length > 0;
-  };
-
-  isCreating = () => this.props.match.params.id === 'create';
-
-  /**
-   * Check environment
-   * @type {boolean} current env is dev
-   */
-  isDevEnvironment = () => {
-    const { currentEnvironment } = this.context;
-
-    return currentEnvironment === 'development';
-  };
-
-  isRelationComponentNull = () =>
-    Object.keys(get(this.getSchema(), 'relations', {})).filter(
-      relation =>
-        get(this.getSchema(), ['relations', relation, 'plugin']) !== 'upload' &&
-        (!get(this.getSchema(), ['relations', relation, 'nature'], '')
-          .toLowerCase()
-          .includes('morph') ||
-          !get(this.getSchema(), ['relations', relation, relation])),
-    ).length === 0;
-
-  // NOTE: technical debt that needs to be redone
-  generateFormFromRecord = () =>
-    Object.keys(this.getModelAttributes()).reduce((acc, current) => {
-      acc[current] = get(this.props.editPage.record, current, '');
-
-      return acc;
-    }, {});
-
-  /**
-   * Render the edit layout link
-   * @type {NavLink}
-   */
-  layoutLink = () => {
-    // Retrieve URL
-    const url = `${this.getContentManagerBaseUrl()}${this.getModelName()}`;
-    // Link props to display
-    const message = {
-      message: {
-        id: `${pluginId}.containers.Edit.Link.Layout`,
-      },
-      icon: 'layout',
-    };
-
-    return (
-      <li key={`${pluginId}.link`}  onClick={() => this.context.emitEvent('willEditContentTypeLayoutFromEditView')}>
-        <NavLink {...message} url={url} />
-      </li>
-    );
-  };
-
-  pluginHeaderActions = () => [
-    {
-      label: `${pluginId}.containers.Edit.reset`,
-      kind: 'secondary',
-      onClick: this.toggle,
-      type: 'button',
-      disabled: this.showLoaders(),
-    },
-    {
-      kind: 'primary',
-      label: `${pluginId}.containers.Edit.submit`,
-      onClick: this.handleSubmit,
-      type: 'submit',
-      loader: this.props.editPage.showLoader,
-      style: this.props.editPage.showLoader
-        ? { marginRight: '18px', flexGrow: 2 }
-        : { flexGrow: 2 },
-      disabled: this.showLoaders(),
-    },
-  ];
-
-  pluginHeaderSubActions = () => {
-    /* eslint-disable indent */
-    const subActions = this.isCreating()
-      ? []
-      : [
-          {
-            label: 'app.utils.delete',
-            kind: 'delete',
-            onClick: this.toggleDelete,
-            type: 'button',
-            disabled: this.showLoaders(),
-          },
-        ];
-
-    return subActions;
-    /* eslint-enable indent */
-  };
-
-  /**
-   * Retrieve external links from injected components
-   * @type {Array} List of external links to display
-   */
-  retrieveLinksContainerComponent = () => {
-    // Should be retrieved from the global props (@soupette)
-    const { plugins } = this.context;
-    const appPlugins = plugins.toJS();
-    const componentToInject = Object.keys(appPlugins).reduce((acc, current) => {
-      // Retrieve injected compos from plugin
-      // if compo can be injected in left.links area push the compo in the array
-      const currentPlugin = appPlugins[current];
-      const injectedComponents = get(currentPlugin, 'injectedComponents', []);
-
-      const compos = injectedComponents
-        .filter(compo => {
-          return (
-            compo.plugin === `${pluginId}.editPage` &&
-            compo.area === 'right.links'
-          );
+    return useQueryLoader(editPageQuery, {
+        variables: { entityDefId, entityId, isEditMode: mode === 'edit' },
+    })(({ data }) =>
+        renderEditPage({
+            ...props,
+            data,
+            mode,
+            entityDefId,
         })
-        .map(compo => {
-          const Component = compo.component;
+    )
+}
 
-          return (
-            <li key={compo.key} onClick={() => this.context.emitEvent('willEditContentTypeFromEditView')}>
-              <Component {...this} {...compo.props} />
-            </li>
-          );
-        });
+function renderEditPage({ data, mode, history, location, entityDefId }) {
+    const entityDef = convertEntityDefResult(data.entityDef)
+    const { propertiesToShowOnEditForm } = entityDef.adminUiSettings
+    // const { propertiesToShowOnEditForm } = convertAdminUiSettings(entityDef.adminUiSettings)
+    // console.log('entityDef: ', entityDef)
 
-      return [...acc, ...compos];
-    }, []);
-
-    return componentToInject;
-  };
-
-  shouldDisplayedRelations = () => {
-    return this.getDisplayedRelations().length > 0;
-  };
-
-  /**
-   * Right section to display if needed
-   * @type {boolean}
-   */
-  shouldDisplayedRightSection = () => {
-    return this.shouldDisplayedRelations() || this.isDevEnvironment();
-  };
-
-  showLoaders = () => {
-    const {
-      editPage: { isLoading },
-      schema: { layout },
-    } = this.props;
-
-    return (
-      (isLoading && !this.isCreating()) ||
-      (isLoading && get(layout, this.getModelName()) === undefined)
-    );
-  };
-
-  toggle = () =>
-    this.setState(prevState => ({ showWarning: !prevState.showWarning }));
-
-  toggleDelete = () =>
-    this.setState(prevState => ({
-      showWarningDelete: !prevState.showWarningDelete,
-    }));
-
-  /**
-   * Render internal and external links
-   * @type {Array} List of all links to display
-   */
-  renderNavLinks = () => {
-    return [this.layoutLink(), ...this.retrieveLinksContainerComponent()];
-  };
-
-  renderEdit = () => {
-    const {
-      editPage,
-      location: { search },
-    } = this.props;
-    const source = getQueryParameters(search, 'source');
-    const basePath = `/plugins/${pluginId}/ctm-configurations/edit-settings`;
-    const pathname =
-      source !== pluginId
-        ? `${basePath}/plugins/${source}/${this.getModelName()}`
-        : `${basePath}/${this.getModelName()}`;
-
-    if (this.showLoaders()) {
-      return (
-        <div
-          className={
-            !this.shouldDisplayedRelations() ? 'col-lg-12' : 'col-lg-9'
-          }
-        >
-          <div className={styles.main_wrapper}>
-            <LoadingIndicator />
-          </div>
-        </div>
-      );
-    }
-
-    if (!this.hasDisplayedFields()) {
-      return (
-        <div
-          className={
-            !this.shouldDisplayedRelations() ? 'col-lg-12' : 'col-lg-9'
-          }
-        >
-          <EmptyAttributesBlock
-            description={`${pluginId}.components.EmptyAttributesBlock.description`}
-            label={`${pluginId}.components.EmptyAttributesBlock.button`}
-            onClick={() => this.props.history.push(pathname)}
-          />
-        </div>
-      );
-    }
-
-    return (
-      <div
-        className={
-          !this.shouldDisplayedRightSection() ? 'col-lg-12' : 'col-lg-9'
+    let entity
+    if (mode === 'create') {
+        entity = newEntity(entityDef)
+        // // TEMP
+        // entity.state = {
+        //     businessId: 'pop-art',
+        //     displayName: 'Pop Art',
+        // }
+    } else {
+        entity = convertEntityResult(data.entity)
+        // console.log('entity: ', entity)
+        if (!entity.state.businessId) {
+            throw Error(`Missing businessId for entity ID '${entity.id}'`)
         }
-      >
-        <div className={styles.main_wrapper}>
-          <Edit
-            attributes={this.getModelAttributes()}
-            didCheckErrors={editPage.didCheckErrors}
-            formValidations={editPage.formValidations}
-            formErrors={editPage.formErrors}
-            layout={this.getLayout()}
-            modelName={this.getModelName()}
-            onBlur={this.handleBlur}
-            onChange={this.handleChange}
-            record={editPage.record}
-            resetProps={editPage.resetProps}
-            schema={this.getSchema()}
-          />
-        </div>
-      </div>
-    );
-  };
+    }
 
-  render() {
-    const { editPage, moveAttr, moveAttrEnd } = this.props;
-    const { showWarning, showWarningDelete } = this.state;
+    const state = useConvenientState({
+        showWarning: false,
+        showWarningDelete: false,
+    })
+
+    const [formState, setFormState] = useFormState(entity.state)
+    const createEntityRequest = useMutation(mutations.createEntityRequest)
+    const updateEntityRequest = useMutation(mutations.updateEntityRequest)
+    const deleteEntityRequest = useDeleteEntityRequest()
+
+    const showLoaders = false // TODO
+    const shoeEditPageLoader = false // TODO
+
+    const pluginHeaderActions = [
+        {
+            label: 'content-manager.containers.Edit.reset',
+            kind: 'secondary',
+            onClick: toggleCancelChangesWarning,
+            type: 'button',
+            disabled: showLoaders,
+        },
+        {
+            kind: 'primary',
+            label: 'content-manager.containers.Edit.submit',
+            onClick: handleSubmit,
+            type: 'submit',
+            loader: shoeEditPageLoader,
+            style: shoeEditPageLoader
+                ? { marginRight: '18px', flexGrow: 2 }
+                : { flexGrow: 2 },
+            disabled: showLoaders,
+        },
+    ]
+
+    const pluginHeaderSubActions =
+        mode === 'create'
+            ? []
+            : [
+                  {
+                      label: 'app.utils.delete',
+                      kind: 'delete',
+                      onClick: toggleDeleteWarning,
+                      type: 'button',
+                      disabled: showLoaders,
+                  },
+              ]
+
+    const helpers = {
+        getPluginHeaderTitle: () =>
+            mode === 'create'
+                ? labels.createFormHeading
+                : entity.state.businessId,
+
+        hasDisplayedAssociations: () => false,
+        hasDisplayedLiteralProperties: () => true,
+
+        // Retrieve the entity def's layout
+        getLayout: () => getLayout(propertiesToShowOnEditForm),
+
+        // Get the 'source' from the URL
+        getSource: () => getQueryParameters(location.search, 'source'),
+
+        redirectAfterSave: () => {
+            if (location.search && location.search.includes('?redirectUrl')) {
+                const redirectUrl = location.search.split('?redirectUrl=')[1]
+
+                history.push({
+                    pathname: redirectUrl.split('?')[0],
+                    search: redirectUrl.split('?')[1],
+                })
+            } else {
+                history.push({
+                    pathname: location.pathname.replace('/create', ''),
+                    search: `?source=${helpers.getSource()}`,
+                })
+            }
+        },
+    }
+
+    function toggleCancelChangesWarning() {
+        state.setShowWarning(prev => !prev)
+    }
+
+    function toggleDeleteWarning() {
+        state.setShowWarningDelete(prev => !prev)
+    }
+
+    function handleGoBack() {
+        history.goBack()
+    }
+
+    function handleConfirm() {}
+
+    async function handleDelete() {
+        await deleteEntityRequest({
+            entityDefId,
+            entityId: entity.id,
+        })
+        state.showWarningDelete = false
+        helpers.redirectAfterSave()
+    }
+
+    function handleBlur() {}
+
+    function handleChange(e) {
+        let value = e.target.value
+        // Check if date
+        if (
+            isObject(e.target.value) &&
+            e.target.value._isAMomentObject === true
+        ) {
+            value = moment(e.target.value).format('YYYY-MM-DD HH:mm:ss')
+        } else if (
+            ['float', 'integer', 'biginteger', 'decimal'].indexOf(
+                get(entityDef, ['properties', e.target.name, 'dataType'])
+            ) !== -1
+        ) {
+            value = toNumber(e.target.value)
+        }
+
+        // const target = {
+        //     name: `record.${e.target.name}`,
+        //     value,
+        // }
+
+        setFormState({
+            [e.target.name]: value,
+        })
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault()
+
+        const entityId = entity.id
+        const entityState = Object.entries(formState.values).map(
+            ([propertyId, value]) => {
+                const propertyDef = entityDef.properties[propertyId]
+                switch (propertyDef.__typename) {
+                    case 'LiteralPropertyDefinition':
+                        return {
+                            propertyId,
+                            literalValue: JSON.stringify(value),
+                        }
+                    case 'AssociationDefinition':
+                        return {
+                            propertyId,
+                            associationsValue: value.map(destinationEntity => ({
+                                destinationEntityId: destinationEntity.id,
+                            })),
+                        }
+                    default:
+                        throw Error(
+                            `Unrecognized property type '${
+                                propertyDef.__typename
+                            }'`
+                        )
+                }
+            }
+        )
+
+        console.log('entityState: ', entityState)
+
+        // Needed to simulate the server response for optimistic updates
+        const convertToGraphqlOutputFormat = stateValues =>
+            Object.keys(stateValues).map(propertyId => {
+                const stateVal = stateValues[propertyId]
+                let value
+                // assume literal property value for now
+                value = {
+                    __typename: 'LiteralPropertyValue',
+                    value: JSON.stringify(stateVal),
+                }
+
+                // switch (???) {
+                //     case 'LiteralPropertyValue':
+                //         value = {
+                //             __typename: 'LiteralPropertyValue',
+                //             value: propState.literalValue,
+                //         }
+                //         break
+                //     case 'Associations':
+                //         // TODO
+                //         // UNTESTED
+                //         value = {
+                //             __typename: 'Associations',
+                //             associations: propState.entityIds.map(
+                //                 associatedEntityId => ({
+                //                     destinationEntity: {
+                //                         id: associatedEntityId,
+                //                     },
+                //                 })
+                //             ),
+                //         }
+                //         break
+                //     case 'StaticAssets':
+                //         throw Error('TODO')
+                //     default:
+                //         throw Error(
+                //             `Unable to determine value type for property state ${JSON.stringify(
+                //                 propState
+                //             )}`
+                //         )
+                // }
+                return {
+                    __typename: 'PropertyState',
+                    propertyId,
+                    value,
+                }
+            })
+
+        try {
+            const optimisticModerationResponse = {
+                __typename: 'EntityModerationStatus',
+                entity: {
+                    __typename: 'Entity',
+                    id: entityId,
+                    state: convertToGraphqlOutputFormat(formState.values),
+                },
+            }
+            // console.log(
+            //     'optimisticModerationResponse: ',
+            //     optimisticModerationResponse
+            // )
+
+            if (mode === 'create') {
+                await createEntityRequest({
+                    variables: {
+                        entityDefId,
+                        initialState: entityState,
+                    },
+                    optimisticResponse: {
+                        __typename: 'Mutation',
+                        createEntityRequest: optimisticModerationResponse,
+                    },
+                    // update cache so list screen will optimistically show updated data
+                    update: (proxy, { data: { createEntityRequest } }) => {
+                        // read current cache data
+                        const queryArgs = {
+                            query: entitiesQuery,
+                            variables: { entityDefId, where: { entityDefId } },
+                        }
+                        const data = proxy.readQuery(queryArgs)
+                        // add entity to the top of the list (TODO(?): respect sort order)
+                        data.entities.results.unshift(
+                            createEntityRequest.entity
+                        )
+                        // write our data back to the cache
+                        proxy.writeQuery({ ...queryArgs, data })
+                    },
+                })
+            } else {
+                await updateEntityRequest({
+                    variables: {
+                        entityDefId,
+                        entityId: entityId,
+                        updatedState: entityState,
+                    },
+                    optimisticResponse: {
+                        __typename: 'Mutation',
+                        updateEntityRequest: optimisticModerationResponse,
+                    },
+                })
+            }
+
+            strapi.notification.success('content-manager.success.record.save')
+            helpers.redirectAfterSave()
+        } catch (e) {
+            console.error('Apollo error: ', e)
+            strapi.notification.error('Error saving data: ' + e.message)
+        }
+    }
+
+    // For to-one relationships only (not to-many)
+    function handleChangeSingleAssociationValue({
+        propertyId,
+        destinationEntity,
+    }) {
+        setFormState({
+            [propertyId]: destinationEntity ? [destinationEntity] : [],
+        })
+    }
+
+    function handleAddAssociationItem({ propertyId, item }) {
+        setFormState({
+            [propertyId]: [...formState.values[propertyId], item],
+        })
+    }
+
+    function handleRemoveAssociationItem({ propertyId, index }) {
+        const associatedEntities = [...formState.values[propertyId]]
+        associatedEntities.splice(index, 1)
+        setFormState({
+            [propertyId]: associatedEntities,
+        })
+    }
+
+    function handleClickAssociatedEntityDetails({
+        associatedEntity,
+        associationDef,
+    }) {
+        const baseUrl = `${window.location.origin}/${
+            window.location.pathname.split('/')[1]
+        }`
+        const url = `${baseUrl}/plugins/content-manager/${
+            associationDef.destinationItemDef.entityDef.id
+        }/${associatedEntity.id}`
+        // TODO this should either open in a modal window,
+        // or redirect but save the form state for when the user returns
+        window.open(url, null, 'width=1000,height=600')
+    }
+
+    function renderForm() {
+        const source = helpers.getSource()
+        const basePath = '/plugins/content-manager/ctm-configurations'
+        const pathname =
+            source !== 'content-manager'
+                ? `${basePath}/plugins/${source}/${entityDefId}`
+                : `${basePath}/${entityDefId}`
+
+        if (showLoaders) {
+            return (
+                <div
+                    className={
+                        !helpers.hasDisplayedAssociations()
+                            ? 'col-lg-12'
+                            : 'col-lg-9'
+                    }
+                >
+                    <div className={styles.main_wrapper}>
+                        <LoadingIndicator />
+                    </div>
+                </div>
+            )
+        }
+
+        if (!helpers.hasDisplayedLiteralProperties()) {
+            return (
+                <div
+                    className={
+                        !helpers.hasDisplayedAssociations()
+                            ? 'col-lg-12'
+                            : 'col-lg-9'
+                    }
+                >
+                    <EmptyAttributesBlock
+                        description="content-manager.components.EmptyAttributesBlock.description"
+                        label="content-manager.components.EmptyAttributesBlock.button"
+                        onClick={() => history.push(pathname)}
+                    />
+                </div>
+            )
+        }
+
+        // TODO
+        // It would be better to allow the user to arrange the properties in any order on the edit form,
+        // regardless of whether it's a literal property or association property, etc.
+        const literalProps = propertiesToShowOnEditForm.filter(
+            p => p.__typename === 'LiteralPropertyDefinition'
+        )
+        const associationProps = propertiesToShowOnEditForm.filter(
+            p => p.__typename === 'AssociationDefinition'
+        )
+        // TODO StaticAssets props
+
+        // console.log('associationProps: ', associationProps)
+
+        return (
+            <div
+                className={
+                    !helpers.hasDisplayedAssociations()
+                        ? 'col-lg-12'
+                        : 'col-lg-9'
+                }
+            >
+                <div className={styles.main_wrapper}>
+                    <Edit
+                        attributes={entityDef.properties}
+                        displayAttributes={literalProps}
+                        didCheckErrors={false}
+                        formValidations={[]}
+                        formErrors={[]}
+                        layout={helpers.getLayout()}
+                        modelName={entityDefId}
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        record={formState.values}
+                        resetProps={false}
+                        entityDef={entityDef}
+                        // schema={this.getSchema()}
+                    />
+                    <div className={styles.editFormAssociations}>
+                        {associationProps.map(associationDef => (
+                            <EditAssociation
+                                key={associationDef.id}
+                                associationDef={associationDef}
+                                entityState={formState.values}
+                                onChangeSingleAssociationValue={
+                                    handleChangeSingleAssociationValue
+                                }
+                                onAddAssociationItem={handleAddAssociationItem}
+                                onRemoveAssociationItem={
+                                    handleRemoveAssociationItem
+                                }
+                                onClickEntityDetails={
+                                    handleClickAssociatedEntityDetails
+                                }
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     return (
-      <div>
-        <form onSubmit={this.handleSubmit}>
-          <BackHeader onClick={this.handleGoBack} />
-          <CustomDragLayer />
-          <div className={cn('container-fluid', styles.containerFluid)}>
-            <PluginHeader
-              actions={this.pluginHeaderActions()}
-              subActions={this.pluginHeaderSubActions()}
-              title={{ id: this.getPluginHeaderTitle() }}
-              titleId="addNewEntry"
-            />
-            <PopUpWarning
-              isOpen={showWarning}
-              toggleModal={this.toggle}
-              content={{
-                title: `${pluginId}.popUpWarning.title`,
-                message: `${pluginId}.popUpWarning.warning.cancelAllSettings`,
-                cancel: `${pluginId}.popUpWarning.button.cancel`,
-                confirm: `${pluginId}.popUpWarning.button.confirm`,
-              }}
-              popUpWarningType="danger"
-              onConfirm={this.handleConfirm}
-            />
-            <PopUpWarning
-              isOpen={showWarningDelete}
-              toggleModal={this.toggleDelete}
-              content={{
-                title: `${pluginId}.popUpWarning.title`,
-                message: `${pluginId}.popUpWarning.bodyMessage.contentType.delete`,
-                cancel: `${pluginId}.popUpWarning.button.cancel`,
-                confirm: `${pluginId}.popUpWarning.button.confirm`,
-              }}
-              popUpWarningType="danger"
-              onConfirm={this.handleConfirm}
-            />
-            <div className="row">
-              {this.renderEdit()}
-              {this.shouldDisplayedRightSection() && (
-                <div className={cn('col-lg-3')}>
-                  {this.shouldDisplayedRelations() && (
-                    <div className={styles.sub_wrapper}>
-                      <EditRelations
-                        changeData={this.props.changeData}
-                        currentModelName={this.getModelName()}
-                        displayedRelations={this.getDisplayedRelations()}
-                        isDraggingSibling={editPage.isDraggingSibling}
-                        location={this.props.location}
-                        moveAttr={moveAttr}
-                        moveAttrEnd={moveAttrEnd}
-                        onAddRelationalItem={this.handleAddRelationItem}
-                        onRedirect={this.handleRedirect}
-                        onRemoveRelationItem={this.props.onRemoveRelationItem}
-                        record={editPage.record}
-                        schema={this.getSchema()}
-                      />
-                    </div>
-                  )}
-
-                  {this.isDevEnvironment() && (
-                    <div className={styles.links_wrapper}>
-                      <ul>{this.renderNavLinks()}</ul>
-                    </div>
-                  )}
+        <div>
+            <form onSubmit={handleSubmit}>
+                <BackHeader onClick={handleGoBack} />
+                <CustomDragLayer />
+                <div className={cn('container-fluid', styles.containerFluid)}>
+                    <PluginHeader
+                        actions={pluginHeaderActions}
+                        subActions={pluginHeaderSubActions}
+                        title={{ id: helpers.getPluginHeaderTitle() }}
+                        titleId="addNewEntry"
+                    />
+                    <PopUpWarning
+                        isOpen={state.showWarning}
+                        toggleModal={toggleCancelChangesWarning}
+                        content={{
+                            title: 'content-manager.popUpWarning.title',
+                            message:
+                                'content-manager.popUpWarning.warning.cancelAllSettings',
+                            cancel:
+                                'content-manager.popUpWarning.button.cancel',
+                            confirm:
+                                'content-manager.popUpWarning.button.confirm',
+                        }}
+                        popUpWarningType="danger"
+                        onConfirm={handleConfirm}
+                    />
+                    <PopUpWarning
+                        isOpen={state.showWarningDelete}
+                        toggleModal={toggleDeleteWarning}
+                        content={{
+                            title: 'content-manager.popUpWarning.title',
+                            message:
+                                'content-manager.popUpWarning.bodyMessage.contentType.delete',
+                            cancel:
+                                'content-manager.popUpWarning.button.cancel',
+                            confirm:
+                                'content-manager.popUpWarning.button.confirm',
+                        }}
+                        popUpWarningType="danger"
+                        onConfirm={handleDelete}
+                    />
+                    <div className="row">{renderForm()}</div>
                 </div>
-              )}
-            </div>
-          </div>
-        </form>
-      </div>
-    );
-  }
+            </form>
+        </div>
+    )
 }
 
-EditPage.contextTypes = {
-  emitEvent: PropTypes.func,
-  currentEnvironment: PropTypes.string,
-  plugins: PropTypes.object,
-};
-
-EditPage.defaultProps = {
-  schema: {},
-};
-
-EditPage.propTypes = {
-  addRelationItem: PropTypes.func.isRequired,
-  changeData: PropTypes.func.isRequired,
-  deleteData: PropTypes.func.isRequired,
-  editPage: PropTypes.object.isRequired,
-  getData: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired,
-  initModelProps: PropTypes.func.isRequired,
-  location: PropTypes.object.isRequired,
-  match: PropTypes.object.isRequired,
-  moveAttr: PropTypes.func.isRequired,
-  moveAttrEnd: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
-  onRemoveRelationItem: PropTypes.func.isRequired,
-  resetProps: PropTypes.func.isRequired,
-  schema: PropTypes.object,
-  setFileRelations: PropTypes.func.isRequired,
-  setFormErrors: PropTypes.func.isRequired,
-  submit: PropTypes.func.isRequired,
-};
-
-function mapDispatchToProps(dispatch) {
-  return bindActionCreators(
-    {
-      addRelationItem,
-      changeData,
-      deleteData,
-      getData,
-      initModelProps,
-      moveAttr,
-      moveAttrEnd,
-      onCancel,
-      onRemoveRelationItem,
-      resetProps,
-      setFileRelations,
-      setFormErrors,
-      submit,
-    },
-    dispatch,
-  );
-}
-
-const mapStateToProps = createStructuredSelector({
-  editPage: makeSelectEditPage(),
-  schema: makeSelectSchema(),
-});
-
-const withConnect = connect(
-  mapStateToProps,
-  mapDispatchToProps,
-);
-
-const withReducer = strapi.injectReducer({ key: 'editPage', reducer, pluginId });
-const withSaga = strapi.injectSaga({ key: 'editPage', saga, pluginId });
-
-export default compose(
-  withReducer,
-  withSaga,
-  withConnect,
-)(DragDropContext(HTML5Backend)(EditPage));
+export default DragDropContext(HTML5Backend)(EditPage)
