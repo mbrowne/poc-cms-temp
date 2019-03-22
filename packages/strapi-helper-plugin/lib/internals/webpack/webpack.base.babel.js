@@ -44,7 +44,8 @@ if (isAdmin && !isSetup) {
   );
 
   try {
-    const { templateConfiguration } = require(path.join(adminPath, 'node_modules', 'strapi-utils'));
+    const { templateConfiguration } = require('strapi-utils');
+    // const { templateConfiguration } = require(path.join(adminPath, 'node_modules', 'strapi-utils'));
 
     let server = require(serverConfig);
     server = templateConfiguration(server);

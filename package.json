@@ -31,7 +31,8 @@
   },
   "scripts": {
     "bootstrap": "lerna bootstrap --npm-client=yarn",
-    "start": "(cd packages/cms-admin && yarn start)",
+    "start": "yarn --cwd packages/cms-admin start",
+    "start-graphql": "yarn --cwd packages/cms-graphql-server start",
     "clean": "npm run removesymlinkdependencies && npx rimraf package-lock.json && npx rimraf packages/*/package-lock.json",
     "clean:all": "npm run removesymlinkdependencies && npx rimraf package-lock.json && npx rimraf packages/*/package-lock.json && npx rimraf packages/*/node_modules",
     "doc": "node ./scripts/documentation.js",

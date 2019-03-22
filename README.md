@@ -1,9 +1,38 @@
-<p align="center">
-  <strong>We're hiring!</strong> Located in Paris 🇫🇷 and dreaming of being full-time on Strapi?
-  <a href="https://strapi.io/company#looking-for-talents">Join us</a>!
-</p>
+# [POC] artnet CMS
+
+## Quickstart
+
+Start MongoDB:
+
+```bash
+docker-compose -f docker/docker-compose.yml up # start MongoDB
+```
+
+Install dependencies:
+
+```bash
+yarn
+yarn bootstrap # bootstrap the Lerna monorepo
+```
+
+Start the CMS admin app:
+
+```bash
+yarn start-graphql # start the GraphQL server (artnet-specific, not part of Strapi)
+```
+
+```bash
+yarn start # start the Strapi API server
+```
+
+```bash
+cd packages/cms-admin/admin
+yarn start # start the admin UI in development mode
+```
 
 ---
+
+### Official Strapi readme follows...
 
 <p align="center">
   <a href="https://strapi.io">

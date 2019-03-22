@@ -66,8 +66,6 @@ export const Query = {
         const templateDef = templateEntityDefsById[entityDefId]
         // Do other entity definitions inherit from this one?
         if (templateDef) {
-            const tmp = Object.keys(templateDef.childEntityDefs)
-            console.log('tmp: ', tmp)
             // If yes, fetch entities for all child types
             queryConditions.entityDefId = Object.keys(
                 templateDef.childEntityDefs
