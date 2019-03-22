@@ -30,7 +30,7 @@
   "dependencies": {
     "pluralize": "^7.0.0",
     "strapi-admin": "^3.0.0-alpha.25.2",
-    "strapi-helper-plugin": "3.0.0-alpha.21"
+    "strapi-helper-plugin": "^3.0.0-alpha.25.2"
   },
   "author": {
     "name": "Strapi team",

@@ -21,7 +21,6 @@ import AddEditPropertyDefForm from 'containers/AddEditPropertyDefForm'
 import NotFoundPage from 'containers/NotFoundPage'
 
 // Utils
-import injectSaga from 'utils/injectSaga'
 // import { storeData } from '../../utils/storeData'
 
 import styles from './styles.scss'
@@ -204,7 +203,7 @@ const withConnect = connect(
     null,
     mapDispatchToProps
 )
-const withSaga = injectSaga({ key: 'global', saga })
+const withSaga = strapi.injectSaga({ key: 'global', saga })
 // const withFormReducer = injectReducer({ key: 'form', reducer: formReducer })
 // const withFormSaga = injectSaga({ key: 'form', saga: formSaga })
 export default compose(
